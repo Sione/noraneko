@@ -18,6 +18,7 @@
       "approved": false
     }
   },
-  "ready_for_implementation": false
+  "ready_for_implementation": false,
+  "requirements_detail_level": "comprehensive"
 }
 
