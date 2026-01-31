@@ -20,8 +20,9 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const idStr = Array.isArray(id) ? id[0] : id;
     const todo = await prisma.todo.findUnique({
-      where: { id: parseInt(id, 10) },
+      where: { id: parseInt(idStr, 10) },
     });
     if (!todo) {
       res.status(404).json({ error: 'Todo not found' });
@@ -59,9 +60,10 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const idStr = Array.isArray(id) ? id[0] : id;
     const { title, description, completed } = req.body;
     const todo = await prisma.todo.update({
-      where: { id: parseInt(id, 10) },
+      where: { id: parseInt(idStr, 10) },
       data: {
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
@@ -79,8 +81,9 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const idStr = Array.isArray(id) ? id[0] : id;
     await prisma.todo.delete({
-      where: { id: parseInt(id, 10) },
+      where: { id: parseInt(idStr, 10) },
     });
     res.status(204).send();
   } catch (error) {
@@ -93,15 +96,16 @@ router.delete('/:id', async (req: Request, res: Response) => {
 router.patch('/:id/toggle', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const idStr = Array.isArray(id) ? id[0] : id;
     const todo = await prisma.todo.findUnique({
-      where: { id: parseInt(id, 10) },
+      where: { id: parseInt(idStr, 10) },
     });
     if (!todo) {
       res.status(404).json({ error: 'Todo not found' });
       return;
     }
     const updatedTodo = await prisma.todo.update({
-      where: { id: parseInt(id, 10) },
+      where: { id: parseInt(idStr, 10) },
       data: { completed: !todo.completed },
     });
     res.json(updatedTodo);
