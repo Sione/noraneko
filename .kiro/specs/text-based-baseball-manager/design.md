@@ -52,6 +52,7 @@ graph TB
         HistoryScreen[History Screen]
         PlayerEditorScreen[Player Editor Screen]
         TeamManagerScreen[Team Manager Screen]
+        SettingsScreen[Settings Screen]
         Widgets[UI Widgets]
     end
     
@@ -60,12 +61,15 @@ graph TB
         StateManager[Game State Manager]
         InputHandler[Input Handler]
         ImportExportService[Import Export Service]
+        SettingsManager[Settings Manager]
+        TemplateManager[Template Manager]
     end
     
     subgraph Domain["Domain Layer"]
         PlaySimulator[Play Simulation Engine]
         AbilityCalc[Ability Calculator]
         GameFlowManager[Game Flow Manager]
+        GameStatsManager[Game Stats Manager]
         PlayerManager[Player Manager]
         BackupManager[Backup Manager]
     end
@@ -74,13 +78,18 @@ graph TB
         DataPersistence[Data Persistence Layer]
         PlayerRepository[Player Repository]
         HistoryRepository[History Repository]
+        HistoryFileStore[History File Store]
         TeamRepository[Team Repository]
+        TemplateStore[Template Store]
     end
     
     subgraph External["External Storage"]
         SQLiteDB[(SQLite DB)]
         ConfigJSON[Config JSON]
         BackupFiles[Backup Files]
+        HistoryJSON[History JSON]
+        SettingsJSON[Settings JSON]
+        TemplateFiles[Template Files]
     end
     
     Presentation --> Application
@@ -126,6 +135,10 @@ stateDiagram-v2
         BetweenInnings --> AtBat: 次イニング
         AtBat --> GameEnd: 試合終了条件
     }
+
+    InGame --> Paused: 一時停止
+    Paused --> InGame: 再開
+    Paused --> MainMenu: 保存して終了/保存せず終了
     
     GameEnd --> MainMenu: メニューへ戻る
     History --> MainMenu: 戻る
@@ -157,7 +170,10 @@ flowchart TD
     HomeRun -->|No| Hit{ヒット?}
     
     Hit -->|Yes| ExtraBase{長打?}
-    Hit -->|No| OutType[ゴロ/フライアウト]
+    Hit -->|No| Error{守備エラー?}
+    
+    Error -->|Yes| ReachOnError[エラーで出塁]
+    Error -->|No| OutType[ゴロ/フライ/ファウルアウト]
     
     ExtraBase -->|Yes| Double{二塁打?}
     ExtraBase -->|No| Single[単打]
@@ -169,6 +185,7 @@ flowchart TD
     UpdateWalk --> UpdateState
     Strikeout --> UpdateState
     UpdateHR --> UpdateState
+    ReachOnError --> UpdateState
     OutType --> UpdateState
     Single --> UpdateState
     UpdateDouble --> UpdateState
@@ -183,6 +200,7 @@ flowchart TD
 - 各分岐点で確率を計算し、乱数で判定
 - OOTP26能力値（Contact, Power, Eye等）を確率計算に使用
 - 決定木により確率の合計=1を保証
+- アウト種別にファウルフライ/守備エラー/タッチアップ判定を含める
 
 ## Requirements Traceability
 
@@ -191,22 +209,23 @@ flowchart TD
 | 1.1-1.5 | 試合の初期化と開始 | GameController, StateManager | GameController.start_game() | 試合フロー全体 |
 | 1.6-1.10 | イニング進行管理 | GameFlowManager, StateManager | GameFlowManager.advance_inning() | 試合フロー全体 |
 | 1.11-1.18 | 試合終了条件判定 | GameFlowManager, GameController | GameFlowManager.check_game_end() | 試合フロー全体 |
-| 2.1-2.10 | 攻撃側指示システム | InputHandler, PlaySimulator | InputHandler.get_player_decision() | - |
+| 2.1-2.10 | 攻撃側指示システム | InputHandler, PlaySimulationEngine | InputHandler.get_offensive_decision() | - |
 | 2.11-2.15 | 守備側指示システム | InputHandler, PlayerManager | PlayerManager.substitute_pitcher() | - |
-| 2.16-2.23 | 指示実行とフィードバック | PlaySimulator, UIRenderer | PlaySimulator.execute_play() | プレイ判定フロー |
+| 2.16-2.23 | 指示実行とフィードバック | PlaySimulationEngine, UIRenderer | PlaySimulationEngine.simulate_at_bat() | プレイ判定フロー |
 | 3.1-3.30 | プレイ結果判定 | PlaySimulationEngine, AbilityCalculator | PlaySimulationEngine.simulate_at_bat() | プレイ判定フロー |
 | 4.1-4.85 | 選手能力管理（OOTP26） | PlayerAbility, AbilityCalculator, PlayerRepository | PlayerAbility.get_contact(), etc. | - |
 | 5.1-5.30 | 試合状況可視化 | GameScreen, Widgets, UIRenderer | GameScreen.update_scoreboard() | - |
-| 6.1-6.25 | 勝敗判定 | GameFlowManager | GameFlowManager.determine_winner() | 試合フロー全体 |
+| 6.1-6.25 | 勝敗判定/試合統計 | GameFlowManager, GameStatsManager | GameFlowManager.determine_winner() | 試合フロー全体 |
 | 7.1-7.30 | エラーハンドリング | ErrorHandler, StateManager | ErrorHandler.handle_invalid_input() | - |
-| 8.1-8.40 | 試合履歴管理 | HistoryRepository, HistoryScreen | HistoryRepository.save_game() | - |
+| 7.16-7.30 | 設定/アクセシビリティ | SettingsManager, SettingsScreen, UIRenderer | SettingsManager.load_settings() | - |
+| 8.1-8.40 | 試合履歴管理 | HistoryRepository, HistoryScreen, HistoryFileStore | HistoryRepository.save_game() | - |
 | 9.1-9.5 | 選手データ初期化 | PlayerRepository, DataPersistenceLayer | PlayerRepository.load_default_players() | - |
 | 9.6-9.15 | 選手一覧と検索 | PlayerEditorScreen, PlayerRepository | PlayerEditorScreen.filter_players() | - |
 | 9.16-9.24 | 選手新規作成 | PlayerEditorScreen, PlayerRepository | PlayerRepository.save_player() | - |
 | 9.25-9.34 | 選手編集と削除 | PlayerEditorScreen, PlayerRepository | PlayerRepository.update_player() | - |
 | 9.35-9.40 | チーム管理 | TeamManagerScreen, TeamRepository | TeamRepository.save_team() | - |
 | 9.41-9.50 | インポート/エクスポート | ImportExportService, PlayerRepository | ImportExportService.export_players() | - |
-| 9.51-9.55 | テンプレート機能 | PlayerEditorScreen | PlayerEditorScreen.apply_template() | - |
+| 9.51-9.55 | テンプレート機能 | PlayerEditorScreen, TemplateManager, TemplateStore | PlayerEditorScreen.apply_template() | - |
 | 9.56-9.60 | バッチ編集 | PlayerEditorScreen, PlayerRepository | PlayerRepository.batch_update() | - |
 | 9.61-9.68 | バックアップと復元 | BackupManager, DataPersistenceLayer | BackupManager.create_backup() | - |
 | 9.69-9.72 | ヘルプとドキュメント | PlayerEditorScreen, UIRenderer | UIRenderer.show_help() | - |
@@ -220,24 +239,30 @@ flowchart TD
 | GameController | Application | ゲーム全体の制御と調整 | 1, 2, 6 | StateManager (P0), GameFlowManager (P0) | Service |
 | GameStateManager | Application | 状態機械による状態管理 | 1, 7 | python-statemachine (P0) | State |
 | ImportExportService | Application | 選手データのインポート/エクスポート | 9 | PlayerRepository (P0) | Service |
+| TemplateManager | Application | テンプレート管理 | 9 | TemplateStore (P0) | Service |
 | PlaySimulationEngine | Domain | 確率計算とプレイ判定 | 2, 3 | AbilityCalculator (P0), PlayerAbility (P0) | Service |
 | AbilityCalculator | Domain | OOTP26能力値計算 | 3, 4 | PlayerAbility (P0) | Service |
 | PlayerAbility | Domain | 選手能力データモデル | 4, 9 | なし | Data Model |
 | PlayerManager | Domain | 選手交代・管理 | 2, 4 | PlayerRepository (P0) | Service |
 | GameFlowManager | Domain | イニング進行・終了判定 | 1, 6 | なし | Service |
+| GameStatsManager | Domain | 試合統計（安打/エラー/残塁）集計 | 6, 8 | なし | Service |
 | BackupManager | Domain | データバックアップと復元 | 9 | DataPersistenceLayer (P0) | Service |
 | DataPersistenceLayer | Data | SQLite操作の抽象化 | 4, 8, 9 | sqlite3 (P0) | Service |
 | PlayerRepository | Data | 選手データCRUD | 4, 9 | DataPersistenceLayer (P0) | Service |
-| HistoryRepository | Data | 試合履歴CRUD | 8 | DataPersistenceLayer (P0) | Service |
+| HistoryRepository | Data | 試合履歴CRUD（DB/JSON両方） | 8 | DataPersistenceLayer (P0), HistoryFileStore (P0) | Service |
+| HistoryFileStore | Data | 履歴JSONの読み書き | 8 | json (P0) | Service |
+| TemplateStore | Data | テンプレートの保存/読込 | 9 | json (P0) | Service |
 | TeamRepository | Data | チームデータCRUD | 9 | DataPersistenceLayer (P0) | Service |
 | GameScreen | Presentation | 試合画面UI | 5 | Textual (P0), UIRenderer (P0) | UI Component |
 | MainMenuScreen | Presentation | メインメニューUI | 1, 9 | Textual (P0) | UI Component |
 | HistoryScreen | Presentation | 履歴画面UI | 8 | Textual (P0), HistoryRepository (P0) | UI Component |
 | PlayerEditorScreen | Presentation | 選手編集画面UI | 9 | Textual (P0), PlayerRepository (P0) | UI Component |
 | TeamManagerScreen | Presentation | チーム管理画面UI | 9 | Textual (P0), TeamRepository (P0) | UI Component |
+| SettingsScreen | Presentation | 設定画面UI | 7 | Textual (P0), SettingsManager (P0) | UI Component |
 | UIRenderer | Presentation | UI更新とフォーマット | 5 | Rich (P0) | Service |
 | InputHandler | Application | ユーザー入力処理 | 2, 7 | GameScreen (P0) | Service |
 | ErrorHandler | Application | エラー処理と復旧 | 7 | なし | Service |
+| SettingsManager | Application | 設定の読み書き/適用 | 7 | json (P0) | Service |
 
 ### Application Layer
 
@@ -251,7 +276,7 @@ flowchart TD
 **Responsibilities & Constraints**
 - ゲームの起動、試合開始、終了処理を管理
 - StateManager経由で状態遷移を制御
-- 各ドメインサービス（PlaySimulator, GameFlowManager）を調整
+- 各ドメインサービス（PlaySimulationEngine, GameFlowManager）を調整
 - トランザクション境界: 1試合単位
 
 **Dependencies**
@@ -295,6 +320,18 @@ class GameController:
         """現在の試合を保存する。game_idを返す"""
         ...
     
+    def pause_game(self) -> None:
+        """試合を一時停止する"""
+        ...
+    
+    def resume_paused_game(self) -> None:
+        """一時停止中の試合を再開する"""
+        ...
+    
+    def abandon_game(self, save: bool) -> None:
+        """試合を中断する（save=Falseの場合はノーゲーム扱い）"""
+        ...
+    
     def end_game(self) -> GameResult:
         """試合を終了し結果を返す"""
         ...
@@ -307,6 +344,9 @@ class GameController:
 **Implementation Notes**
 - **Integration**: StateManagerと密連携、状態変更はStateManager経由
 - **Validation**: チームIDの存在確認、game_idの有効性確認
+- **Integration**: イニング終了時に自動保存（Requirement 7.9）
+- **Integration**: 起動時にクラッシュ検知で「前回の試合を復元しますか？」を提示
+- **Integration**: 試合終了時にGameStatsManagerのサマリーを取得し表示
 - **Risks**: 試合中のクラッシュ → 自動保存機能で緩和（Requirement 7.6-7.10参照）
 
 #### GameStateManager
@@ -339,6 +379,7 @@ class GameState(Enum):
     MAIN_MENU = "main_menu"
     TEAM_SELECTION = "team_selection"
     IN_GAME = "in_game"
+    PAUSED = "paused"
     GAME_END = "game_end"
     HISTORY = "history"
 
@@ -389,6 +430,7 @@ class GameStateManager:
 - ユーザーからの指示選択を受信
 - 入力の妥当性検証（無効な指示、範囲外の数値）
 - エラーメッセージの表示とリトライ促進
+- 指示選択肢に番号を付与し数字入力を許可
 - ドメイン境界: UI入力とドメインコマンドの変換のみ
 
 **Dependencies**
@@ -408,7 +450,9 @@ from typing import Optional
 class OffensiveDecision(Enum):
     NORMAL_SWING = "normal_swing"
     BUNT = "bunt"
+    SQUEEZE = "squeeze"
     STEAL = "steal"
+    DOUBLE_STEAL = "double_steal"
     HIT_AND_RUN = "hit_and_run"
     WAIT = "wait"
 
@@ -448,7 +492,9 @@ class InputHandler:
 
 **Implementation Notes**
 - **Integration**: Textualのイベントループと統合、非同期入力を同期変換
-- **Validation**: 現在の試合状況（ランナー有無、アウトカウント）に応じた検証
+- **Validation**: 現在の試合状況（ランナー有無、アウトカウント、ストライク数）に応じた検証
+- **Warnings**: 2ストライク時のバント成功率低下、ツーアウト時の盗塁警告、走力低い場合のリスク警告
+- **Behavior**: 指示選択のタイムアウトは設けず、待機し続ける
 - **Risks**: ユーザーが無限に誤入力 → 5回エラーでヘルプ表示（Requirement 7.5）
 
 #### ErrorHandler
@@ -462,6 +508,7 @@ class InputHandler:
 - 3種類のエラー分類（ユーザーエラー、システムエラー、ビジネスルールエラー）
 - エラーメッセージの多言語対応
 - システムエラー時の自動保存とログ記録
+- 入力エラー時に警告記号（[!])を表示
 - ドメイン境界: エラー処理のみ、ビジネスロジックは含まない
 
 **Dependencies**
@@ -513,6 +560,101 @@ class ErrorHandler:
 - **Integration**: Python loggingモジュールと統合、`~/.baseball_game/error.log`に出力
 - **Validation**: なし（エラーハンドラー自体はエラーをスローしない）
 - **Risks**: ログファイル肥大化 → ローテーション設定（1MB/日、7日保存）
+
+#### SettingsManager
+
+| Field | Detail |
+|-------|--------|
+| Intent | 言語・表示速度など設定の読み書き/適用を管理 |
+| Requirements | 7.16-7.30 |
+
+**Responsibilities & Constraints**
+- 設定ファイルの読み込み/保存
+- 表示言語（日本語/英語）とテキスト表示速度の管理
+- ターミナル幅に応じたレイアウト設定の保持
+- ドメイン境界: 設定データのみ、ビジネスロジックは含まない
+
+**Dependencies**
+- Inbound: MainMenuScreen, SettingsScreen — 設定要求 (P0)
+- Outbound: UIRenderer — 設定反映 (P0)
+- External: Python json module (P0)
+
+**Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]
+
+##### Service Interface
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class GameSettings:
+    language: str  # "ja" or "en"
+    text_speed: str  # "instant" or "step"
+    difficulty: str  # "easy", "normal", "hard"
+
+class SettingsManager:
+    def load_settings(self, path: str = "~/.baseball_game/settings.json") -> GameSettings:
+        """設定を読み込む。存在しない場合はデフォルトを返す"""
+        ...
+    
+    def save_settings(self, settings: GameSettings, path: str = "~/.baseball_game/settings.json") -> None:
+        """設定を保存する"""
+        ...
+```
+
+**Implementation Notes**
+- **Integration**: 起動時に読み込み、変更時に即時保存
+- **Validation**: 設定値の許容範囲チェック（language/text_speed/difficulty）
+- **Risks**: 設定ファイル破損 → デフォルト復元と警告表示
+
+#### TemplateManager
+
+| Field | Detail |
+|-------|--------|
+| Intent | 選手テンプレートの保存/取得を管理 |
+| Requirements | 9.51-9.55 |
+
+**Responsibilities & Constraints**
+- テンプレート一覧の取得
+- テンプレートの保存/削除
+- テンプレートの適用（能力値セット）
+- ドメイン境界: テンプレート管理のみ
+
+**Dependencies**
+- Inbound: PlayerEditorScreen — テンプレート操作 (P0)
+- Outbound: TemplateStore — 永続化 (P0)
+
+**Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]
+
+##### Service Interface
+
+```python
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
+class PlayerTemplate:
+    name: str
+    abilities: dict[str, int]
+
+class TemplateManager:
+    def list_templates(self) -> List[PlayerTemplate]:
+        """テンプレート一覧を取得"""
+        ...
+    
+    def save_template(self, template: PlayerTemplate) -> None:
+        """テンプレートを保存"""
+        ...
+    
+    def delete_template(self, name: str) -> None:
+        """テンプレートを削除"""
+        ...
+```
+
+**Implementation Notes**
+- **Integration**: `~/.baseball_game/templates/` にJSON保存
+- **Validation**: 能力値が1-100範囲内
+- **Risks**: テンプレート名重複 → 保存時に上書き確認
 
 #### ImportExportService
 
@@ -594,6 +736,7 @@ class ImportExportService:
 
 **Implementation Notes**
 - **Integration**: エクスポートファイルは`~/.baseball_game/exports/players_export_YYYY-MM-DD_HH-MM-SS.json`に保存
+- **Integration**: サンプルファイル`data/sample_player.json`を提供
 - **Validation**: JSON schema検証、必須フィールド確認、能力値範囲チェック
 - **Risks**: 大量選手データでメモリ不足 → ストリーミング処理を検討
 
@@ -609,7 +752,8 @@ class ImportExportService:
 **Responsibilities & Constraints**
 - Odds Ratio Method（Log5）で打者-投手対決の確率を計算
 - 決定木アプローチで打席結果を段階的に判定
-- ランナー進塁ロジックの実行
+- ランナー進塁ロジックの実行（タッチアップ、守備エラー含む）
+- バント/スクイズ/盗塁/ダブルスチールの専用判定ロジック
 - OOTP26能力値を確率計算に統合
 - トランザクション境界: 1プレイ単位
 
@@ -632,6 +776,7 @@ class PlayOutcome(Enum):
     HIT_BY_PITCH = "hit_by_pitch"
     WALK = "walk"
     STRIKEOUT = "strikeout"
+    FOUL_FLY = "foul_fly"
     SINGLE = "single"
     DOUBLE = "double"
     TRIPLE = "triple"
@@ -639,6 +784,8 @@ class PlayOutcome(Enum):
     GROUND_OUT = "ground_out"
     FLY_OUT = "fly_out"
     DOUBLE_PLAY = "double_play"
+    ERROR = "error"
+    SAC_FLY = "sac_fly"
 
 @dataclass
 class PlayResult:
@@ -647,6 +794,8 @@ class PlayResult:
     outs_recorded: int
     runners_advanced: List[int]  # 各塁のランナーが進んだ塁数
     description: str  # 実況テキスト
+    home_score_after: int
+    away_score_after: int
 
 class PlaySimulationEngine:
     def simulate_at_bat(
@@ -677,6 +826,48 @@ class PlaySimulationEngine:
     ) -> bool:
         """盗塁の成否を判定。成功時True"""
         ...
+
+    def simulate_double_steal(
+        self,
+        runner_ids: List[int],
+        pitcher_id: int,
+        catcher_id: int
+    ) -> List[bool]:
+        """ダブルスチールの成否を判定。各走者の成功可否を返す"""
+        ...
+
+    def simulate_bunt(
+        self,
+        batter_id: int,
+        runners_on_base: List[int],
+        strikes: int
+    ) -> PlayResult:
+        """バントの成否と進塁を判定"""
+        ...
+
+    def simulate_squeeze(
+        self,
+        batter_id: int,
+        runner_on_third: int,
+        strikes: int
+    ) -> PlayResult:
+        """スクイズの成否と得点を判定"""
+        ...
+
+    def simulate_fielding_error(
+        self,
+        fielder_ids: List[int]
+    ) -> bool:
+        """守備エラーの有無を判定。エラー時True"""
+        ...
+
+    def simulate_tag_up(
+        self,
+        runner_id: int,
+        fielder_arm: int
+    ) -> bool:
+        """タッチアップ成否を判定。成功時True"""
+        ...
 ```
 
 - **Preconditions**: batter_id, pitcher_idが有効、能力値データが存在
@@ -687,6 +878,7 @@ class PlaySimulationEngine:
 - **Integration**: リーグ平均データを`config/league_averages.json`から読込
 - **Validation**: 能力値が1-100範囲内、確率が0-1範囲内
 - **Risks**: 確率計算のバランス調整 → MLB 2025データで検証、調整用デバッグモード実装（research.md Risk 2参照）
+- **Risks**: 守備エラー/タッチアップ判定の複雑化 → ルール別ユニットテストで担保
 
 #### AbilityCalculator
 
@@ -753,6 +945,26 @@ class AbilityCalculator:
     ) -> float:
         """疲労度による能力減衰を適用"""
         ...
+
+    def calculate_overall_rating_batter(
+        self,
+        contact: int,
+        gap_power: int,
+        hr_power: int,
+        eye: int,
+        speed: int
+    ) -> float:
+        """打者OVRを計算（Contact 30%、Gap/HR Power 40%、Eye 15%、Speed 15%）"""
+        ...
+
+    def calculate_overall_rating_pitcher(
+        self,
+        stuff: int,
+        movement: int,
+        control: int
+    ) -> float:
+        """投手OVRを計算（Stuff 40%、Movement 35%、Control 25%）"""
+        ...
 ```
 
 - **Preconditions**: player_idが存在、能力値データが有効
@@ -775,6 +987,7 @@ class AbilityCalculator:
 - イニング管理（表/裏、攻守交代）
 - 得点の加算とスコアボード更新
 - 試合終了条件の判定（9回終了、延長戦、サヨナラ、コールド）
+- 試合時間（プレイ時間）の計測
 - トランザクション境界: 1イニング単位
 
 **Dependencies**
@@ -794,6 +1007,8 @@ class GameStatus:
     inning: int
     is_top: bool  # True=表, False=裏
     outs: int
+    balls: int
+    strikes: int
     home_score: int
     away_score: int
     is_game_over: bool
@@ -832,6 +1047,65 @@ class GameFlowManager:
 - **Validation**: イニング数の上限チェック（max_innings設定）
 - **Risks**: 延長戦の無限ループ → max_inningsで制限（デフォルト12回）
 
+#### GameStatsManager
+
+| Field | Detail |
+|-------|--------|
+| Intent | 試合中/試合終了時の統計を集計する |
+| Requirements | 6.5, 6.24-6.25, 8.1-8.5 |
+
+**Responsibilities & Constraints**
+- チームの安打数/エラー数/残塁数を集計
+- 個人成績（打数・安打、投球回・失点など）を集計
+- 試合終了時のサマリー/MVP候補/ハイライトを生成
+- バント/盗塁など戦術使用回数を集計
+- ドメイン境界: 統計集計のみ、表示はUI側
+
+**Dependencies**
+- Inbound: GameController, PlaySimulationEngine — 集計更新 (P0)
+- Outbound: なし
+
+**Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]
+
+##### Service Interface
+
+```python
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
+class TeamStats:
+    hits: int
+    errors: int
+    left_on_base: int
+
+@dataclass
+class GameSummary:
+    home_stats: TeamStats
+    away_stats: TeamStats
+    mvp_player_id: int
+    highlights: List[str]
+    tactic_counts: dict[str, int]
+
+class GameStatsManager:
+    def record_play(self, play_result: PlayResult) -> None:
+        """プレイ結果を統計に反映"""
+        ...
+    
+    def get_team_stats(self) -> tuple[TeamStats, TeamStats]:
+        """両チームの統計を取得"""
+        ...
+    
+    def build_game_summary(self) -> GameSummary:
+        """試合終了時のサマリーを生成"""
+        ...
+```
+
+**Implementation Notes**
+- **Integration**: 試合終了時にUIへ統計サマリーを渡す
+- **Validation**: なし（集計専用）
+- **Risks**: 集計漏れ → PlayResult全パスのテストで担保
+
 #### PlayerManager
 
 | Field | Detail |
@@ -843,6 +1117,7 @@ class GameFlowManager:
 - 投手交代、代打、守備固めの実行
 - 一度交代した選手の再出場禁止を保証
 - 打順の自動引き継ぎ
+- 推奨打順の生成
 - ドメイン境界: ロースター操作のみ、能力値計算は含まない
 
 **Dependencies**
@@ -897,6 +1172,10 @@ class PlayerManager:
         player_out_id: int
     ) -> tuple[bool, Optional[str]]:
         """交代の妥当性を検証"""
+        ...
+
+    def generate_recommended_lineup(self, team: str) -> Lineup:
+        """推奨打順を生成"""
         ...
     
     def has_played(self, player_id: int) -> bool:
@@ -1082,6 +1361,7 @@ class PlayerData:
     player_id: int
     name: str
     primary_position: str
+    overall_rating: float
     batting_abilities: BattingAbilityData
     pitching_abilities: Optional[PitchingAbilityData]
     defensive_abilities: DefensiveAbilityData
@@ -1097,6 +1377,19 @@ class PlayerRepository:
     def get_players_by_position(self, position: str) -> List[PlayerData]:
         """ポジションで選手を検索"""
         ...
+
+    def get_players(
+        self,
+        position: Optional[str] = None,
+        team_id: Optional[int] = None,
+        ability_range: Optional[tuple[int, int]] = None,
+        sort_key: Optional[str] = None,
+        sort_order: str = "asc",
+        limit: int = 50,
+        offset: int = 0
+    ) -> List[PlayerData]:
+        """一覧/検索/並び替え/ページネーションを統合提供"""
+        ...
     
     def update_player_condition(
         self,
@@ -1109,6 +1402,10 @@ class PlayerRepository:
     def save_player(self, player: PlayerData) -> int:
         """選手を保存。player_idを返す"""
         ...
+
+    def has_game_history(self, player_id: int) -> bool:
+        """選手が試合履歴に含まれるか判定"""
+        ...
 ```
 
 - **Preconditions**: データベースが初期化済み
@@ -1117,7 +1414,9 @@ class PlayerRepository:
 
 **Implementation Notes**
 - **Integration**: 初回起動時に`data/default_players.json`からデータロード
+- **Integration**: デフォルト選手数は30人以上、複数の選手タイプを含む
 - **Validation**: 能力値が1-100範囲内、必須フィールドの存在確認
+- **Validation**: バリデーションエラー時は選手名/能力名/無効値を提示してスキップ
 - **Risks**: データサイズ肥大化 → インデックス最適化（player_id, position）
 
 #### HistoryRepository
@@ -1131,11 +1430,13 @@ class PlayerRepository:
 - 試合結果の保存
 - 履歴の検索・フィルタリング
 - 統計の集計（通算成績、最近10試合）
+- 履歴を`~/.baseball_game/history.json`にも同期保存
 - トランザクション境界: 試合単位
 
 **Dependencies**
 - Inbound: GameController, HistoryScreen — データ要求 (P0)
 - Outbound: DataPersistenceLayer — データ操作 (P0)
+- Outbound: HistoryFileStore — JSON保存 (P0)
 
 **Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]
 
@@ -1153,6 +1454,14 @@ class GameHistory:
     away_team: str
     home_score: int
     away_score: int
+    home_inning_scores: List[int]
+    away_inning_scores: List[int]
+    home_hits: int
+    away_hits: int
+    home_errors: int
+    away_errors: int
+    home_left_on_base: int
+    away_left_on_base: int
     result: str  # "win", "loss", "draw"
     innings_played: int
     game_duration_minutes: int
@@ -1188,13 +1497,41 @@ class HistoryRepository:
     ) -> List[GameHistory]:
         """期間で絞り込み"""
         ...
+
+    def get_games_by_result(self, result: str) -> List[GameHistory]:
+        """勝敗で絞り込み（"win"/"loss"/"draw"）"""
+        ...
+
+    def get_games_by_opponent(self, opponent_team: str) -> List[GameHistory]:
+        """対戦相手で絞り込み"""
+        ...
     
     def get_career_stats(self) -> CareerStats:
         """通算成績を計算"""
         ...
+
+    def get_recent_stats(self, last_n: int = 10) -> CareerStats:
+        """最近N試合の成績を計算"""
+        ...
+
+    def get_opponent_rankings(self) -> List[tuple[str, float]]:
+        """対戦相手別の勝率ランキングを取得"""
+        ...
     
     def delete_games_before(self, date: datetime) -> int:
         """指定日以前の試合を削除。削除数を返す"""
+        ...
+
+    def delete_games_by_ids(self, game_ids: List[int]) -> int:
+        """指定試合を削除。削除数を返す"""
+        ...
+
+    def compress_old_game_logs(self, keep_count: int = 100) -> int:
+        """古い試合の詳細ログを圧縮。圧縮件数を返す"""
+        ...
+
+    def export_history(self, output_path: str) -> None:
+        """履歴データをJSONでエクスポート"""
         ...
 ```
 
@@ -1204,8 +1541,91 @@ class HistoryRepository:
 
 **Implementation Notes**
 - **Integration**: 履歴が100件超過時に警告表示（Requirement 8.31）
+- **Integration**: JSON履歴は`~/.baseball_game/history.json`に保存し、起動時に自動ロード
 - **Validation**: 日付範囲の妥当性確認
 - **Risks**: 大量データでクエリが遅延 → インデックス作成（date, result）
+
+#### HistoryFileStore
+
+| Field | Detail |
+|-------|--------|
+| Intent | 履歴JSONファイルの読み書きを担当 |
+| Requirements | 8.1-8.40 |
+
+**Responsibilities & Constraints**
+- `~/.baseball_game/history.json`への保存と読み込み
+- JSONフォーマットのバリデーション
+- 破損時は空の履歴にフォールバック
+- ドメイン境界: 履歴の永続化のみ
+
+**Dependencies**
+- Inbound: HistoryRepository — 保存/読込要求 (P0)
+- Outbound: なし
+- External: Python json module (P0)
+
+**Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]
+
+##### Service Interface
+
+```python
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
+class HistoryFileSnapshot:
+    games: List[GameHistory]
+
+class HistoryFileStore:
+    def load(self, path: str = "~/.baseball_game/history.json") -> HistoryFileSnapshot:
+        """履歴JSONを読み込み、スナップショットを返す"""
+        ...
+    
+    def save(self, snapshot: HistoryFileSnapshot, path: str = "~/.baseball_game/history.json") -> None:
+        """履歴JSONを保存"""
+        ...
+```
+
+**Implementation Notes**
+- **Integration**: 起動時に読み込み、保存は試合終了時に同期書き込み
+- **Validation**: スキーマ検証（必須フィールドと型）
+- **Risks**: ファイル破損 → バックアップ世代と併用
+
+#### TemplateStore
+
+| Field | Detail |
+|-------|--------|
+| Intent | テンプレートのファイル永続化 |
+| Requirements | 9.54-9.55 |
+
+**Responsibilities & Constraints**
+- テンプレートJSONの読み書き
+- テンプレート名の重複検出
+- ドメイン境界: 永続化のみ
+
+**Dependencies**
+- Inbound: TemplateManager — 保存/読込要求 (P0)
+- Outbound: なし
+- External: Python json module (P0)
+
+**Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]
+
+##### Service Interface
+
+```python
+class TemplateStore:
+    def load_all(self, path: str = "~/.baseball_game/templates/") -> List[PlayerTemplate]:
+        """テンプレート一覧を読み込む"""
+        ...
+    
+    def save(self, template: PlayerTemplate, path: str = "~/.baseball_game/templates/") -> None:
+        """テンプレートを保存"""
+        ...
+```
+
+**Implementation Notes**
+- **Integration**: テンプレートはファイル名にテンプレート名を使用
+- **Validation**: JSONフォーマットの整合性チェック
+- **Risks**: 不正ファイル混入 → 不正ファイルはスキップして警告
 
 #### TeamRepository
 
@@ -1267,7 +1687,7 @@ class TeamRepository:
         self,
         player_ids: List[int]
     ) -> tuple[bool, Optional[str]]:
-        """ロースターの妥当性を検証（最低9野手+2投手）"""
+        """ロースターの妥当性を検証（先発9名+ベンチ5名以上、投手2名以上）"""
         ...
     
     def delete_team(self, team_id: int) -> None:
@@ -1277,7 +1697,7 @@ class TeamRepository:
 
 - **Preconditions**: team_idがユニーク、player_idが存在
 - **Postconditions**: ロースター更新時は選手がチームに紐付く
-- **Invariants**: ロースターは最低11人（9野手+2投手）
+- **Invariants**: ロースターは最低14人（先発9名+ベンチ5名以上）かつ投手2名以上
 
 **Implementation Notes**
 - **Integration**: デフォルトで2チーム（Home Team, Away Team）を作成
@@ -1294,9 +1714,14 @@ class TeamRepository:
 | Requirements | 5.1-5.30 |
 
 **Responsibilities & Constraints**
-- スコアボード、ランナー状況、プレイ履歴の表示
+- スコアボード（得点、イニング、アウト、ボール/ストライク、打順）の常時表示
+- イニング別得点表の表示
+- ランナー状況、プレイ履歴の表示
+- ランナー名表示オプションと満塁など状況強調
 - ユーザー入力の受付（指示選択ボタン）
 - リアルタイムUI更新
+- 次に行うべきアクションのガイダンス表示
+- 試合終了時のサマリー表示（MVP/ハイライト）
 - ドメイン境界: UI表示のみ、ビジネスロジックは含まない
 
 **Dependencies**
@@ -1329,25 +1754,46 @@ class GameScreen(Screen):
         inning: int,
         is_top: bool,
         outs: int,
+        balls: int,
+        strikes: int,
         home_score: int,
-        away_score: int
+        away_score: int,
+        inning_scores: List[int],
+        batting_order_slot: int
     ) -> None:
-        """スコアボードを更新"""
+        """スコアボードを更新（ボール/ストライク、イニング別得点、打順含む）"""
         ...
     
     def update_runners(self, runners: List[int]) -> None:
         """ランナー状況を更新"""
         ...
     
-    def add_play_log(self, play_description: str) -> None:
-        """プレイログに追加"""
+    def add_play_log(self, play_description: str, timestamp: str) -> None:
+        """プレイログに追加（時刻付き）"""
+        ...
+    
+    def filter_play_log(self, inning: int) -> None:
+        """指定イニングのログのみ表示"""
         ...
     
     def show_decision_buttons(
         self,
-        decisions: List[OffensiveDecision]
+        decisions: List[OffensiveDecision],
+        decision_help: List[str]
     ) -> None:
-        """利用可能な指示ボタンを表示"""
+        """利用可能な指示ボタンを表示（1行説明付き）"""
+        ...
+
+    def show_batter_detail(self, batter_id: int) -> None:
+        """打者詳細（能力/成績/左右/コンディション）を表示"""
+        ...
+    
+    def show_pitcher_detail(self, pitcher_id: int) -> None:
+        """投手詳細（能力/成績/疲労度）を表示"""
+        ...
+    
+    def show_endgame_menu(self) -> None:
+        """試合終了後のアクション（新規試合/履歴/終了）を表示"""
         ...
 ```
 
@@ -1366,8 +1812,32 @@ class GameScreen(Screen):
 
 これらの画面は標準的なTextual Screenパターンに従い、GameScreenと類似の構造を持つため、詳細は省略。主な違いは以下の通り：
 
-- **MainMenuScreen**: ボタンメニュー（新規試合、**選手管理**、**チーム管理**、履歴、設定、終了）
-- **HistoryScreen**: DataTableでの履歴一覧表示、詳細モーダル
+- **MainMenuScreen**: ボタンメニュー（新規試合、**選手管理**、**チーム管理**、履歴、設定、チュートリアル、終了）
+- **HistoryScreen**: DataTableでの履歴一覧表示、ページネーション、勝敗/期間/対戦相手フィルタ、詳細モーダル、削除/圧縮/エクスポート操作
+- **HistoryScreen**: 通算成績/最近10試合/自己ベスト/連勝連敗/対戦相手別ランキングのサマリー、テキストチャート表示
+- **HistoryScreen**: 詳細画面で最終スコア/イニング別得点/試合時間/総安打数を表示
+
+#### SettingsScreen
+
+| Field | Detail |
+|-------|--------|
+| Intent | 言語/表示速度/難易度などの設定を提供するUI |
+| Requirements | 7.16-7.30 |
+
+**Responsibilities & Constraints**
+- 言語（日本語/英語）の切替
+- テキスト表示速度（即時/逐次）設定
+- 難易度（乱数の振れ幅）設定
+- 端末幅に応じたレイアウト設定のプレビュー
+- ドメイン境界: UI表示のみ
+
+**Dependencies**
+- Inbound: MainMenuScreen — 画面遷移 (P0)
+- Outbound: SettingsManager — 設定読み書き (P0)
+- Outbound: UIRenderer — 設定反映 (P0)
+- External: Textual — TUIフレームワーク (P0)
+
+**Contracts**: UI Component [x] / Service [ ] / API [ ] / Event [x]
 
 #### PlayerEditorScreen
 
@@ -1378,16 +1848,21 @@ class GameScreen(Screen):
 
 **Responsibilities & Constraints**
 - 選手一覧の表示とフィルタリング
+- 選手一覧の並び替えとページネーション（50人/ページ）
 - 選手作成/編集フォームの表示
 - OOTP26準拠の85能力値入力UI
 - テンプレート適用とランダム生成
 - バッチ編集機能
+- 編集時の差分表示と保存確認ダイアログ
+- 削除時の二重確認と履歴存在時の警告
+- 能力値ガイド/ヘルプ表示
 - ドメイン境界: UI表示のみ、ビジネスロジックは含まない
 
 **Dependencies**
 - Inbound: MainMenuScreen — 画面遷移 (P0)
 - Outbound: PlayerRepository — 選手データ操作 (P0)
 - Outbound: ImportExportService — インポート/エクスポート (P0)
+- Outbound: TemplateManager — テンプレート操作 (P0)
 - Outbound: UIRenderer — フォーマット (P0)
 - External: Textual — TUIフレームワーク (P0)
 
@@ -1408,6 +1883,8 @@ class PlayerEditorScreen(Screen):
         """UIコンポーネントを配置"""
         yield Input(placeholder="選手名で検索")
         yield Select(options=["全ポジション", "P", "C", "1B", ...])
+        yield Select(options=["全チーム", "Home Team", "Away Team", ...])
+        yield Select(options=["OVR昇順", "OVR降順", "名前昇順", "名前降順", ...])
         yield DataTable()  # 選手一覧
         yield Button("新規作成")
         yield Button("インポート")
@@ -1428,6 +1905,14 @@ class PlayerEditorScreen(Screen):
     def show_edit_form(self, player_id: int) -> None:
         """選手編集フォームを表示"""
         ...
+
+    def show_edit_diff(self, player_id: int) -> None:
+        """変更差分を表示"""
+        ...
+
+    def confirm_delete(self, player_id: int, has_history: bool) -> bool:
+        """削除確認（履歴がある場合は追加警告）"""
+        ...
     
     def show_ability_sliders(self) -> ComposeResult:
         """85能力値のスライダーUIを生成"""
@@ -1436,6 +1921,10 @@ class PlayerEditorScreen(Screen):
     
     def apply_template(self, template_name: str) -> None:
         """テンプレート（パワーヒッター、俊足等）を適用"""
+        ...
+
+    def save_template(self, template_name: str) -> None:
+        """カスタムテンプレートを保存"""
         ...
     
     def show_batch_edit_menu(
@@ -1454,6 +1943,8 @@ class PlayerEditorScreen(Screen):
 
 **Implementation Notes**
 - **Integration**: 85能力値をタブで分類表示（打撃、投手、守備、走塁、バント）
+- **Integration**: AbilityCalculatorでOVRをリアルタイム再計算し表示
+- **Integration**: 新規作成時の能力値は全て50をデフォルトに設定
 - **Validation**: フォーム送信時にPlayerRepositoryでバリデーション
 - **Risks**: 85能力値入力が煩雑 → テンプレート機能とランダム生成で緩和
 
@@ -1469,6 +1960,7 @@ class PlayerEditorScreen(Screen):
 - チーム作成/編集フォーム
 - ロースター編集（選手の追加/削除）
 - デフォルト打順の設定
+- 推奨打順の自動生成
 - ドメイン境界: UI表示のみ、ビジネスロジックは含まない
 
 **Dependencies**
@@ -1501,17 +1993,22 @@ class TeamManagerScreen(Screen):
         """ロースター編集画面を表示"""
         ...
     
+    def apply_recommended_lineup(self, team_id: int) -> None:
+        """推奨打順を適用"""
+        ...
+    
     def validate_roster_requirements(
         self,
         roster: List[int]
     ) -> tuple[bool, Optional[str]]:
-        """最低9野手+2投手を確認"""
+        """先発9名+ベンチ5名以上、投手2名以上を確認"""
         ...
 ```
 
 **Implementation Notes**
+- **Integration**: 打順編集はドラッグ&ドロップまたは番号入力で入れ替え可能
 - **Integration**: ロースター編集は選手一覧からドラッグ&ドロップまたは選択方式
-- **Validation**: 保存時にTeamRepositoryでロースター要件チェック
+- **Validation**: 保存時にTeamRepositoryでロースター要件チェック（先発9+ベンチ5、投手2以上）
 - **Risks**: UI操作が複雑 → 明確なガイダンスメッセージを表示
 
 #### UIRenderer
@@ -1523,7 +2020,11 @@ class TeamManagerScreen(Screen):
 
 **Responsibilities & Constraints**
 - プレイ実況テキストの生成
+- 長文表示の区切りと「Enterで続行」ガイドの挿入
 - 能力値の色分け表示（青/緑/黄/橙/赤）
+- 履歴一覧の勝敗色分け/記号表示
+- 重要局面ラベル（チャンス/ピンチ/接戦/サヨナラ）表示
+- 重要プレイ（HR/三振/併殺）で強調記号を付与
 - テーブルフォーマット
 - ドメイン境界: 表示フォーマットのみ
 
@@ -1566,6 +2067,7 @@ class UIRenderer:
 
 **Implementation Notes**
 - **Integration**: Richのmarkup記法でテキストスタイリング
+- **Integration**: SettingsManagerのtext_speedに応じて即時/逐次表示を切替
 - **Validation**: なし
 - **Risks**: ターミナルが色非対応 → フォールバック（記号のみ）
 
@@ -1578,6 +2080,7 @@ class UIRenderer:
 1. **Player（選手）** - 集約ルート
    - BattingAbility, PitchingAbility, DefensiveAbility, BaserunningAbility（値オブジェクト）
    - Condition, FatigueLevel（状態）
+   - OverallRating（派生値、OVR計算式により算出）
    - 不変条件: player_idはユニーク、能力値は1-100範囲
 
 2. **Game（試合）** - 集約ルート
@@ -1610,6 +2113,7 @@ erDiagram
     
     GAME ||--o{ GAME_PLAYER_STATS : records
     GAME ||--o{ PLAY_HISTORY : contains
+    GAME ||--o{ GAME_INNING_SCORE : records
     GAME }o--|| TEAM : home_team
     GAME }o--|| TEAM : away_team
     
@@ -1644,6 +2148,14 @@ erDiagram
         int away_score
         int innings_played
         string result
+    }
+
+    GAME_INNING_SCORE {
+        int inning_score_id PK
+        int game_id FK
+        int inning
+        int home_runs
+        int away_runs
     }
 ```
 
@@ -1723,12 +2235,30 @@ CREATE TABLE games (
     away_team_id INTEGER NOT NULL,
     home_score INTEGER DEFAULT 0,
     away_score INTEGER DEFAULT 0,
+    home_hits INTEGER DEFAULT 0,
+    away_hits INTEGER DEFAULT 0,
+    home_errors INTEGER DEFAULT 0,
+    away_errors INTEGER DEFAULT 0,
+    home_left_on_base INTEGER DEFAULT 0,
+    away_left_on_base INTEGER DEFAULT 0,
     innings_played INTEGER DEFAULT 9,
     result TEXT CHECK(result IN ('win', 'loss', 'draw')),
     game_duration_minutes INTEGER,
     FOREIGN KEY (home_team_id) REFERENCES teams(team_id),
     FOREIGN KEY (away_team_id) REFERENCES teams(team_id)
 );
+
+-- Inning Scores Table
+CREATE TABLE game_inning_scores (
+    inning_score_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id INTEGER NOT NULL,
+    inning INTEGER NOT NULL,
+    home_runs INTEGER DEFAULT 0,
+    away_runs INTEGER DEFAULT 0,
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_inning_scores_game ON game_inning_scores(game_id, inning);
 
 CREATE INDEX idx_games_date ON games(game_date DESC);
 CREATE INDEX idx_games_result ON games(result);
@@ -1743,6 +2273,9 @@ CREATE TABLE play_history (
     pitcher_id INTEGER NOT NULL,
     play_outcome TEXT NOT NULL,
     runs_scored INTEGER DEFAULT 0,
+    home_score_after INTEGER DEFAULT 0,
+    away_score_after INTEGER DEFAULT 0,
+    play_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     description TEXT,
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE,
     FOREIGN KEY (batter_id) REFERENCES players(player_id),
@@ -1760,6 +2293,7 @@ CREATE TABLE play_history (
 ### Data Contracts & Integration
 
 **API Data Transfer**: 該当なし（ローカルアプリケーション）
+**File Data Transfer**: 試合履歴を`~/.baseball_game/history.json`、設定を`~/.baseball_game/settings.json`に保存/読込
 
 **Event Schemas**:
 
@@ -1876,10 +2410,23 @@ class GameEndEvent:
    - 世代管理（10世代超過時の自動削除）
    - データベース整合性チェック
 
+9. **HistoryFileStore.load()/save()**
+   - JSON保存/読込の整合性
+   - 破損ファイル時のフォールバック
+
+10. **SettingsManager.load_settings()/save_settings()**
+   - 設定の永続化とデフォルト復元
+
+11. **TemplateManager.save_template()**
+   - テンプレート保存/重複確認
+
+12. **GameStatsManager.build_game_summary()**
+   - 安打/エラー/残塁集計の正確性
+
 ### Integration Tests
 
 1. **1打席の完全フロー**
-   - InputHandler → PlaySimulator → GameFlowManager → UIRenderer
+   - InputHandler → PlaySimulationEngine → GameFlowManager → UIRenderer
    - プレイ結果が試合状態に正しく反映
 
 2. **選手交代フロー**
@@ -1912,6 +2459,14 @@ class GameEndEvent:
    - BackupManager → DataPersistenceLayer
    - バックアップ作成と復元の完全性
    - 破損データからの自動復元
+
+9. **一時停止・再開フロー**
+   - InGame → Paused → InGame
+   - 保存して終了/保存せず終了の分岐
+
+10. **履歴JSON同期フロー**
+   - HistoryRepository → HistoryFileStore
+   - DB/JSONの整合性確認
 
 ### E2E/UI Tests
 
@@ -1948,6 +2503,12 @@ class GameEndEvent:
    - 複数選手選択 → バッチ編集メニュー → 一括更新
    - 影響範囲の確認ダイアログ
    - 更新結果の表示
+
+9. **一時停止と再開**
+   - 試合中に一時停止 → 再開/保存して終了/保存せず終了
+
+10. **設定変更**
+   - 言語/表示速度/難易度の変更 → 保存 → 次回起動で反映
 
 ### Performance/Load Tests
 
