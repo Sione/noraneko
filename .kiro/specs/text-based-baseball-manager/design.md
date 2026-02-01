@@ -53,6 +53,7 @@ graph TB
         PlayerEditorScreen[Player Editor Screen]
         TeamManagerScreen[Team Manager Screen]
         SettingsScreen[Settings Screen]
+        TutorialScreen[Tutorial Screen]
         Widgets[UI Widgets]
     end
     
@@ -66,7 +67,7 @@ graph TB
     end
     
     subgraph Domain["Domain Layer"]
-        PlaySimulator[Play Simulation Engine]
+        PlaySimulationEngine[Play Simulation Engine]
         AbilityCalc[Ability Calculator]
         GameFlowManager[Game Flow Manager]
         GameStatsManager[Game Stats Manager]
@@ -259,6 +260,7 @@ flowchart TD
 | PlayerEditorScreen | Presentation | 選手編集画面UI | 9 | Textual (P0), PlayerRepository (P0) | UI Component |
 | TeamManagerScreen | Presentation | チーム管理画面UI | 9 | Textual (P0), TeamRepository (P0) | UI Component |
 | SettingsScreen | Presentation | 設定画面UI | 7 | Textual (P0), SettingsManager (P0) | UI Component |
+| TutorialScreen | Presentation | 初回チュートリアル画面 | 7 | Textual (P0), UIRenderer (P0) | UI Component |
 | UIRenderer | Presentation | UI更新とフォーマット | 5 | Rich (P0) | Service |
 | InputHandler | Application | ユーザー入力処理 | 2, 7 | GameScreen (P0) | Service |
 | ErrorHandler | Application | エラー処理と復旧 | 7 | なし | Service |
@@ -277,6 +279,7 @@ flowchart TD
 - ゲームの起動、試合開始、終了処理を管理
 - StateManager経由で状態遷移を制御
 - 各ドメインサービス（PlaySimulationEngine, GameFlowManager）を調整
+- 守備指示の実行後に攻撃側打席を再開
 - トランザクション境界: 1試合単位
 
 **Dependencies**
@@ -431,6 +434,8 @@ class GameStateManager:
 - 入力の妥当性検証（無効な指示、範囲外の数値）
 - エラーメッセージの表示とリトライ促進
 - 指示選択肢に番号を付与し数字入力を許可
+- 走者状況に応じて指示選択肢を切替（盗塁/エンドラン/スクイズ/ダブルスチール）
+- 守備シフトは種類を選択して適用（右打ちシフト/極端シフトなど）
 - ドメイン境界: UI入力とドメインコマンドの変換のみ
 
 **Dependencies**
@@ -462,10 +467,15 @@ class DefensiveDecision(Enum):
     INTENTIONAL_WALK = "intentional_walk"
     DEFENSIVE_SHIFT = "defensive_shift"
 
+class DefensiveShiftType(Enum):
+    RIGHT_SHIFT = "right_shift"
+    EXTREME_SHIFT = "extreme_shift"
+
 @dataclass
 class PlayerDecision:
     decision_type: OffensiveDecision | DefensiveDecision
     target_player_id: Optional[int] = None  # 選手交代時
+    shift_type: Optional[DefensiveShiftType] = None  # 守備シフト時
 
 class ValidationError(Exception):
     user_message: str
@@ -495,7 +505,7 @@ class InputHandler:
 - **Validation**: 現在の試合状況（ランナー有無、アウトカウント、ストライク数）に応じた検証
 - **Warnings**: 2ストライク時のバント成功率低下、ツーアウト時の盗塁警告、走力低い場合のリスク警告
 - **Behavior**: 指示選択のタイムアウトは設けず、待機し続ける
-- **Risks**: ユーザーが無限に誤入力 → 5回エラーでヘルプ表示（Requirement 7.5）
+- **Risks**: ユーザーが無限に誤入力 → 3回エラーでヘルプ表示（Requirement 7.5）
 
 #### ErrorHandler
 
@@ -508,7 +518,8 @@ class InputHandler:
 - 3種類のエラー分類（ユーザーエラー、システムエラー、ビジネスルールエラー）
 - エラーメッセージの多言語対応
 - システムエラー時の自動保存とログ記録
-- 入力エラー時に警告記号（[!])を表示
+- 入力エラー時に警告記号（[!]）を表示
+- 保存失敗時に再試行オプションを提示
 - ドメイン境界: エラー処理のみ、ビジネスロジックは含まない
 
 **Dependencies**
@@ -754,6 +765,7 @@ class ImportExportService:
 - 決定木アプローチで打席結果を段階的に判定
 - ランナー進塁ロジックの実行（タッチアップ、守備エラー含む）
 - バント/スクイズ/盗塁/ダブルスチールの専用判定ロジック
+- 敬遠は即時四球として処理
 - OOTP26能力値を確率計算に統合
 - トランザクション境界: 1プレイ単位
 
@@ -842,7 +854,7 @@ class PlaySimulationEngine:
         runners_on_base: List[int],
         strikes: int
     ) -> PlayResult:
-        """バントの成否と進塁を判定"""
+        """バントの成否と進塁を判定（2ストライク時は成功率低下）"""
         ...
 
     def simulate_squeeze(
@@ -851,14 +863,14 @@ class PlaySimulationEngine:
         runner_on_third: int,
         strikes: int
     ) -> PlayResult:
-        """スクイズの成否と得点を判定"""
+        """スクイズの成否と得点を判定（失敗時は三塁走者アウトのリスク）"""
         ...
 
     def simulate_fielding_error(
         self,
         fielder_ids: List[int]
     ) -> bool:
-        """守備エラーの有無を判定。エラー時True"""
+        """守備エラーの有無を判定（守備能力/適性を考慮）。エラー時True"""
         ...
 
     def simulate_tag_up(
@@ -877,6 +889,13 @@ class PlaySimulationEngine:
 **Implementation Notes**
 - **Integration**: リーグ平均データを`config/league_averages.json`から読込
 - **Validation**: 能力値が1-100範囲内、確率が0-1範囲内
+- **Rules**: 通常打撃は打者の打率を基準確率として使用
+- **Rules**: 左打者は一塁到達時間を0.2秒短縮として判定に反映
+- **Rules**: 左打者バントは成功率を5-10%上昇
+- **Rules**: エンドランでゴロ時は走者進塁成功率を上昇
+- **Rules**: 単打は1・2塁走者は確実進塁、3塁走者は確率で本塁生還
+- **Rules**: 二塁打は全走者が最低2塁進塁、本塁打は全走者が得点
+- **Rules**: 守備はPositionRatingsに応じて能力ペナルティを適用
 - **Risks**: 確率計算のバランス調整 → MLB 2025データで検証、調整用デバッグモード実装（research.md Risk 2参照）
 - **Risks**: 守備エラー/タッチアップ判定の複雑化 → ルール別ユニットテストで担保
 
@@ -974,6 +993,9 @@ class AbilityCalculator:
 **Implementation Notes**
 - **Integration**: 計算式を`config/ability_formulas.json`で外部化し調整可能に
 - **Validation**: 能力値範囲チェック（1-100）、確率範囲チェック（0-1）
+- **Rules**: 投球数に応じて疲労度を段階分類（0-50: 新鮮、51-75: 普通、76-100: 疲労、101+: 限界）
+- **Rules**: 疲労でStuff/Controlを段階的に低下（疲労: Stuff-5〜10%、Control-10〜15%、限界: Stuff-15〜20%、Control-20〜25%）
+- **Rules**: Stamina閾値超過時は追加で能力を5%ずつ低下
 - **Risks**: 計算式の複雑化 → ユニットテストで各能力値パターンを網羅
 
 #### GameFlowManager
@@ -1045,6 +1067,7 @@ class GameFlowManager:
 **Implementation Notes**
 - **Integration**: スコアボード更新時にUIRendererにイベント送信
 - **Validation**: イニング数の上限チェック（max_innings設定）
+- **Rules**: 延長で得点差がついた場合はそのイニング終了時に試合終了
 - **Risks**: 延長戦の無限ループ → max_inningsで制限（デフォルト12回）
 
 #### GameStatsManager
@@ -1190,6 +1213,9 @@ class PlayerManager:
 **Implementation Notes**
 - **Integration**: SubstitutionRecordを試合履歴に保存
 - **Validation**: 交代選手の守備適性チェック、再出場禁止チェック
+- **Rules**: 代打は当該打席のみ実施し、次守備で正式交代するか確認
+- **Rules**: DHなしの場合、投手交代時に新投手を打順へ反映
+- **Rules**: 推奨打順はContact/Eye/Gap/HR Powerを加重して生成
 - **Risks**: 複雑な交代パターン → ユニットテストで全パターン網羅
 
 #### BackupManager
@@ -1362,6 +1388,9 @@ class PlayerData:
     name: str
     primary_position: str
     overall_rating: float
+    hitter_type: str  # "power", "contact", "balanced"
+    pitcher_role: Optional[str] = None  # "starter" or "reliever"
+    pitch_types: Optional[List[str]] = None  # 先発は3球種、救援は2球種
     batting_abilities: BattingAbilityData
     pitching_abilities: Optional[PitchingAbilityData]
     defensive_abilities: DefensiveAbilityData
@@ -1722,6 +1751,10 @@ class TeamRepository:
 - リアルタイムUI更新
 - 次に行うべきアクションのガイダンス表示
 - 試合終了時のサマリー表示（MVP/ハイライト）
+- 投手交代時にブルペン投手一覧と疲労度を表示
+- 守備シフトの選択肢を表示
+- 選手交代メニューでベンチ選手の能力値を表示
+- 各打席前に投手/打者の左右（L/R）を表示
 - ドメイン境界: UI表示のみ、ビジネスロジックは含まない
 
 **Dependencies**
@@ -1785,11 +1818,11 @@ class GameScreen(Screen):
         ...
 
     def show_batter_detail(self, batter_id: int) -> None:
-        """打者詳細（能力/成績/左右/コンディション）を表示"""
+        """打者詳細（打率/打順/今試合成績/対左右/能力/コンディション）を表示"""
         ...
     
     def show_pitcher_detail(self, pitcher_id: int) -> None:
-        """投手詳細（能力/成績/疲労度）を表示"""
+        """投手詳細（投球数/今試合成績/能力/疲労度）を表示"""
         ...
     
     def show_endgame_menu(self) -> None:
@@ -1813,9 +1846,7 @@ class GameScreen(Screen):
 これらの画面は標準的なTextual Screenパターンに従い、GameScreenと類似の構造を持つため、詳細は省略。主な違いは以下の通り：
 
 - **MainMenuScreen**: ボタンメニュー（新規試合、**選手管理**、**チーム管理**、履歴、設定、チュートリアル、終了）
-- **HistoryScreen**: DataTableでの履歴一覧表示、ページネーション、勝敗/期間/対戦相手フィルタ、詳細モーダル、削除/圧縮/エクスポート操作
-- **HistoryScreen**: 通算成績/最近10試合/自己ベスト/連勝連敗/対戦相手別ランキングのサマリー、テキストチャート表示
-- **HistoryScreen**: 詳細画面で最終スコア/イニング別得点/試合時間/総安打数を表示
+- **HistoryScreen**: DataTableでの履歴一覧・ページネーション・勝敗/期間/対戦相手フィルタ、詳細モーダル（最終スコア/イニング別得点/試合時間/総安打数）、通算/最近10試合/自己ベスト/連勝連敗/対戦相手別ランキングのサマリー、テキストチャート、削除/圧縮/エクスポート操作（削除前に「取り消せません」警告）
 
 #### SettingsScreen
 
@@ -1839,6 +1870,26 @@ class GameScreen(Screen):
 
 **Contracts**: UI Component [x] / Service [ ] / API [ ] / Event [x]
 
+#### TutorialScreen
+
+| Field | Detail |
+|-------|--------|
+| Intent | 初回プレイ時のチュートリアルを提供するUI |
+| Requirements | 7.18 |
+
+**Responsibilities & Constraints**
+- 基本操作の説明とサンプル入力の提示
+- 「今後表示しない」設定の保存
+- ドメイン境界: UI表示のみ
+
+**Dependencies**
+- Inbound: MainMenuScreen — 画面遷移 (P0)
+- Outbound: SettingsManager — 表示設定の保存 (P0)
+- Outbound: UIRenderer — テキスト表示 (P0)
+- External: Textual — TUIフレームワーク (P0)
+
+**Contracts**: UI Component [x] / Service [ ] / API [ ] / Event [x]
+
 #### PlayerEditorScreen
 
 | Field | Detail |
@@ -1849,6 +1900,7 @@ class GameScreen(Screen):
 **Responsibilities & Constraints**
 - 選手一覧の表示とフィルタリング
 - 選手一覧の並び替えとページネーション（50人/ページ）
+- 一覧に選手名/ポジション/OVR/所属チームを表示
 - 選手作成/編集フォームの表示
 - OOTP26準拠の85能力値入力UI
 - テンプレート適用とランダム生成
@@ -1945,6 +1997,8 @@ class PlayerEditorScreen(Screen):
 - **Integration**: 85能力値をタブで分類表示（打撃、投手、守備、走塁、バント）
 - **Integration**: AbilityCalculatorでOVRをリアルタイム再計算し表示
 - **Integration**: 新規作成時の能力値は全て50をデフォルトに設定
+- **Integration**: インポート時はファイルパス入力またはTUIファイル選択を提供
+- **Integration**: ファイル選択はTextualのFilePickerまたはパス入力のフォールバック
 - **Validation**: フォーム送信時にPlayerRepositoryでバリデーション
 - **Risks**: 85能力値入力が煩雑 → テンプレート機能とランダム生成で緩和
 
@@ -2025,6 +2079,9 @@ class TeamManagerScreen(Screen):
 - 履歴一覧の勝敗色分け/記号表示
 - 重要局面ラベル（チャンス/ピンチ/接戦/サヨナラ）表示
 - 重要プレイ（HR/三振/併殺）で強調記号を付与
+- 進塁/得点時のアニメーション風テキスト表現
+- 得点時にスコアボードを強調表示
+- プレイ結果（ヒット/アウト）を色分け表示
 - テーブルフォーマット
 - ドメイン境界: 表示フォーマットのみ
 
@@ -2081,6 +2138,7 @@ class UIRenderer:
    - BattingAbility, PitchingAbility, DefensiveAbility, BaserunningAbility（値オブジェクト）
    - Condition, FatigueLevel（状態）
    - OverallRating（派生値、OVR計算式により算出）
+   - PositionRatings（A/B/C/D/F、主/副ポジション適性）
    - 不変条件: player_idはユニーク、能力値は1-100範囲
 
 2. **Game（試合）** - 集約ルート
@@ -2121,6 +2179,8 @@ erDiagram
         int player_id PK
         string name
         string primary_position
+        string hitter_type
+        string pitcher_role
         string condition
         int fatigue_level
         int team_id FK
@@ -2135,6 +2195,8 @@ erDiagram
         int hr_power
         int eye
         int avoid_ks
+        int sac_bunt
+        int bunt_for_hit
         int vs_lhp_modifier
         int vs_rhp_modifier
     }
@@ -2185,6 +2247,8 @@ CREATE TABLE players (
     player_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     primary_position TEXT NOT NULL,
+    hitter_type TEXT CHECK(hitter_type IN ('power', 'contact', 'balanced')),
+    pitcher_role TEXT CHECK(pitcher_role IN ('starter', 'reliever')),
     condition TEXT DEFAULT 'normal',
     fatigue_level INTEGER DEFAULT 0,
     team_id INTEGER,
@@ -2205,6 +2269,8 @@ CREATE TABLE batting_abilities (
     hr_power INTEGER CHECK(hr_power BETWEEN 1 AND 100),
     eye INTEGER CHECK(eye BETWEEN 1 AND 100),
     avoid_ks INTEGER CHECK(avoid_ks BETWEEN 1 AND 100),
+    sac_bunt INTEGER CHECK(sac_bunt BETWEEN 1 AND 100),
+    bunt_for_hit INTEGER CHECK(bunt_for_hit BETWEEN 1 AND 100),
     vs_lhp_modifier INTEGER DEFAULT 0,
     vs_rhp_modifier INTEGER DEFAULT 0,
     FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE
@@ -2221,11 +2287,39 @@ CREATE TABLE pitching_abilities (
     groundball_rate INTEGER CHECK(groundball_rate BETWEEN 0 AND 100),
     velocity INTEGER CHECK(velocity BETWEEN 70 AND 105),
     hold_runners INTEGER CHECK(hold_runners BETWEEN 1 AND 100),
+    primary_pitch_1 TEXT,
+    primary_pitch_2 TEXT,
+    primary_pitch_3 TEXT,
     FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE
 );
 
--- Defensive Abilities Table (similar structure)
--- Baserunning Abilities Table (similar structure)
+-- Defensive Abilities Table
+CREATE TABLE defensive_abilities (
+    ability_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL UNIQUE,
+    infield_range INTEGER CHECK(infield_range BETWEEN 1 AND 100),
+    outfield_range INTEGER CHECK(outfield_range BETWEEN 1 AND 100),
+    infield_error INTEGER CHECK(infield_error BETWEEN 1 AND 100),
+    outfield_error INTEGER CHECK(outfield_error BETWEEN 1 AND 100),
+    infield_arm INTEGER CHECK(infield_arm BETWEEN 1 AND 100),
+    outfield_arm INTEGER CHECK(outfield_arm BETWEEN 1 AND 100),
+    turn_double_play INTEGER CHECK(turn_double_play BETWEEN 1 AND 100),
+    catcher_ability INTEGER CHECK(catcher_ability BETWEEN 1 AND 100),
+    catcher_arm INTEGER CHECK(catcher_arm BETWEEN 1 AND 100),
+    position_ratings_json TEXT,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE
+);
+
+-- Baserunning Abilities Table
+CREATE TABLE baserunning_abilities (
+    ability_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL UNIQUE,
+    speed INTEGER CHECK(speed BETWEEN 1 AND 100),
+    stealing_ability INTEGER CHECK(stealing_ability BETWEEN 1 AND 100),
+    stealing_aggressiveness INTEGER CHECK(stealing_aggressiveness BETWEEN 1 AND 100),
+    baserunning INTEGER CHECK(baserunning BETWEEN 1 AND 100),
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE
+);
 
 -- Games Table
 CREATE TABLE games (
