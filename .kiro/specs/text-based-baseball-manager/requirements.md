@@ -91,38 +91,50 @@
 
 **打撃結果の詳細判定**
 6. When 通常打撃が実行される、the Game System shall 打者のContact能力とBABIP能力を組み合わせてヒット確率を計算する
-7. When ヒットが出る、the Game System shall 打者のGap Power（二塁打・三塁打）とHR Power（本塁打）に基づいて単打/二塁打/三塁打/本塁打を判定する
-8. When アウトになる、the Game System shall 投手のGround Ball %とAvoid K's能力に基づいてゴロアウト、フライアウト、三振などのアウト種類を判定する
-9. When 投手の疲労度が高い、the Game System shall 投手のStuffとControlを減衰させることで打者有利に確率を補正する
-10. When 打者のコンディションが好調である、the Game System shall Contact、Gap Power、HR Power等の打撃能力値を5-10%上昇させる
+7. When 打球種類を判定する、the Game System shall 投手のGround Ball %とAvoid K's能力に基づいて三振、ゴロ、フライ、ライナーの打球種類を決定する
+8. When 三振が選択される、the Game System shall 打者をアウトとして処理する
+9. When ゴロが選択される、the Game System shall 守備側のInfield Range（内野守備範囲）とInfield Error（内野エラー率）に基づいてヒット/アウトを判定する
+10. When 打者のSpeed（走力）が高くゴロを打つ、the Game System shall 内野安打の確率を上昇させる（Speed 80+で+15%、90+で+25%）
+11. When フライまたはライナーが選択される、the Game System shall 守備側のOutfield Range（外野守備範囲）とOutfield Error（外野エラー率）に基づいてヒット/アウトを判定する
+12. When ヒットが確定する、the Game System shall 打者のGap Power（二塁打・三塁打）とHR Power（本塁打）に基づいて単打/二塁打/三塁打/本塁打を判定する
+13. When 三塁打を判定する、the Game System shall 打者のSpeed（走力）を追加要素として考慮し、Speed 70+で三塁打確率を+20%、80+で+40%上昇させる
+14. When 投手の疲労度が高い、the Game System shall 投手のStuffとControlを減衰させることで打者有利に確率を補正する
+15. When 打者のコンディションが好調である、the Game System shall Contact、Gap Power、HR Power等の打撃能力値を5-10%上昇させる
 
 **バント系プレイの判定**
-11. When バント指示が出される、the Game System shall 成功率を通常打撃の打率とは独立した専用ロジックで計算する
-12. When バントが成功する、the Game System shall ランナーを進塁させ打者をアウトにする
-13. When バントが失敗する、the Game System shall ファウルまたは打ち損じによるアウトとして処理する
-14. When スクイズが試みられる、the Game System shall 成功時に三塁ランナーを得点させる
-15. If スクイズが失敗する、then the Game System shall 三塁ランナーをアウトにするリスクを適用する
+11. When バント指示が出される、the Game System shall 打者のSacrifice Bunt（犠打バント能力）を基準として成功率を計算する
+12. When セーフティバントが試みられる、the Game System shall 打者のBunt for Hit（セーフティバント能力）とSpeed（走力）を組み合わせて成功率を計算する
+13. When バント打球が処理される、the Game System shall 内野手のInfield Range（内野守備範囲）とInfield Arm（内野肩力）、打者のSpeed（走力）を総合評価してセーフ/アウトを判定する
+14. When バントが成功する、the Game System shall ランナーを進塁させ打者をアウトにする（犠打の場合）またはセーフにする（セーフティバントの場合）
+15. When バントが失敗する、the Game System shall ファウルまたは打ち損じによるアウトとして処理する
+16. When スクイズが試みられる、the Game System shall 打者のSacrifice Bunt能力、三塁ランナーのSpeed（走力）とBaserunning（走塁技術）、内野手のInfield Armを評価して成否を判定する
+17. When スクイズが成功する、the Game System shall 三塁ランナーを得点させる
+18. If スクイズが失敗する、then the Game System shall 三塁ランナーをアウトにするリスクを適用する
 
 **走塁プレイの判定**
-16. When 盗塁が試みられる、the Game System shall ランナーの走力、投手のクイック能力、捕手の肩力を総合的に評価する
-17. When 盗塁が成功する、the Game System shall ランナーを次の塁に進める
-18. When 盗塁が失敗する、the Game System shall ランナーをアウトにしアウトカウントを増加させる
-19. When エンドランが実行される、the Game System shall 打者が打った結果とランナーの走塁を連動させる
-20. If エンドランで打者がゴロを打つ、then the Game System shall ランナーの進塁成功率を通常より高く設定する
+19. When 盗塁が試みられる、the Game System shall ランナーのSpeed（走力）とStealing Ability（盗塁能力）、投手のHold Runners（牽制能力）、捕手のCatcher Arm（捕手肩力）を総合的に評価する
+20. When 盗塁が成功する、the Game System shall ランナーを次の塁に進める
+21. When 盗塁が失敗する、the Game System shall ランナーをアウトにしアウトカウントを増加させる
+22. When エンドランが実行される、the Game System shall 打者が打った結果とランナーの走塁を連動させる
+23. If エンドランで打者がゴロを打つ、then the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）に基づいて進塁成功率を通常より高く設定する
 
 **ランナー進塁の判定**
-21. When ヒットが出る、the Game System shall 打球の種類（単打/長打）と塁上のランナー位置に応じて進塁を判定する
-22. When 単打が出る、the Game System shall 一塁・二塁ランナーは確実に進塁、三塁ランナーは確率的に本塁到達を判定する
-23. When 二塁打が出る、the Game System shall 全ランナーを最低2塁分進塁させる
-24. When 本塁打が出る、the Game System shall 打者と全ランナーを得点させる
-25. When タイムリーヒットで得点が入る、the Game System shall 得点を加算しスコアボードを更新する
+21. When ヒットが出る、the Game System shall 打球の種類（単打/長打）、塁上のランナー位置、ランナーのSpeed（走力）とBaserunning（走塁技術）に応じて進塁を判定する
+22. When 単打が出る、the Game System shall 一塁・二塁ランナーは確実に進塁、三塁ランナーはSpeed（走力）とBaserunning（走塁技術）に基づいて本塁到達を確率的に判定する
+23. When 単打で一塁または二塁ランナーが追加進塁を試みる、the Game System shall ランナーのSpeed（走力80+）とBaserunning（走塁技術70+）、外野手のOutfield Arm（外野肩力）を総合評価して成功を判定する
+24. When 二塁打が出る、the Game System shall 全ランナーを最低2塁分進塁させる
+25. When 二塁打で一塁ランナーが本塁を狙う、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）、外野手のOutfield Arm（外野肩力）を評価して成功を判定する
+26. When 本塁打が出る、the Game System shall 打者と全ランナーを得点させる
+27. When タイムリーヒットで得点が入る、the Game System shall 得点を加算しスコアボードを更新する
 
 **守備プレイとアウトの判定**
-26. When ゴロが打たれる、the Game System shall 守備側の守備力に基づいてエラー発生の可否を判定する
-27. When ダブルプレー機会（ランナー一塁でゴロ）が発生する、the Game System shall 確率的にダブルプレーを判定する
-28. When フライが打たれる、the Game System shall タッチアップの可能性を判定する
-29. If 守備エラーが発生する、then the Game System shall ランナーを余分に進塁させる
-30. The Game System shall 全てのプレイ結果を自然な日本語のテキストで実況形式で表示する
+28. When ゴロが打たれる、the Game System shall 守備側のInfield Range（内野守備範囲）で打球に追いつけるかを判定し、追いついた場合はInfield Error（内野エラー率）でエラー発生の可否を判定する
+29. When 内野ゴロで打者走者が一塁を狙う、the Game System shall 内野手のInfield Arm（内野肩力）と打者のSpeed（走力）を比較してセーフ/アウトを判定する
+30. When ダブルプレー機会（ランナー一塁でゴロ）が発生する、the Game System shall 内野手のTurn Double Play（併殺処理能力）とInfield Arm（内野肩力）、ランナーのSpeed（走力）を総合評価してダブルプレーの成否を判定する
+31. When フライが打たれる、the Game System shall 守備側のOutfield Range（外野守備範囲）で打球に追いつけるかを判定し、追いついた場合はOutfield Error（外野エラー率）でエラー発生の可否を判定する
+32. When フライがキャッチされる、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）、外野手のOutfield Arm（外野肩力）に基づいてタッチアップの可能性を判定する
+33. If 守備エラーが発生する、then the Game System shall ランナーを余分に進塁させ、打者を出塁させる
+34. The Game System shall 全てのプレイ結果を自然な日本語のテキストで実況形式で表示する
 
 ### Requirement 4: 選手とチーム情報の管理
 **Objective:** 監督として、選手やチームの状態を詳細に把握したい、Out of the Park Baseball 26のような深みのある選手能力システムで適切な指示判断ができるようにするため
@@ -667,3 +679,230 @@
 70. The Game System shall ヘルプに各能力値の説明とゲームへの影響を記載する
 71. The Game System shall JSON形式のサンプルファイルを `data/sample_player.json` として提供する
 72. When プレイヤーが「能力値ガイド」を開く、the Game System shall OOTP26準拠の能力値説明を表示する
+
+### Requirement 10: CPU操作チームの戦術AI
+**Objective:** システムとして、プレイヤーの対戦相手となるCPU操作チームに現実的な戦術判断をさせたい、人間の監督と対戦しているような臨場感を提供するため
+
+#### Acceptance Criteria
+
+**CPU AI の基本動作**
+1. When CPU操作チームの攻撃または守備ターンになる、the Game System shall 試合状況を分析し自動的に戦術指示を決定する
+2. The Game System shall CPU操作チームの指示決定にランダム性を持たせ、毎回同じ状況で同じ指示にならないようにする
+3. When CPU操作チームが指示を決定する、the Game System shall 0.5-1.5秒の思考時間を設けてから実行する
+4. The Game System shall CPU操作チームの指示内容を「（CPU監督）○○の指示！」と表示する
+5. The Game System shall CPU操作チームの難易度設定（初級/中級/上級）に応じて判断精度を調整する
+
+**攻撃時の基本戦術判断**
+6. When CPU操作チームの打席である、the Game System shall デフォルトとして「通常打撃」を80-90%の確率で選択する
+7. When 打者のContact能力が70以上である、the Game System shall 通常打撃の選択確率を90-95%に上昇させる
+8. When 打者のContact能力が40未満である、the Game System shall 通常打撃の選択確率を70-80%に低下させ、他の戦術を検討する
+9. When 得点差が大きい（5点差以上）状態で負けている、the Game System shall 積極的な攻撃（通常打撃、盗塁）を選択する確率を上昇させる
+10. When 試合が接戦（2点差以内）である、the Game System shall 状況に応じてバント、盗塁、エンドランなどの小技を検討する
+
+**バント戦術の判断**
+11. When ランナーが一塁にいてノーアウトまたはワンアウトである、the Game System shall 打者のSacrifice Bunt能力が60以上の場合、バント指示を15-25%の確率で選択する
+12. When ランナーが一塁にいてツーアウトである、the Game System shall バント指示を選択しない（通常打撃優先）
+13. When 打者が投手（Contact能力30未満）でランナーが塁上にいる、the Game System shall バント指示を50-70%の確率で選択する
+14. When 接戦（1点差以内）で7回以降にランナーが二塁または三塁にいる、the Game System shall バント指示の選択確率を20-30%上昇させる
+15. When 打者がクリーンナップ（3-5番）でHR Power 70以上である、the Game System shall バント指示を選択しない
+
+**盗塁戦術の判断**
+16. When ランナーが一塁にいてStealing Ability 70以上である、the Game System shall 盗塁指示を20-30%の確率で選択する
+17. When ランナーが一塁にいてStealing Ability 50未満である、the Game System shall 盗塁指示を選択しない（5%未満）
+18. When 投手のHold Runners能力が80以上である、the Game System shall 盗塁指示の選択確率を半減させる
+19. When 捕手のCatcher Arm能力が80以上である、the Game System shall 盗塁指示の選択確率を半減させる
+20. When ツーアウトである、the Game System shall 盗塁指示の選択確率を70%低下させる
+21. When 点差が5点以上である、the Game System shall 盗塁指示を選択しない
+22. When 接戦（1点差以内）で7回以降である、the Game System shall 盗塁指示の選択確率を1.5倍に上昇させる
+
+**エンドラン戦術の判断**
+23. When ランナーが一塁にいてノーアウトまたはワンアウトである、the Game System shall 打者のContact能力65以上かつランナーのSpeed 60以上の場合、エンドラン指示を10-20%の確率で選択する
+24. When カウントが打者有利（3-0、3-1、2-0）である、the Game System shall エンドラン指示の選択確率を1.5倍に上昇させる
+25. When カウントが投手有利（0-2、1-2）である、the Game System shall エンドラン指示を選択しない
+26. When 打者がパワーヒッター（HR Power 75以上、Contact 60未満）である、the Game System shall エンドラン指示の選択確率を50%低下させる
+
+**スクイズ戦術の判断**
+27. When ランナーが三塁にいてワンアウト以下である、the Game System shall 打者のSacrifice Bunt能力60以上かつランナーのSpeed 60以上の場合、スクイズ指示を検討する
+28. When 接戦（同点または1点差で負けている）で7回以降にランナーが三塁にいる、the Game System shall スクイズ指示を15-25%の確率で選択する
+29. When ノーアウトまたはワンアウトで三塁ランナーがいる、the Game System shall スクイズ指示を5-15%の確率で選択する
+30. When ツーアウトで三塁ランナーがいる、the Game System shall スクイズ指示を選択しない
+31. When 打者がクリーンナップ（3-5番）である、the Game System shall スクイズ指示を選択しない
+
+**ダブルスチール戦術の判断**
+32. When ランナーが一塁と三塁にいる、the Game System shall 両ランナーのStealing Ability平均が65以上の場合、ダブルスチール指示を10-15%の確率で選択する
+33. When ランナーが一塁と二塁にいる、the Game System shall 両ランナーのStealing Ability平均が70以上の場合、ダブルスチール指示を5-10%の確率で選択する
+34. When ツーアウトである、the Game System shall ダブルスチール指示を選択しない
+
+**守備時の投手交代判断**
+35. When 先発投手の投球数が100球を超える、the Game System shall 投手交代を80-90%の確率で決定する
+36. When 先発投手の投球数が75球を超え疲労度が「疲労」以上である、the Game System shall 投手交代を40-60%の確率で決定する
+37. When 先発投手が5失点以上している、the Game System shall イニングの切れ目で投手交代を60-80%の確率で決定する
+38. When 先発投手が1イニングで3失点以上した、the Game System shall そのイニング終了後に投手交代を70-90%の確率で決定する
+39. When リリーフ投手の投球数が30球を超える、the Game System shall 次のイニングで投手交代を50-70%の確率で検討する
+40. When 投手交代を決定する、the Game System shall ブルペンから疲労度が「新鮮」または「普通」の投手を優先的に選択する
+41. When 7回以降で接戦（3点差以内）である、the Game System shall より高いStuffとControlを持つリリーフ投手を優先選択する
+42. When リードしている状態で9回表を迎える、the Game System shall 最も高いStuffを持つクローザー（リリーフ投手）を選択する
+
+**守備時の敬遠判断**
+43. When 打者がチーム最高のHR Power（80以上）を持ち、一塁が空いている、the Game System shall 敬遠指示を15-25%の確率で選択する
+44. When 一塁が空いており、打者がHR Power 75以上で次打者がContact 50未満である、the Game System shall 敬遠指示を30-40%の確率で選択する
+45. When 満塁状態になる敬遠である、the Game System shall 敬遠指示の選択確率を80%低下させる
+46. When 8回以降の接戦（1-2点差）で一塁が空いている、the Game System shall 強打者への敬遠指示を25-35%の確率で選択する
+47. When 点差が5点以上ある、the Game System shall 敬遠指示を選択しない
+
+**守備時の守備シフト判断**
+48. When 打者が極端な引っ張り傾向（データで判別可能な場合）を持つ、the Game System shall 該当方向への守備シフトを40-60%の確率で選択する
+49. When 打者のHR Power 80以上である、the Game System shall 守備シフトの選択確率を1.5倍に上昇させる
+50. When ランナーが得点圏（二塁または三塁）にいる、the Game System shall 守備シフトを選択しない（通常守備優先）
+
+### Requirement 11: 守備シフトシステム
+**Objective:** 監督として、守備シフトを活用して打者の傾向に対応したい、守備戦術の深みを提供し打撃結果に影響を与えられるようにするため
+
+#### Acceptance Criteria
+
+**守備シフトの種類と定義**
+1. The Game System shall 以下の守備シフトタイプを提供する：「通常守備」「右打ちシフト」「左打ちシフト」「極端シフト（エクストリームシフト）」「前進守備」「深守備」
+2. When 「通常守備」が選択される、the Game System shall 全守備位置を標準配置に設定し、特別な補正を適用しない
+3. When 「右打ちシフト」が選択される、the Game System shall 内野手を一塁・二塁側に寄せ、右方向の打球処理範囲を+15%、左方向の打球処理範囲を-20%に補正する
+4. When 「左打ちシフト」が選択される、the Game System shall 内野手を三塁・遊撃側に寄せ、左方向の打球処理範囲を+15%、右方向の打球処理範囲を-20%に補正する
+5. When 「極端シフト」が選択される、the Game System shall 内野手3名を打者の引っ張り方向に集中配置し、引っ張り方向の打球処理範囲を+25%、逆方向の打球処理範囲を-35%に補正する
+6. When 「前進守備」が選択される、the Game System shall 内野手全員を前方に配置し、ゴロ処理速度を+20%、深い打球の処理範囲を-15%に補正する
+7. When 「深守備」が選択される、the Game System shall 内野手・外野手全員を後方に配置し、長打処理範囲を+15%、内野安打の発生率を+20%に補正する
+
+**守備シフトの選択条件と制約**
+8. The Game System shall 守備シフト選択メニューで現在の打者の打球傾向情報（引っ張り傾向・流し打ち傾向）を表示する
+9. When 打者が左打者である、the Game System shall 「右打ちシフト」を推奨オプションとして強調表示する
+10. When 打者が右打者である、the Game System shall 「左打ちシフト」を推奨オプションとして強調表示する
+11. When 打者のHR Power 80以上である、the Game System shall 「極端シフト」を推奨オプションとして表示する
+12. When ランナーが三塁にいてワンアウト以下である、the Game System shall 「前進守備」を推奨オプションとして表示する
+13. When ランナーが得点圏（二塁または三塁）にいる、the Game System shall 極端シフトの選択に「リスク警告：進塁を許しやすくなります」を表示する
+14. When 打者のContact能力が40未満である、the Game System shall 守備シフトの有効性を低下させる警告を表示する（「打者が空振りしやすいため効果は限定的」）
+15. The Game System shall 守備シフトが選択されてから3打席継続するまで変更できないルールを適用する（オプション設定で変更可能）
+
+**守備シフトが打撃結果に与える効果：ゴロ打球**
+16. When 右打ちシフトが適用され、打者が右方向にゴロを打つ、the Game System shall 内野安打の発生率を-30%低下させる
+17. When 右打ちシフトが適用され、打者が左方向にゴロを打つ、the Game System shall 内野安打の発生率を+40%上昇させる
+18. When 左打ちシフトが適用され、打者が左方向にゴロを打つ、the Game System shall 内野安打の発生率を-30%低下させる
+19. When 左打ちシフトが適用され、打者が右方向にゴロを打つ、the Game System shall 内野安打の発生率を+40%上昇させる
+20. When 極端シフトが適用され、打者が引っ張り方向にゴロを打つ、the Game System shall 内野安打の発生率を-50%低下させ、アウト確率を+20%上昇させる
+21. When 極端シフトが適用され、打者が逆方向にゴロを打つ、the Game System shall 内野安打の発生率を+60%上昇させ、確実安打として処理する確率を+30%上昇させる
+22. When 前進守備が適用され、打者が内野ゴロを打つ、the Game System shall 内野手の一塁到達までの時間を-0.3秒短縮し、打者走者のアウト確率を+25%上昇させる
+23. When 前進守備が適用され、三塁ランナーがいる状態でゴロが打たれる、the Game System shall 三塁ランナーの本塁到達を阻止する確率を+40%上昇させる
+
+**守備シフトが打撃結果に与える効果：フライ・ライナー打球**
+24. When 深守備が適用され、打者が外野フライを打つ、the Game System shall 外野手のOutfield Range（外野守備範囲）を+20%拡大し、長打性の打球をアウトにする確率を+15%上昇させる
+25. When 深守備が適用され、打者が内野フライを打つ、the Game System shall 内野手の処理範囲を-10%縮小し、ポテンヒットの発生率を+15%上昇させる
+26. When 前進守備が適用され、打者が外野フライを打つ、the Game System shall 外野手の処理範囲を-10%縮小し、長打（二塁打・三塁打）の発生率を+10%上昇させる
+27. When 右打ちシフトまたは左打ちシフトが適用され、打者がライナーを打つ、the Game System shall シフト方向のライナーの捕球確率を+15%上昇させ、逆方向のライナーの捕球確率を-20%低下させる
+28. When 極端シフトが適用され、打者がライナーを打つ、the Game System shall シフト方向のライナーの捕球確率を+25%上昇させ、逆方向のライナーは確実安打（二塁打以上）として処理する確率を+40%上昇させる
+
+**守備シフトが打撃結果に与える効果：長打と進塁**
+29. When 右打ちシフトまたは左打ちシフトが適用され、打者が二塁打を打つ、the Game System shall シフト逆方向への二塁打の発生率を+20%上昇させる
+30. When 極端シフトが適用され、打者が二塁打を打つ、the Game System shall シフト逆方向への二塁打の発生率を+35%上昇させる
+31. When 極端シフトが適用され、打者が三塁打を打つ、the Game System shall シフト逆方向への三塁打の発生率を+50%上昇させる
+32. When 深守備が適用され、打者が三塁打を打つ、the Game System shall 三塁打の発生率を-20%低下させ、二塁打に変換する確率を+15%上昇させる
+33. When 前進守備が適用され、打者が二塁打を打つ、the Game System shall 二塁打の発生率を+10%上昇させ、一塁ランナーの本塁到達確率を+15%上昇させる
+34. When シフトが適用され、ランナーが塁上にいる状態でヒットが出る、the Game System shall シフト逆方向のヒットでランナーの追加進塁確率を+20%上昇させる（守備位置が空いているため）
+
+**守備シフトが打撃結果に与える効果：特殊状況**
+35. When 極端シフトが適用され、打者のContact能力が70以上である、the Game System shall 打者が逆方向を狙う確率を+30%上昇させ、シフトを逆手に取る打撃を実行する
+36. When 極端シフトが適用され、打者のBunt for Hit（セーフティバント能力）が60以上である、the Game System shall 打者が無人の逆方向側にバントヒットを試みる確率を+40%上昇させる
+37. When 前進守備が適用され、打者が強振する、the Game System shall 外野を抜ける長打の発生率を+15%上昇させる（外野手が前寄りのため）
+38. When 深守備が適用され、打者が内野安打を狙う、the Game System shall 内野安打の成功率を+25%上昇させる（内野手が後寄りのため）
+39. When シフトが適用され、打者が意図的に逆方向を狙う、the Game System shall Contact能力を-10%低下させる（通常より難しい打撃のため）
+40. When シフトが適用され、ダブルプレー機会が発生する、the Game System shall シフト方向のゴロでダブルプレー成功率を+15%上昇させ、逆方向のゴロでダブルプレー成功率を-30%低下させる
+
+**守備シフトの視覚的フィードバックと実況**
+41. When 守備シフトが選択される、the Game System shall 「（監督）○○シフト指示！」とテキストで表示する
+42. When シフトが適用された状態で打球が処理される、the Game System shall シフトの効果を実況テキストに含める（例：「右打ちシフトの効果で二塁手が難なく処理！」）
+43. When シフトの逆を突かれる、the Game System shall 「シフトの逆を突く見事なヒット！」などの実況を表示する
+44. When 極端シフトが適用され、大きな効果を発揮する、the Game System shall 「極端シフトが的中！完璧なアウト！」と強調表示する
+45. When 極端シフトが適用され、逆方向に長打を許す、the Game System shall 「シフトの裏をかかれた！痛恨の長打！」と表示する
+46. The Game System shall 守備シフト選択画面で各シフトの効果を簡潔に説明する（例：「右打ちシフト: 右方向の打球に強い、左方向に弱い」）
+47. The Game System shall 守備シフト適用中、スコアボード付近にシフト表示アイコン（例：[→シフト]）を常時表示する
+
+**守備シフトの統計と成功率追跡**
+48. The Game System shall 試合中に使用した守備シフトの回数と成功率を記録する
+49. When 試合が終了する、the Game System shall 守備シフトの効果統計（「右打ちシフト使用5回、アウト4回、安打1回」など）を表示する
+50. The Game System shall 過去の試合における各守備シフトの成功率を集計し、戦績画面で表示する
+51. When プレイヤーが守備シフト統計を確認する、the Game System shall 各シフトタイプの使用回数、成功率、失敗時の被長打率を表示する
+52. The Game System shall 特定の打者に対する守備シフトの効果履歴を記録し、「この打者には○○シフトが有効」と推奨する機能を提供する
+
+**CPU操作チームの守備シフト判断（Requirement 10への追加）**
+53. When CPU操作チームが守備シフトを判断する、the Game System shall 打者の打球傾向データが利用可能な場合、適切なシフトを40-60%の確率で選択する
+54. When 打者のHR Power 80以上である、the Game System shall CPU操作チームが極端シフトを選択する確率を1.5倍に上昇させる
+55. When ランナーが得点圏（二塁または三塁）にいる、the Game System shall CPU操作チームが守備シフトを選択しない（通常守備優先）
+56. When CPU難易度が「上級」である、the Game System shall CPU操作チームが守備シフトを最適に活用し、選択確率を70-80%に上昇させる
+57. When CPU難易度が「初級」である、the Game System shall CPU操作チームが守備シフトをほとんど使用せず、選択確率を10-20%に低下させる
+
+**試合状況に応じた戦術調整**
+51. When 7回以降で5点差以上でリードしている、the Game System shall 守備的戦術（投手温存、通常打撃中心）を採用する
+52. When 7回以降で3点差以上で負けている、the Game System shall 攻撃的戦術（通常打撃中心、盗塁増加）を採用する
+53. When 9回裏で負けている状態で最後の攻撃である、the Game System shall 代打・代走を積極的に起用する
+54. When 延長戦に突入する、the Game System shall 投手の疲労管理を優先し早めの投手交代を行う
+55. When 延長戦で先頭打者が出塁する、the Game System shall バント指示の選択確率を通常の2倍に上昇させる
+
+**選手交代の判断**
+56. When 7回以降で打順が投手に回る、the Game System shall ランナーが得点圏にいる場合、代打を70-90%の確率で起用する
+57. When 7回以降で打順が投手に回る、the Game System shall ランナーがいない場合、代打を30-50%の確率で起用する
+58. When 代打を起用する、the Game System shall ベンチから最も高いContact能力またはHR Powerを持つ選手を選択する
+59. When 8回以降で2点差以内でリードしている、the Game System shall 守備固めを50-70%の確率で実行する
+60. When 守備固めを実行する、the Game System shall 最も高いInfield/Outfield RangeとError評価を持つ選手に交代する
+61. When 9回以降でランナーが塁に出る、the Game System shall Speed 70以上の代走を30-50%の確率で起用する
+62. When 代走を起用する、the Game System shall ベンチから最も高いSpeedとStealing Abilityを持つ選手を選択する
+
+**難易度別のAI調整**
+63. When CPU難易度が「初級」である、the Game System shall 最適でない指示を30-40%の確率で選択する
+64. When CPU難易度が「初級」である、the Game System shall 投手交代判断を遅らせ、投球数+20球まで継続させる
+65. When CPU難易度が「中級」である、the Game System shall 最適でない指示を15-20%の確率で選択する
+66. When CPU難易度が「上級」である、the Game System shall ほぼ最適な指示を選択し、ミス判断を5%未満に抑える
+67. When CPU難易度が「上級」である、the Game System shall 選手能力とマッチアップを詳細に分析し高度な戦術（左右の投打対決など）を活用する
+
+**AI判断の透明性と演出**
+68. When CPU操作チームが特殊な戦術（バント、盗塁、敬遠など）を選択する、the Game System shall 「（CPU監督）バント指示！」などの実況テキストを表示する
+69. When CPU操作チームが選手交代を実行する、the Game System shall 「（CPU監督）○○選手に交代！」と表示する
+70. The Game System shall CPU操作チームの戦術判断過程をプレイヤーに見せない（結果のみ表示）
+71. When デバッグモードが有効である、the Game System shall CPU操作チームの判断理由（「打者の能力が低いためバント選択」など）をログに出力する
+72. The Game System shall CPU操作チームの戦術パターンに変化を持たせ、プレイヤーが予測しづらいようにする
+
+**プレイヤーからCPU AIへの指示委譲**
+73. When プレイヤーの攻撃または守備ターンで指示選択画面が表示される、the Game System shall 「AI委譲」または「おまかせ」オプションを選択肢に含める
+74. When プレイヤーが「AI委譲」を選択する、the Game System shall CPU AI戦術判断ロジックを使用してプレイヤーチームの指示を自動決定する
+75. When AI委譲で指示が決定される、the Game System shall 決定された指示内容を「（AI推奨）○○の指示！」と表示する
+76. The Game System shall AI委譲で決定された指示を実行前にプレイヤーに確認するオプションを提供する（「確認モード」）
+77. When 確認モードが有効である、the Game System shall AI推奨指示を表示し「実行する/別の指示を選ぶ」の選択肢を提示する
+78. When プレイヤーが「別の指示を選ぶ」を選択する、the Game System shall 通常の指示選択画面に戻る
+79. When 確認モードが無効である、the Game System shall AI推奨指示を即座に実行する
+80. The Game System shall プレイヤーが設定画面で「常にAI委譲」モードを有効化できる機能を提供する
+81. When 「常にAI委譲」モードが有効である、the Game System shall 全ての打席と守備機会で自動的にAI委譲を実行する
+82. When 「常にAI委譲」モードが有効である、the Game System shall プレイヤーが任意のタイミングで「手動操作に戻す」ボタンを押せるようにする
+83. When プレイヤーが「手動操作に戻す」を選択する、the Game System shall 次の打席または守備機会から通常の指示選択に戻る
+84. The Game System shall AI委譲時の判断難易度をプレイヤーが設定できる機能を提供する（保守的/標準/積極的）
+85. When AI委譲判断難易度が「保守的」である、the Game System shall リスクの高い戦術（盗塁、スクイズ）の選択確率を50%低下させる
+86. When AI委譲判断難易度が「積極的」である、the Game System shall リスクの高い戦術（盗塁、スクイズ、エンドラン）の選択確率を50%上昇させる
+87. When AI委譲が実行される、the Game System shall プレイヤーチームの選手能力とCPU AI戦術判断ロジックを使用し、プレイヤーチームに最適な指示を選択する
+88. When デバッグモードが有効である、the Game System shall AI委譲時の判断理由（「ランナー一塁でSacrifice Bunt 65のためバント選択」など）をログに出力する
+89. The Game System shall AI委譲機能の使用統計（使用回数、成功率）を記録し、プレイヤーが確認できる機能を提供する
+90. When プレイヤーがAI委譲統計を確認する、the Game System shall 「AI委譲使用回数」「AI委譲時の得点率」「AI委譲時の勝率」を表示する
+
+**イニング/試合単位でのAI委譲**
+91. The Game System shall プレイヤーが「このイニングをAIに委譲」オプションを選択できる機能を提供する
+92. When プレイヤーが「このイニングをAIに委譲」を選択する、the Game System shall そのイニングの全打席と守備機会をAI委譲で処理する
+93. When イニング委譲が有効である、the Game System shall イニング終了後に「手動操作に戻りますか？」と確認する
+94. The Game System shall プレイヤーが「試合全体をAIに委譲」オプションを選択できる機能を提供する
+95. When プレイヤーが「試合全体をAIに委譲」を選択する、the Game System shall 試合終了まで全てをAI委譲で処理し、結果のみを表示する
+96. When 試合全体委譲が有効である、the Game System shall プレイヤーが任意のタイミングで「Escキー」または「中断ボタン」を押して手動操作に戻れるようにする
+97. The Game System shall 試合全体委譲時に、重要な場面（得点シーン、選手交代、投手交代）のみをハイライト表示するオプションを提供する
+98. When ハイライトモードが有効である、the Game System shall 通常のプレイは省略し、重要プレイのみを実況テキストで表示する
+
+**特定場面でのAI推奨表示**
+99. When プレイヤーが指示選択画面で一定時間（5秒以上）操作しない、the Game System shall 「AI推奨: ○○」とヒントを表示する
+100. When プレイヤーが指示選択画面で「?」または「ヘルプ」ボタンを押す、the Game System shall AI推奨指示とその理由（「盗塁成功率70%のため推奨」など）を表示する
+101. The Game System shall AI推奨表示機能の有効/無効を設定で切り替えられるようにする
+102. When プレイヤーが初心者モードを選択する、the Game System shall デフォルトでAI推奨表示を有効化する
+103. When AI推奨が表示される、the Game System shall 推奨理由を簡潔に説明する（例：「ランナー一塁、Sacrifice Bunt能力高、接戦のためバント推奨」）
+
+**AI学習と適応（将来拡張）**
+104. The Game System shall CPU操作チームの戦術成功率を記録し、効果的な戦術の選択頻度を調整する機能を提供する（オプション機能）
+105. When プレイヤーが特定の戦術を多用する、the Game System shall CPU操作チームがそれに対応する守備戦術を採用する確率を上昇させる（オプション機能）
+106. The Game System shall 各CPU操作チームに「戦術傾向」（攻撃的/守備的/バランス型）を設定し、判断に反映させる機能を提供する（オプション機能）
