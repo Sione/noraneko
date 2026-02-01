@@ -26,30 +26,38 @@ describe('stealingEngine', () => {
     runnerPlayer = {
       id: 'runner1',
       name: '走者太郎',
+      teamId: 'test-team',
       position: 'CF',
-      hand: 'right',
-      pitcherHand: 'right',
+      batterHand: 'right',
+      pitcherHand: undefined,
       condition: 'normal',
       fatigue: 'normal',
       batting: {
         contact: 60,
-        power: 55,
+        babip: 55,
+        gapPower: 55,
+        hrPower: 55,
         eye: 50,
-        strikeoutRate: 20,
-        walkRate: 8
+        avoidKs: 60,
+        vsLHP: 60,
+        vsRHP: 60
       },
-      pitching: {
-        velocity: 50,
-        control: 50,
-        movement: 50,
-        stamina: 50,
-        holdRunners: 50
-      },
+      pitching: undefined,
       fielding: {
-        fielding: 70,
-        range: 65,
+        infieldRange: 60,
+        outfieldRange: 70,
+        infieldError: 75,
+        outfieldError: 80,
         infieldArm: 60,
-        outfieldArm: 70
+        outfieldArm: 70,
+        turnDP: 60,
+        catcherAbility: undefined,
+        catcherArm: undefined,
+        sacrificeBunt: 50,
+        buntForHit: 50,
+        positionRatings: {
+          CF: 'B' as const
+        }
       },
       running: {
         speed: 80,
@@ -62,30 +70,46 @@ describe('stealingEngine', () => {
     pitcher = {
       id: 'pitcher1',
       name: '投手一郎',
+      teamId: 'test-team',
       position: 'P',
-      hand: 'right',
+      batterHand: 'right',
       pitcherHand: 'right',
       condition: 'normal',
       fatigue: 'normal',
       batting: {
         contact: 30,
-        power: 20,
+        babip: 25,
+        gapPower: 20,
+        hrPower: 20,
         eye: 25,
-        strikeoutRate: 40,
-        walkRate: 5
+        avoidKs: 30,
+        vsLHP: 30,
+        vsRHP: 30
       },
       pitching: {
+        stuff: 75,
         velocity: 75,
         control: 70,
         movement: 68,
         stamina: 80,
-        holdRunners: 65 // 牽制能力が高い
+        groundBallPct: 55,
+        holdRunners: 65
       },
       fielding: {
-        fielding: 60,
-        range: 50,
+        infieldRange: 60,
+        outfieldRange: 50,
+        infieldError: 70,
+        outfieldError: 60,
         infieldArm: 55,
-        outfieldArm: 50
+        outfieldArm: 50,
+        turnDP: 55,
+        catcherAbility: undefined,
+        catcherArm: undefined,
+        sacrificeBunt: 40,
+        buntForHit: 35,
+        positionRatings: {
+          P: 'B' as const
+        }
       },
       running: {
         speed: 40,
@@ -98,30 +122,38 @@ describe('stealingEngine', () => {
     catcher = {
       id: 'catcher1',
       name: '捕手二郎',
+      teamId: 'test-team',
       position: 'C',
-      hand: 'right',
-      pitcherHand: 'right',
+      batterHand: 'right',
+      pitcherHand: undefined,
       condition: 'normal',
       fatigue: 'normal',
       batting: {
         contact: 55,
-        power: 60,
+        babip: 52,
+        gapPower: 60,
+        hrPower: 60,
         eye: 52,
-        strikeoutRate: 22,
-        walkRate: 7
+        avoidKs: 58,
+        vsLHP: 55,
+        vsRHP: 55
       },
-      pitching: {
-        velocity: 50,
-        control: 50,
-        movement: 50,
-        stamina: 50,
-        holdRunners: 50
-      },
+      pitching: undefined,
       fielding: {
-        fielding: 75,
-        range: 60,
-        infieldArm: 80, // 肩力が強い
-        outfieldArm: 50
+        infieldRange: 60,
+        outfieldRange: 50,
+        infieldError: 75,
+        outfieldError: 60,
+        infieldArm: 80,
+        outfieldArm: 50,
+        turnDP: 65,
+        catcherAbility: 75,
+        catcherArm: 80,
+        sacrificeBunt: 50,
+        buntForHit: 45,
+        positionRatings: {
+          C: 'B' as const
+        }
       },
       running: {
         speed: 45,
@@ -135,30 +167,38 @@ describe('stealingEngine', () => {
       {
         id: 'second_base',
         name: '二塁手',
+        teamId: 'test-team',
         position: '2B',
-        hand: 'right',
-        pitcherHand: 'right',
+        batterHand: 'right',
+        pitcherHand: undefined,
         condition: 'normal',
         fatigue: 'normal',
         batting: {
           contact: 60,
-          power: 50,
+          babip: 55,
+          gapPower: 50,
+          hrPower: 50,
           eye: 55,
-          strikeoutRate: 18,
-          walkRate: 8
+          avoidKs: 62,
+          vsLHP: 60,
+          vsRHP: 60
         },
-        pitching: {
-          velocity: 50,
-          control: 50,
-          movement: 50,
-          stamina: 50,
-          holdRunners: 50
-        },
+        pitching: undefined,
         fielding: {
-          fielding: 72,
-          range: 70,
+          infieldRange: 72,
+          outfieldRange: 50,
+          infieldError: 75,
+          outfieldError: 60,
           infieldArm: 68,
-          outfieldArm: 50
+          outfieldArm: 50,
+          turnDP: 70,
+          catcherAbility: undefined,
+          catcherArm: undefined,
+          sacrificeBunt: 55,
+          buntForHit: 50,
+          positionRatings: {
+            '2B': 'B' as const
+          }
         },
         running: {
           speed: 65,
@@ -238,20 +278,40 @@ describe('stealingEngine', () => {
       const weakInfielder = [{
         ...infielders[0],
         fielding: {
-          fielding: 40,
-          range: 35,
+          infieldRange: 40,
+          outfieldRange: 35,
+          infieldError: 50,
+          outfieldError: 50,
           infieldArm: 40,
-          outfieldArm: 50
+          outfieldArm: 50,
+          turnDP: 40,
+          catcherAbility: undefined,
+          catcherArm: undefined,
+          sacrificeBunt: 50,
+          buntForHit: 45,
+          positionRatings: {
+            '2B': 'D' as const
+          }
         }
       }];
 
       const strongInfielder = [{
         ...infielders[0],
         fielding: {
-          fielding: 90,
-          range: 85,
+          infieldRange: 90,
+          outfieldRange: 85,
+          infieldError: 95,
+          outfieldError: 90,
           infieldArm: 88,
-          outfieldArm: 50
+          outfieldArm: 50,
+          turnDP: 90,
+          catcherAbility: undefined,
+          catcherArm: undefined,
+          sacrificeBunt: 70,
+          buntForHit: 65,
+          positionRatings: {
+            '2B': 'A' as const
+          }
         }
       }];
 
@@ -419,7 +479,12 @@ describe('stealingEngine', () => {
       const highHoldPitcher = {
         ...pitcher,
         pitching: {
-          ...pitcher.pitching,
+          stuff: 75,
+          velocity: 75,
+          control: 70,
+          movement: 68,
+          stamina: 80,
+          groundBallPct: 55,
           holdRunners: 90
         }
       };

@@ -1,0 +1,353 @@
+.game-detail {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ヘッダー */
+.detail-header {
+  margin-bottom: 20px;
+}
+
+.detail-header h1 {
+  font-size: 28px;
+  color: #333;
+  margin: 10px 0;
+}
+
+.back-button {
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  margin-bottom: 10px;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+/* カード共通 */
+.game-info-card,
+.mvp-card,
+.innings-card,
+.stats-card,
+.highlights-card,
+.playlog-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* 試合基本情報 */
+.game-date {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.game-type {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 20px;
+}
+
+.score-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.team-score {
+  text-align: center;
+}
+
+.team-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.team-total-score {
+  font-size: 48px;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.score-vs {
+  font-size: 24px;
+  color: #999;
+}
+
+.game-result {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 20px 0;
+}
+
+.game-result.home {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.game-result.away {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.game-result.draw {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.game-stats-summary {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: #666;
+}
+
+/* MVP */
+.mvp-card h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.mvp-info {
+  background: #fff3cd;
+  padding: 15px;
+  border-radius: 4px;
+  border-left: 4px solid #ffc107;
+}
+
+.mvp-player {
+  font-size: 20px;
+  font-weight: bold;
+  color: #856404;
+  margin-bottom: 5px;
+}
+
+.mvp-reason {
+  font-size: 14px;
+  color: #856404;
+}
+
+/* イニング別スコア */
+.innings-card h3,
+.stats-card h3,
+.highlights-card h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.innings-table-container {
+  overflow-x: auto;
+}
+
+.innings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.innings-table th,
+.innings-table td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #dee2e6;
+}
+
+.innings-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.team-label {
+  font-weight: bold;
+  background: #f8f9fa;
+}
+
+.inning-runs {
+  font-weight: 500;
+}
+
+.total-runs {
+  font-weight: bold;
+  background: #e9ecef;
+  color: #007bff;
+}
+
+/* 試合統計 */
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stats-table th,
+.stats-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.stats-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ハイライト */
+.highlights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.highlight-item {
+  display: flex;
+  gap: 15px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}
+
+.highlight-inning {
+  flex-shrink: 0;
+  font-weight: bold;
+  color: #007bff;
+  min-width: 80px;
+}
+
+.highlight-description {
+  color: #333;
+  line-height: 1.5;
+}
+
+/* プレイログ */
+.playlog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.playlog-header h3 {
+  font-size: 18px;
+  color: #333;
+  margin: 0;
+}
+
+.toggle-log-button {
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.toggle-log-button:hover {
+  background-color: #0056b3;
+}
+
+.playlog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.playlog-list.expanded {
+  max-height: none;
+}
+
+.playlog-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.playlog-inning {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #666;
+  min-width: 70px;
+}
+
+.playlog-description {
+  color: #333;
+  line-height: 1.4;
+}
+
+.error-message {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .game-detail {
+    padding: 10px;
+  }
+
+  .score-display {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .team-total-score {
+    font-size: 36px;
+  }
+
+  .innings-table {
+    font-size: 12px;
+  }
+
+  .innings-table th,
+  .innings-table td {
+    padding: 6px;
+  }
+
+  .highlight-item,
+  .playlog-item {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .highlight-inning,
+  .playlog-inning {
+    min-width: auto;
+  }
+}

@@ -67,12 +67,12 @@ export function judgeSteal(
   const stealingAggr = runnerPlayer.running.stealingAggr;
   
   // 投手の牽制能力とクイックモーション
-  const holdRunners = pitcher.pitching.holdRunners;
-  const quickMotion = pitcher.pitching.control * 0.3; // コントロールの良い投手は投球が速い
+  const holdRunners = pitcher.pitching?.holdRunners || 50;
+  const quickMotion = (pitcher.pitching?.control || 50) * 0.3; // コントロールの良い投手は投球が速い
   
-  // 捕手の肩力
-  const catcherArm = catcher.fielding.infieldArm;
-  const catcherFielding = catcher.fielding.fielding;
+  // 捕手の肩力と能力
+  const catcherArm = catcher.fielding.catcherArm || catcher.fielding.infieldArm;
+  const catcherFielding = catcher.fielding.catcherAbility || 50;
   
   // 塁上守備選手（二塁手またはショート）
   let infielderCovering: PlayerInGame | undefined;
@@ -84,8 +84,8 @@ export function judgeSteal(
     infielderCovering = infielders.find(p => p.position === '3B');
   }
   
-  const infielderFielding = infielderCovering?.fielding.fielding || 50;
-  const infielderReaction = infielderCovering?.fielding.range || 50;
+  const infielderFielding = infielderCovering?.fielding.infieldRange || 50;
+  const infielderReaction = infielderCovering?.fielding.infieldRange || 50;
   
   // 7.1: 成功率計算
   let successRate = 50; // 基本成功率
@@ -357,7 +357,7 @@ export function judgePickoff(
   }
   
   // 7.4: 牽制試行確率
-  const holdRunners = pitcher.pitching.holdRunners;
+  const holdRunners = pitcher.pitching?.holdRunners || 50;
   const runnerStealingAggr = runnerPlayer.running.stealingAggr;
   
   // 牽制を試みる確率
@@ -417,8 +417,8 @@ export function judgePickoff(
   pickoffSuccessRate += (leadDistance - 50) * 0.5; // リード幅が大きいほど成功しやすい
   
   if (infielder) {
-    const infielderFielding = infielder.fielding.fielding;
-    const infielderReaction = infielder.fielding.range;
+    const infielderFielding = infielder.fielding.infieldRange;
+    const infielderReaction = infielder.fielding.infieldRange;
     pickoffSuccessRate += (infielderFielding - 50) * 0.3; // 内野手の守備力
     pickoffSuccessRate += (infielderReaction - 50) * 0.2; // 内野手の反応
   }
@@ -432,7 +432,8 @@ export function judgePickoff(
   const pickoffSuccess = Math.random() * 100 < pickoffSuccessRate;
   
   // 7.4: 悪送球の可能性
-  const wildThrowRate = 5 + (pitcher.pitching.control < 50 ? (50 - pitcher.pitching.control) * 0.2 : 0);
+  const pitcherControl = pitcher.pitching?.control || 50;
+  const wildThrowRate = 5 + (pitcherControl < 50 ? (50 - pitcherControl) * 0.2 : 0);
   const isWildThrow = Math.random() * 100 < wildThrowRate;
   
   let commentary = '';

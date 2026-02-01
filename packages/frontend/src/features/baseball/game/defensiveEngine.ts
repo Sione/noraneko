@@ -2,6 +2,7 @@ import {
   PlayerInGame, 
   Position,
   RunnerState,
+  Runner,
   DefensiveShift 
 } from '../types';
 import { BatBallInfo, BatType, BatDirection, BatStrength, DefensivePlayInput } from './atBatEngine';
@@ -12,6 +13,14 @@ import {
   generateScoringCommentary,
   BaseRunningAdvancement
 } from './baseRunningEngine';
+import {
+  calculateGroundBallShiftEffect,
+  calculateFlyBallShiftEffect,
+  calculateExtraBaseShiftEffect,
+  determineBallDirection,
+  calculateAverageDefensiveAbility,
+  BallDirection
+} from './defensiveShiftEngine';
 
 /**
  * 守備判定エンジン
@@ -246,15 +255,15 @@ export function processDefensivePlay(
   let errorType: ErrorType | undefined;
 
   if (batBallInfo.type === 'ground_ball') {
-    const groundBallResult = processGroundBall(batBallInfo, fielderInfo, runners, outs, shift);
+    const groundBallResult = processGroundBall(batBallInfo, fielderInfo, runners, outs, shift, defendingTeam);
     defensiveResult = groundBallResult.outcome;
     errorType = groundBallResult.errorType;
   } else if (batBallInfo.type === 'fly_ball') {
-    const flyBallResult = processFlyBall(batBallInfo, fielderInfo, runners, outs, shift);
+    const flyBallResult = processFlyBall(batBallInfo, fielderInfo, runners, outs, shift, defendingTeam);
     defensiveResult = flyBallResult.outcome;
     errorType = flyBallResult.errorType;
   } else if (batBallInfo.type === 'line_drive') {
-    const lineDriveResult = processLineDrive(batBallInfo, fielderInfo, runners, outs);
+    const lineDriveResult = processLineDrive(batBallInfo, fielderInfo, runners, outs, shift, defendingTeam);
     defensiveResult = lineDriveResult.outcome;
     errorType = lineDriveResult.errorType;
   }
@@ -355,13 +364,40 @@ function processGroundBall(
   fielderInfo: { primary: PlayerInGame; position: Position; assistBy?: PlayerInGame },
   runners: RunnerState,
   outs: number,
-  shift: DefensiveShift
+  shift: DefensiveShift,
+  defendingTeam?: PlayerInGame[]
 ): { outcome: DefensiveOutcome; errorType?: ErrorType } {
   const { strength, direction } = batBallInfo;
   const fielder = fielderInfo.primary;
 
-  // 前進守備の場合は捕球しやすくなる
-  const shiftBonus = shift === 'infield_in' ? 15 : shift === 'infield_back' ? -10 : 0;
+  // シフト効果を計算（タスク15: Requirement 11）
+  let shiftBonus = 0;
+  let infieldHitRateModifier = 0;
+  let outProbabilityModifier = 0;
+  let guaranteedHitBonus = 0;
+
+  if (defendingTeam) {
+    // 内野手の平均守備能力を計算
+    const avgInfieldRange = calculateAverageDefensiveAbility(defendingTeam, true);
+    
+    // 打球方向を判定（打者の利き手は batBallInfo に含まれていないため、方向文字列で判定）
+    const ballDirection = determineBallDirection('right', direction);
+    
+    // シフト効果を計算
+    const shiftEffect = calculateGroundBallShiftEffect(
+      shift,
+      ballDirection,
+      avgInfieldRange,
+      'right' // 簡略化: 実際は打者情報から取得
+    );
+    
+    infieldHitRateModifier = shiftEffect.infieldHitRateModifier;
+    outProbabilityModifier = shiftEffect.outProbabilityModifier;
+    guaranteedHitBonus = shiftEffect.guaranteedHitBonus;
+  } else {
+    // 従来のシンプルなシフトボーナス
+    shiftBonus = shift === 'infield_in' ? 15 : shift === 'infield_back' ? -10 : 0;
+  }
 
   // 守備範囲判定
   const fieldingRange = fielder.fielding.infieldRange + shiftBonus;
@@ -376,12 +412,21 @@ function processGroundBall(
   };
 
   const baseCatchChance = catchDifficulty[strength];
-  const actualCatchChance = (baseCatchChance * fieldingRange) / 100;
+  let actualCatchChance = (baseCatchChance * fieldingRange) / 100;
+  
+  // アウト確率補正を適用
+  actualCatchChance += outProbabilityModifier;
 
   const roll = Math.random() * 100;
 
+  // 確実安打ボーナスがある場合（シフト逆方向の極端シフト）
+  if (guaranteedHitBonus > 0 && Math.random() * 100 < guaranteedHitBonus) {
+    return { outcome: 'single' };
+  }
+
   // 捕球失敗（打球が抜ける）
-  if (roll > actualCatchChance) {
+  const infieldHitChance = 100 - actualCatchChance + infieldHitRateModifier;
+  if (roll > actualCatchChance || Math.random() * 100 < Math.max(0, infieldHitRateModifier)) {
     // 強い打球は長打になる可能性
     if (strength === 'very_strong') {
       return { outcome: Math.random() > 0.7 ? 'double' : 'single' };
@@ -417,9 +462,10 @@ function processFlyBall(
   fielderInfo: { primary: PlayerInGame; position: Position; assistBy?: PlayerInGame },
   runners: RunnerState,
   outs: number,
-  shift: DefensiveShift
+  shift: DefensiveShift,
+  defendingTeam?: PlayerInGame[]
 ): { outcome: DefensiveOutcome; errorType?: ErrorType } {
-  const { strength, extraBasePotential } = batBallInfo;
+  const { strength, extraBasePotential, direction } = batBallInfo;
   const fielder = fielderInfo.primary;
   const isInfield = ['1B', '2B', '3B', 'SS', 'P'].includes(fielderInfo.position);
 
@@ -442,12 +488,34 @@ function processFlyBall(
   const fieldingRange = isInfield ? fielder.fielding.infieldRange : fielder.fielding.outfieldRange;
   const errorResistance = isInfield ? fielder.fielding.infieldError : fielder.fielding.outfieldError;
 
-  // シフト補正（前進守備は浅いフライに強い、深守備は深いフライに強い）
+  // シフト効果を計算（タスク15: Requirement 11）
   let shiftBonus = 0;
-  if (shift === 'infield_in' && strength === 'weak') {
-    shiftBonus = 20;
-  } else if (shift === 'infield_back' && strength === 'strong') {
-    shiftBonus = 10;
+  let rangeModifier = 0;
+  let catchDifficultyModifier = 0;
+  let extraBaseModifier = 0;
+
+  if (defendingTeam) {
+    const avgDefensiveRange = calculateAverageDefensiveAbility(defendingTeam, !isInfield);
+    const ballDirection = determineBallDirection('right', direction);
+    
+    const shiftEffect = calculateFlyBallShiftEffect(
+      shift,
+      'fly',
+      isInfield,
+      avgDefensiveRange,
+      ballDirection
+    );
+    
+    rangeModifier = shiftEffect.rangeModifier;
+    catchDifficultyModifier = shiftEffect.catchDifficultyModifier;
+    extraBaseModifier = shiftEffect.extraBaseModifier;
+  } else {
+    // 従来のシンプルなシフトボーナス
+    if (shift === 'infield_in' && strength === 'weak') {
+      shiftBonus = 20;
+    } else if (shift === 'infield_back' && strength === 'strong') {
+      shiftBonus = 10;
+    }
   }
 
   // 打球の強さによる捕球難易度
@@ -459,7 +527,8 @@ function processFlyBall(
   };
 
   const baseCatchChance = catchDifficulty[strength];
-  const actualCatchChance = Math.min(99, (baseCatchChance * (fieldingRange + shiftBonus)) / 100);
+  let actualCatchChance = Math.min(99, (baseCatchChance * (fieldingRange + shiftBonus + rangeModifier)) / 100);
+  actualCatchChance += catchDifficultyModifier;
 
   const roll = Math.random() * 100;
 
@@ -467,9 +536,11 @@ function processFlyBall(
   if (roll > actualCatchChance) {
     // 外野への打球は長打になりやすい
     if (!isInfield) {
-      if (strength === 'very_strong') {
+      // 長打率補正を適用
+      const extraBaseRoll = Math.random() * 100 + extraBaseModifier;
+      if (strength === 'very_strong' || extraBaseRoll > 70) {
         return { outcome: 'triple' };
-      } else if (strength === 'strong') {
+      } else if (strength === 'strong' || extraBaseRoll > 40) {
         return { outcome: 'double' };
       }
     }
@@ -500,9 +571,11 @@ function processLineDrive(
   batBallInfo: BatBallInfo,
   fielderInfo: { primary: PlayerInGame; position: Position; assistBy?: PlayerInGame },
   runners: RunnerState,
-  outs: number
+  outs: number,
+  shift: DefensiveShift = 'normal',
+  defendingTeam?: PlayerInGame[]
 ): { outcome: DefensiveOutcome; errorType?: ErrorType } {
-  const { strength, extraBasePotential } = batBallInfo;
+  const { strength, extraBasePotential, direction } = batBallInfo;
   const fielder = fielderInfo.primary;
   const isInfield = ['1B', '2B', '3B', 'SS', 'P'].includes(fielderInfo.position);
 
@@ -511,8 +584,72 @@ function processLineDrive(
   const fieldingRange = isInfield ? fielder.fielding.infieldRange : fielder.fielding.outfieldRange;
   const errorResistance = isInfield ? fielder.fielding.infieldError : fielder.fielding.outfieldError;
 
+  // シフト効果を計算（タスク15: Requirement 11）
+  let catchDifficultyModifier = 0;
+  let extraBaseModifier = 0;
+
+  if (defendingTeam) {
+    const avgDefensiveRange = calculateAverageDefensiveAbility(defendingTeam, !isInfield);
+    const ballDirection = determineBallDirection('right', direction);
+    
+    const shiftEffect = calculateFlyBallShiftEffect(
+      shift,
+      'liner',
+      isInfield,
+      avgDefensiveRange,
+      ballDirection
+    );
+    
+    catchDifficultyModifier = shiftEffect.catchDifficultyModifier;
+    extraBaseModifier = shiftEffect.extraBaseModifier;
+  }
+
   // ライナーの捕球難易度（通常より低い）
   const catchDifficulty: Record<BatStrength, number> = {
+    'weak': 75,
+    'medium': 60,
+    'strong': 45,
+    'very_strong': 30
+  };
+
+  const baseCatchChance = catchDifficulty[strength];
+  let actualCatchChance = (baseCatchChance * fieldingRange) / 100;
+  actualCatchChance += catchDifficultyModifier;
+
+  const roll = Math.random() * 100;
+
+  // 捕球失敗（打球が抜ける）
+  if (roll > actualCatchChance) {
+    // ライナーは抜けると長打になりやすい
+    const extraBaseRoll = Math.random() * 100 + extraBaseModifier;
+    
+    if (!isInfield) {
+      // 外野ライナー
+      if (strength === 'very_strong' && extraBasePotential > 70) {
+        return { outcome: 'triple' };
+      } else if ((strength === 'strong' || strength === 'very_strong') && extraBasePotential > 50) {
+        return { outcome: 'double' };
+      }
+    } else {
+      // 内野ライナー - 抜ければ単打か二塁打
+      if (strength === 'very_strong' && extraBaseRoll > 70) {
+        return { outcome: 'double' };
+      }
+    }
+    return { outcome: 'single' };
+  }
+
+  // 捕球成功 - エラー判定は極めて低い（ライナーは捕れれば確実）
+  const errorChance = (100 - errorResistance) * 0.02;
+  if (Math.random() * 100 < errorChance) {
+    return { outcome: 'error', errorType: 'fielding' };
+  }
+
+  // ライナー捕球後の併殺の可能性（走者が帰塁できない場合）
+  // これは別途実装（4.3）
+
+  return { outcome: 'out' };
+}
     'weak': 70,
     'medium': 55,
     'strong': 35,

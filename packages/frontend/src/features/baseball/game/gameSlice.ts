@@ -69,6 +69,13 @@ export interface GameState {
   // 選手交代管理 (タスク8.5)
   playerStatuses: Record<string, { hasPlayed: boolean; isActive: boolean }>;
   substitutions: any[]; // Substitution型の配列
+
+  // 試合結果 (タスク10.3)
+  mvp: {
+    playerId: string;
+    playerName: string;
+    reason: string;
+  } | null;
 }
 
 const initialState: GameState = {
@@ -102,6 +109,93 @@ const initialState: GameState = {
   elapsedSeconds: 0,
   playerStatuses: {}, // タスク8.5: 選手交代管理
   substitutions: [], // タスク8.5: 交代履歴
+  mvp: null, // タスク10.3: MVP選手
+};
+
+/**
+ * MVP選出ロジック (タスク10.3)
+ * 試合終了時に最も活躍した選手を自動選出する
+ */
+const selectMVP = (state: GameState): { playerId: string; playerName: string; reason: string } | null => {
+  if (!state.homeTeam || !state.awayTeam) return null;
+
+  // 勝利チームを特定
+  const homeScore = state.score.home;
+  const awayScore = state.score.away;
+  
+  // 引き分けの場合はMVPなし
+  if (homeScore === awayScore) return null;
+  
+  const winner = homeScore > awayScore ? state.homeTeam : state.awayTeam;
+  
+  // 打者MVP候補
+  let bestBatter: { player: PlayerInGame; score: number; reason: string } | null = null;
+  
+  for (const player of winner.lineup) {
+    if (player.position !== 'P') {
+      const atBats = player.atBats || 0;
+      const hits = player.hits || 0;
+      const rbis = player.rbis || 0;
+      const runs = player.runs || 0;
+      
+      // 打席がない選手は除外
+      if (atBats === 0) continue;
+      
+      // MVPスコアを計算（打点×3 + 安打×2 + 得点×1）
+      const score = rbis * 3 + hits * 2 + runs;
+      
+      // 理由を生成
+      let reason = '';
+      if (rbis >= 3) {
+        reason = `${rbis}打点の活躍`;
+      } else if (hits >= 3) {
+        reason = `${hits}安打の活躍`;
+      } else if (rbis >= 2) {
+        reason = `${rbis}打点`;
+      } else if (hits >= 2) {
+        reason = `${hits}安打`;
+      } else {
+        reason = '貢献';
+      }
+      
+      if (!bestBatter || score > bestBatter.score) {
+        bestBatter = { player, score, reason };
+      }
+    }
+  }
+
+  // 投手MVP候補
+  let bestPitcher: { player: PlayerInGame; score: number; reason: string } | null = null;
+  
+  for (const player of winner.lineup) {
+    if (player.position === 'P' && player.currentPitchCount && player.currentPitchCount > 20) {
+      // 投手MVPスコアを計算（投球数/10をベースに）
+      const score = player.currentPitchCount / 10;
+      const reason = player.currentPitchCount >= 90 ? '完投級の好投' : '好投';
+      
+      if (!bestPitcher || score > bestPitcher.score) {
+        bestPitcher = { player, score, reason };
+      }
+    }
+  }
+
+  // 打者と投手を比較してMVP決定
+  // 打者のスコアが投手の0.8倍以上なら打者を優先
+  if (bestBatter && (!bestPitcher || bestBatter.score >= bestPitcher.score * 0.8)) {
+    return {
+      playerId: bestBatter.player.id,
+      playerName: bestBatter.player.name,
+      reason: bestBatter.reason,
+    };
+  } else if (bestPitcher) {
+    return {
+      playerId: bestPitcher.player.id,
+      playerName: bestPitcher.player.name,
+      reason: bestPitcher.reason,
+    };
+  }
+
+  return null;
 };
 
 export const gameSlice = createSlice({
@@ -409,6 +503,10 @@ export const gameSlice = createSlice({
         if (state.gameStartTime) {
           state.elapsedSeconds = Math.floor((Date.now() - state.gameStartTime) / 1000);
         }
+        
+        // MVP選出 (タスク10.3)
+        state.mvp = selectMVP(state);
+        
         return;
       }
 
@@ -429,6 +527,10 @@ export const gameSlice = createSlice({
         if (state.gameStartTime) {
           state.elapsedSeconds = Math.floor((Date.now() - state.gameStartTime) / 1000);
         }
+        
+        // MVP選出 (タスク10.3)
+        state.mvp = selectMVP(state);
+        
         return;
       }
 
@@ -452,6 +554,9 @@ export const gameSlice = createSlice({
           if (state.gameStartTime) {
             state.elapsedSeconds = Math.floor((Date.now() - state.gameStartTime) / 1000);
           }
+          
+          // MVP選出 (タスク10.3)
+          state.mvp = selectMVP(state);
         } else {
           // 同点なら延長戦へ
           const extendEvent: PlayEvent = {
@@ -487,6 +592,9 @@ export const gameSlice = createSlice({
           if (state.gameStartTime) {
             state.elapsedSeconds = Math.floor((Date.now() - state.gameStartTime) / 1000);
           }
+          
+          // MVP選出 (タスク10.3)
+          state.mvp = selectMVP(state);
         } else if (state.currentInning >= state.maxInnings) {
           // 最大イニングに達して同点なら引き分け
           state.phase = 'game_end';
@@ -504,6 +612,9 @@ export const gameSlice = createSlice({
           if (state.gameStartTime) {
             state.elapsedSeconds = Math.floor((Date.now() - state.gameStartTime) / 1000);
           }
+          
+          // 引き分けの場合はMVPなし（selectMVP内で引き分け時はnullを返す）
+          state.mvp = selectMVP(state);
         }
         return;
       }
@@ -525,6 +636,9 @@ export const gameSlice = createSlice({
         if (state.gameStartTime) {
           state.elapsedSeconds = Math.floor((Date.now() - state.gameStartTime) / 1000);
         }
+        
+        // MVP選出 (タスク10.3)
+        state.mvp = selectMVP(state);
       }
     },
 
@@ -570,6 +684,9 @@ export const gameSlice = createSlice({
           if (state.gameStartTime) {
             state.elapsedSeconds = Math.floor((Date.now() - state.gameStartTime) / 1000);
           }
+          
+          // MVP選出 (タスク10.3)
+          state.mvp = selectMVP(state);
         }
       }
     },

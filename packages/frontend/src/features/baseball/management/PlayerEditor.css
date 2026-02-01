@@ -1,0 +1,221 @@
+/* 選手編集フォームのスタイル */
+
+.player-editor {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.player-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #2c5f2d;
+}
+
+.player-editor-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #2c5f2d;
+}
+
+.player-editor-overall {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.overall-value {
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
+.player-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.editor-section {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.editor-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  color: #2c5f2d;
+  border-bottom: 2px solid #2c5f2d;
+  padding-bottom: 0.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #2c5f2d;
+  box-shadow: 0 0 0 2px rgba(44, 95, 45, 0.1);
+}
+
+.form-actions-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.template-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.template-selector label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.ability-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.ability-input-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+  min-width: 200px;
+  margin: 0;
+}
+
+.ability-input-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.ability-input-range {
+  flex: 1;
+  max-width: 300px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e0e0e0;
+  border-radius: 3px;
+  outline: none;
+}
+
+.ability-input-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #2c5f2d;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.ability-input-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #2c5f2d;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.ability-input-number {
+  width: 60px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.ability-input-number:focus {
+  outline: none;
+  border-color: #2c5f2d;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid #ddd;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .player-editor {
+    padding: 1rem;
+  }
+  
+  .player-editor-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .ability-input-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .ability-input-label {
+    min-width: auto;
+  }
+  
+  .ability-input-controls {
+    width: 100%;
+  }
+  
+  .ability-input-range {
+    max-width: none;
+  }
+  
+  .form-actions-inline {
+    flex-direction: column;
+  }
+  
+  .template-selector {
+    width: 100%;
+  }
+}

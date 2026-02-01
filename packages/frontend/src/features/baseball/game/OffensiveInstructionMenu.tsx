@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppSelector } from '../../../store/hooks';
 import { InstructionOption, OffensiveInstruction } from '../types';
+import { getAIDelegate, AIDelegateResult } from './aiDelegateEngine';
 import './OffensiveInstructionMenu.css';
 
 /**
@@ -15,6 +16,10 @@ interface OffensiveInstructionMenuProps {
 export function OffensiveInstructionMenu({ onSelectInstruction }: OffensiveInstructionMenuProps) {
   const gameState = useAppSelector((state) => state.game);
   const { runners, currentAtBat, homeTeam, awayTeam, isTopHalf } = gameState;
+  
+  // AI委譲の状態
+  const [showAIRecommendation, setShowAIRecommendation] = useState(false);
+  const [aiRecommendation, setAIRecommendation] = useState<AIDelegateResult | null>(null);
 
   // 攻撃側チームを取得
   const attackingTeam = useMemo(() => {
@@ -33,6 +38,74 @@ export function OffensiveInstructionMenu({ onSelectInstruction }: OffensiveInstr
   const hasRunnerOnThird = runners.third !== null;
   const hasAnyRunner = hasRunnerOnFirst || hasRunnerOnSecond || hasRunnerOnThird;
   const hasMultipleRunners = [hasRunnerOnFirst, hasRunnerOnSecond, hasRunnerOnThird].filter(Boolean).length >= 2;
+
+  // AI委譲を要求
+  const handleAIDelegate = () => {
+    const aiDelegate = getAIDelegate();
+    const result = aiDelegate.delegateOffensiveInstruction(gameState);
+    setAIRecommendation(result);
+    setShowAIRecommendation(true);
+  };
+
+  // AI推奨を実行
+  const handleExecuteAIRecommendation = () => {
+    if (aiRecommendation?.offensiveInstruction) {
+      onSelectInstruction(aiRecommendation.offensiveInstruction);
+    }
+    setShowAIRecommendation(false);
+    setAIRecommendation(null);
+  };
+
+  // AI推奨をキャンセル
+  const handleCancelAIRecommendation = () => {
+    setShowAIRecommendation(false);
+    setAIRecommendation(null);
+  };
+
+  // AI推奨表示モード
+  if (showAIRecommendation && aiRecommendation) {
+    return (
+      <div className="offensive-instruction-menu ai-recommendation-mode">
+        <h3 className="instruction-menu-title">AI推奨</h3>
+        
+        <div className={`ai-recommendation-card ${aiRecommendation.confidence}`}>
+          <div className="recommendation-header">
+            <span className="confidence-badge">
+              {aiRecommendation.confidence === 'high' ? '強く推奨' : 
+               aiRecommendation.confidence === 'medium' ? '推奨' : '参考'}
+            </span>
+          </div>
+          
+          <div className="recommended-instruction">
+            <h4>推奨指示</h4>
+            <div className="instruction-name">
+              {aiRecommendation.offensiveInstruction}
+            </div>
+          </div>
+          
+          <div className="recommendation-reason">
+            <h4>理由</h4>
+            <p>{aiRecommendation.reason}</p>
+          </div>
+          
+          <div className="recommendation-actions">
+            <button 
+              className="execute-button"
+              onClick={handleExecuteAIRecommendation}
+            >
+              この指示を実行する
+            </button>
+            <button 
+              className="cancel-button"
+              onClick={handleCancelAIRecommendation}
+            >
+              別の指示を選ぶ
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // 指示オプションを生成
   const instructionOptions: InstructionOption[] = useMemo(() => {
@@ -201,6 +274,17 @@ export function OffensiveInstructionMenu({ onSelectInstruction }: OffensiveInstr
             )}
           </button>
         ))}
+      </div>
+
+      {/* AI委譲ボタン (AC 73-74) */}
+      <div className="ai-delegate-section">
+        <button 
+          className="ai-delegate-button"
+          onClick={handleAIDelegate}
+        >
+          🤖 AIに委譲
+        </button>
+        <span className="ai-delegate-hint">AIが最適な指示を提案します</span>
       </div>
 
       <div className="instruction-note">

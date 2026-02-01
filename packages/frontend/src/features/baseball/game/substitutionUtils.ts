@@ -84,8 +84,11 @@ export function canDefensiveReplace(
   const status = playerStatuses.get(player.id);
   if (status?.hasPlayed) return false;
 
+  // DH(指名打者)は守備につけない
+  if (position === 'DH') return false;
+
   // ポジション適性のチェック
-  const rating = player.fielding.positionRatings[position];
+  const rating = player.fielding.positionRatings[position as keyof typeof player.fielding.positionRatings];
   return rating !== undefined && rating !== 'F'; // F評価でなければ守備可能
 }
 

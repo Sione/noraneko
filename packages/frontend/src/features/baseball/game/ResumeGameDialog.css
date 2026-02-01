@@ -1,0 +1,205 @@
+.resume-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.resume-dialog {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+  animation: resumeDialogZoomIn 0.3s ease-out;
+}
+
+@keyframes resumeDialogZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.resume-dialog-header {
+  padding: 24px 24px 16px;
+  text-align: center;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.resume-dialog-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+  font-weight: 700;
+}
+
+.resume-dialog-content {
+  padding: 24px;
+}
+
+.resume-info {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.resume-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.resume-info p {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.resume-timestamp {
+  display: block;
+  font-size: 14px;
+  color: #888;
+  margin-top: 8px;
+}
+
+.resume-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resume-button {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+}
+
+.resume-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.resume-button .button-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.resume-button .button-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resume-button .button-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.resume-button .button-description {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.resume-button-resume:hover {
+  border-color: #4caf50;
+  background-color: #f1f8f4;
+}
+
+.resume-button-resume:hover .button-label {
+  color: #4caf50;
+}
+
+.resume-button-new:hover {
+  border-color: #2196f3;
+  background-color: #f0f7ff;
+}
+
+.resume-button-new:hover .button-label {
+  color: #2196f3;
+}
+
+/* ダークテーマ対応 */
+[data-theme="dark"] .resume-dialog {
+  background: #2c2c2c;
+}
+
+[data-theme="dark"] .resume-dialog-header {
+  border-bottom-color: #444;
+}
+
+[data-theme="dark"] .resume-dialog-header h2 {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .resume-info p {
+  color: #bbb;
+}
+
+[data-theme="dark"] .resume-timestamp {
+  color: #888;
+}
+
+[data-theme="dark"] .resume-button {
+  background: #1c1c1c;
+  border-color: #444;
+}
+
+[data-theme="dark"] .resume-button .button-label {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .resume-button .button-description {
+  color: #aaa;
+}
+
+[data-theme="dark"] .resume-button-resume:hover {
+  background-color: #1e3a1e;
+  border-color: #4caf50;
+}
+
+[data-theme="dark"] .resume-button-new:hover {
+  background-color: #1a2a3a;
+  border-color: #64b5f6;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .resume-dialog {
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .resume-button .button-icon {
+    font-size: 28px;
+  }
+
+  .resume-button .button-label {
+    font-size: 15px;
+  }
+
+  .resume-button .button-description {
+    font-size: 11px;
+  }
+}

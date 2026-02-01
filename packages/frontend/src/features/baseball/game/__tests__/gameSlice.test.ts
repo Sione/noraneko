@@ -43,8 +43,14 @@ function createTestTeam(teamId: string, teamName: string): TeamInGame {
   return {
     teamId,
     teamName,
+    abbreviation: teamId.substring(0, 3).toUpperCase(),
     lineup: players,
+    bench: [],
     currentBatterIndex: 0,
+    score: 0,
+    hits: 0,
+    errors: 0,
+    leftOnBase: 0,
   };
 }
 
@@ -106,6 +112,7 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
   let initialState: GameState;
   let homeTeam: TeamInGame;
   let awayTeam: TeamInGame;
+  let allPlayers: PlayerInGame[];
 
   beforeEach(() => {
     // 初期状態を取得
@@ -114,13 +121,16 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
     // テストチームを作成
     homeTeam = createTestTeam('home', 'ホームチーム');
     awayTeam = createTestTeam('away', 'アウェイチーム');
+    
+    // 全選手データを集約
+    allPlayers = [...homeTeam.lineup, ...awayTeam.lineup];
   });
 
   describe('1.1 試合初期化と開始の画面遷移', () => {
     it('チームを設定できる', () => {
       const state = gameReducer(
         initialState,
-        setTeams({ homeTeam, awayTeam, isPlayerHome: true })
+        setTeams({ homeTeam, awayTeam, isPlayerHome: true, allPlayers })
       );
 
       expect(state.homeTeam).toEqual(homeTeam);
@@ -132,7 +142,7 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
     it('試合を開始できる', () => {
       let state = gameReducer(
         initialState,
-        setTeams({ homeTeam, awayTeam, isPlayerHome: true })
+        setTeams({ homeTeam, awayTeam, isPlayerHome: true, allPlayers })
       );
 
       state = gameReducer(state, startGame());
@@ -149,7 +159,7 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
     it('試合開始時に先発投手が設定される', () => {
       let state = gameReducer(
         initialState,
-        setTeams({ homeTeam, awayTeam, isPlayerHome: true })
+        setTeams({ homeTeam, awayTeam, isPlayerHome: true, allPlayers })
       );
 
       state = gameReducer(state, startGame());
@@ -161,7 +171,7 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
     it('試合開始メッセージがログに追加される', () => {
       let state = gameReducer(
         initialState,
-        setTeams({ homeTeam, awayTeam, isPlayerHome: true })
+        setTeams({ homeTeam, awayTeam, isPlayerHome: true, allPlayers })
       );
 
       state = gameReducer(state, startGame());
@@ -179,7 +189,7 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
     beforeEach(() => {
       gameState = gameReducer(
         initialState,
-        setTeams({ homeTeam, awayTeam, isPlayerHome: true })
+        setTeams({ homeTeam, awayTeam, isPlayerHome: true, allPlayers })
       );
       gameState = gameReducer(gameState, startGame());
     });
@@ -298,7 +308,7 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
     beforeEach(() => {
       gameState = gameReducer(
         initialState,
-        setTeams({ homeTeam, awayTeam, isPlayerHome: true })
+        setTeams({ homeTeam, awayTeam, isPlayerHome: true, allPlayers })
       );
       gameState = gameReducer(gameState, startGame());
     });
@@ -407,11 +417,12 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
     });
 
     it('試合終了時に経過時間が記録される', () => {
-      let state = {
+      const startTime = Date.now() - 60000; // 1分前に開始
+      let state: GameState = {
         ...gameState,
         currentInning: 9,
         isTopHalf: false,
-        gameStartTime: Date.now() - 60000, // 1分前に開始
+        gameStartTime: startTime,
         score: {
           ...gameState.score,
           home: 5,
@@ -429,7 +440,7 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
     it('ゲームをリセットして初期状態に戻せる', () => {
       let state = gameReducer(
         initialState,
-        setTeams({ homeTeam, awayTeam, isPlayerHome: true })
+        setTeams({ homeTeam, awayTeam, isPlayerHome: true, allPlayers })
       );
       state = gameReducer(state, startGame());
 

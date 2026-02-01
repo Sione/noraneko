@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { startTeamSetup, resetGame } from '../game/gameSlice';
 import { TeamSetup } from './TeamSetup';
@@ -11,10 +12,23 @@ import './GameBoard.css';
  */
 export function MainMenu() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const handleNewGame = () => {
     dispatch(resetGame());
     dispatch(startTeamSetup());
+  };
+
+  const handleHistory = () => {
+    navigate('/baseball/history');
+  };
+
+  const handlePlayerManagement = () => {
+    navigate('/baseball/players');
+  };
+
+  const handleTeamManagement = () => {
+    navigate('/baseball/teams');
   };
 
   return (
@@ -25,11 +39,14 @@ export function MainMenu() {
           <button className="menu-button" onClick={handleNewGame}>
             新規試合
           </button>
-          <button className="menu-button" disabled>
+          <button className="menu-button" onClick={handleHistory}>
             試合履歴
           </button>
-          <button className="menu-button" disabled>
+          <button className="menu-button" onClick={handlePlayerManagement}>
             選手管理
+          </button>
+          <button className="menu-button" onClick={handleTeamManagement}>
+            チーム管理
           </button>
           <button className="menu-button" disabled>
             設定

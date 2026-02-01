@@ -1,0 +1,116 @@
+.error-boundary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20px;
+}
+
+.error-boundary-container {
+  max-width: 600px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  text-align: center;
+}
+
+.error-boundary-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.error-boundary h1 {
+  color: #d32f2f;
+  margin-bottom: 16px;
+  font-size: 24px;
+}
+
+.error-message {
+  color: #666;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.error-details {
+  text-align: left;
+  margin: 24px 0;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.error-details summary {
+  cursor: pointer;
+  font-weight: bold;
+  color: #d32f2f;
+  margin-bottom: 12px;
+}
+
+.error-stack {
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #333;
+  margin: 0;
+}
+
+.error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.error-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.error-button-primary {
+  background-color: #1976d2;
+  color: white;
+}
+
+.error-button-primary:hover {
+  background-color: #1565c0;
+}
+
+.error-button-secondary {
+  background-color: #4caf50;
+  color: white;
+}
+
+.error-button-secondary:hover {
+  background-color: #43a047;
+}
+
+.error-button-tertiary {
+  background-color: #757575;
+  color: white;
+}
+
+.error-button-tertiary:hover {
+  background-color: #616161;
+}
+
+@media (max-width: 768px) {
+  .error-boundary-container {
+    padding: 24px;
+  }
+
+  .error-boundary-icon {
+    font-size: 48px;
+  }
+
+  .error-boundary h1 {
+    font-size: 20px;
+  }
+}

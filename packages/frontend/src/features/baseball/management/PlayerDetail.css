@@ -1,0 +1,263 @@
+/* 選手詳細表示のスタイル */
+
+.player-detail {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.player-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #2c5f2d;
+}
+
+.player-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.player-detail-title h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #2c5f2d;
+}
+
+.player-detail-position {
+  font-size: 1rem;
+  padding: 0.25rem 0.75rem;
+  background-color: #2c5f2d;
+  color: white;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.player-detail-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.player-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.detail-section {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.detail-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  color: #2c5f2d;
+  border-bottom: 2px solid #2c5f2d;
+  padding-bottom: 0.5rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background-color: white;
+  border-radius: 4px;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.abilities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ability-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: white;
+  border-radius: 4px;
+}
+
+.ability-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+  min-width: 200px;
+}
+
+.ability-value-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.ability-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+
+.ability-bar {
+  flex: 1;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 300px;
+}
+
+.ability-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* 能力値の色分け */
+.ability-excellent {
+  color: #1976d2;
+}
+
+.ability-bar-fill.ability-excellent {
+  background-color: #1976d2;
+}
+
+.ability-good {
+  color: #388e3c;
+}
+
+.ability-bar-fill.ability-good {
+  background-color: #388e3c;
+}
+
+.ability-average {
+  color: #f57c00;
+}
+
+.ability-bar-fill.ability-average {
+  background-color: #f57c00;
+}
+
+.ability-below-average {
+  color: #e64a19;
+}
+
+.ability-bar-fill.ability-below-average {
+  background-color: #e64a19;
+}
+
+.ability-poor {
+  color: #c62828;
+}
+
+.ability-bar-fill.ability-poor {
+  background-color: #c62828;
+}
+
+.position-ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.position-rating-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.position-rating-pos {
+  font-weight: 600;
+  color: #333;
+}
+
+.position-rating-value {
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+}
+
+.rating-A {
+  background-color: #1976d2;
+  color: white;
+}
+
+.rating-B {
+  background-color: #388e3c;
+  color: white;
+}
+
+.rating-C {
+  background-color: #f57c00;
+  color: white;
+}
+
+.rating-D {
+  background-color: #e64a19;
+  color: white;
+}
+
+.rating-F {
+  background-color: #c62828;
+  color: white;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .player-detail {
+    padding: 1rem;
+  }
+  
+  .player-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ability-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .ability-label {
+    min-width: auto;
+  }
+  
+  .ability-value-container {
+    width: 100%;
+  }
+}

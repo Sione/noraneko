@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { 
   startInning, 
@@ -34,15 +34,62 @@ import {
   judgeHitAndRun,
   judgePickoff
 } from './stealingEngine';
+// タスク11: エラーハンドリングとユーザビリティ
+import { ErrorBoundary } from './ErrorBoundary';
+import { Toast, useToast } from './Toast';
+import { SettingsModal } from './SettingsModal';
+import { HelpModal } from './HelpModal';
+import { PauseMenu } from './PauseMenu';
+import { ResumeGameDialog } from './ResumeGameDialog';
+import { validateOffensiveInstruction, formatValidationError, getErrorSeverity } from './validation';
+import { loadSettings, applyTheme, mapDifficultyToCPU } from './settings';
+import { autoSaveGame, startAutoSaveInterval, saveOnInningEnd } from './autoSave';
+// タスク14: CPU戦術AIの実装
+import { useCPUAI } from './useCPUAI';
 import './GameScreen.css';
 
 /**
- * GameScreen - 試合画面
+ * GameScreen - 試合画面（タスク11統合版）
  */
 export function GameScreen() {
   const dispatch = useAppDispatch();
   const gameState = useAppSelector((state) => state.game);
   const { phase, currentInning, isTopHalf, outs, score, homeTeam, awayTeam, playLog, currentAtBat, runners } = gameState;
+
+  // タスク11: UI状態管理
+  const [showSettings, setShowSettings] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showPause, setShowPause] = useState(false);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  
+  // タスク11: Toast通知
+  const { messages, removeToast, error, warning, success, info } = useToast();
+
+  // タスク14: CPU AIの設定
+  const [cpuDifficulty, setCpuDifficulty] = useState(mapDifficultyToCPU('normal'));
+
+  // タスク11: 設定の読み込みとテーマ適用
+  useEffect(() => {
+    const settings = loadSettings();
+    applyTheme(settings.theme);
+    // タスク14: 難易度をCPU AIに適用
+    setCpuDifficulty(mapDifficultyToCPU(settings.difficulty));
+  }, []);
+
+  // タスク11: 自動保存（30秒ごと）
+  useEffect(() => {
+    const cleanup = startAutoSaveInterval(() => {
+      autoSaveGame(gameState);
+    });
+    return cleanup;
+  }, [gameState]);
+
+  // タスク11: イニング終了時の保存
+  useEffect(() => {
+    if (phase === 'half_inning_end') {
+      saveOnInningEnd(gameState);
+    }
+  }, [phase, gameState]);
 
   useEffect(() => {
     // イニング開始フェーズの場合、自動的にイニングを開始
@@ -98,6 +145,22 @@ export function GameScreen() {
   // 攻撃指示を処理
   const handleOffensiveInstruction = (instruction: OffensiveInstruction) => {
     if (!currentAtBat || !homeTeam || !awayTeam) return;
+
+    // タスク11.1: 入力検証
+    const validationError = validateOffensiveInstruction(instruction, runners, outs);
+    if (validationError) {
+      const severity = getErrorSeverity(validationError);
+      const message = formatValidationError(validationError);
+      
+      if (severity === 'error') {
+        // ブロッキングエラー - 実行を中止
+        error(message);
+        return;
+      } else {
+        // 警告 - 実行は継続するが警告を表示
+        warning(message);
+      }
+    }
 
     const attackingTeam = isTopHalf ? awayTeam : homeTeam;
     const defendingTeam = isTopHalf ? homeTeam : awayTeam;
@@ -294,12 +357,15 @@ export function GameScreen() {
   };
 
   // 守備指示を処理
-  const handleDefensiveInstruction = (instruction: DefensiveInstruction) => {
+  const handleDefensiveInstruction = (instruction: DefensiveInstruction | null) => {
+    // nullの場合は通常守備として扱う
+    const actualInstruction = instruction || 'normal';
+    
     const instructionEvent: PlayEvent = {
       timestamp: Date.now(),
       inning: currentInning,
       isTopHalf,
-      description: `監督指示: ${getDefensiveInstructionLabel(instruction)}`,
+      description: `監督指示: ${getDefensiveInstructionLabel(actualInstruction)}`,
       type: 'at_bat_start',
       source: 'player',
     };
@@ -307,11 +373,18 @@ export function GameScreen() {
 
     // 守備指示の処理（次のタスクで実装予定）
     // 通常守備の場合は何もせず次に進む
-    if (instruction === 'normal') {
+    if (actualInstruction === 'normal') {
       // 打席へ進む
       dispatch(startAtBat());
     }
   };
+
+  // タスク14: CPU AIフックの統合
+  useCPUAI(
+    handleOffensiveInstruction,
+    handleDefensiveInstruction,
+    cpuDifficulty
+  );
 
   // タスク5: バント/スクイズ指示の処理
   const handleBuntInstruction = (
@@ -869,12 +942,187 @@ export function GameScreen() {
     return labels[shift];
   };
 
+  // イニング別得点表を生成
+  const generateInningsTable = () => {
+    const maxDisplayInnings = Math.max(9, currentInning);
+    const innings = [];
+    
+    for (let i = 1; i <= maxDisplayInnings; i++) {
+      const inningScore = score.innings.find(s => s.inning === i);
+      innings.push({
+        inning: i,
+        awayScore: inningScore?.awayScore ?? (i < currentInning ? 0 : '-'),
+        homeScore: inningScore?.homeScore ?? (i < currentInning || (i === currentInning && !isTopHalf) ? 0 : '-'),
+      });
+    }
+    return innings;
+  };
+
+  const inningsTable = generateInningsTable();
+
+  // タスク11.3: 一時停止メニューのハンドラ
+  const handlePause = () => {
+    setShowPause(true);
+  };
+
+  const handleSaveAndExit = () => {
+    autoSaveGame(gameState);
+    success('試合を保存しました');
+    // メインメニューに戻る処理（実装は後ほど）
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1000);
+  };
+
+  const handleExitWithoutSave = () => {
+    // 保存せずに終了（確認済み）
+    window.location.href = '/';
+  };
+
+  const handleOpenSettings = () => {
+    setShowPause(false);
+    setShowSettings(true);
+  };
+
+  const handleOpenHelp = () => {
+    setShowPause(false);
+    setShowHelp(true);
+  };
+
+  // タスク11: キーボードショートカット（ESCで一時停止）
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !showPause && !showSettings && !showHelp) {
+        handlePause();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showPause, showSettings, showHelp]);
+
+  // 重要局面の判定
+  const getSituationLabels = () => {
+    const labels: string[] = [];
+    const scoreDiff = isPlayerAttacking 
+      ? (gameState.isPlayerHome ? score.home - score.away : score.away - score.home)
+      : (gameState.isPlayerHome ? score.away - score.home : score.home - score.away);
+
+    // 得点圏判定
+    if (runners.second || runners.third) {
+      labels.push(isPlayerAttacking ? 'チャンス！' : 'ピンチ！');
+    }
+
+    // 接戦判定（7回以降で2点差以内）
+    if (currentInning >= 7 && Math.abs(scoreDiff) <= 2) {
+      labels.push('接戦！');
+    }
+
+    // サヨナラ判定
+    if (currentInning >= 9 && !isTopHalf && score.home <= score.away && runners.third) {
+      labels.push('サヨナラのチャンス！');
+    }
+
+    // ツーアウトでのラストチャンス
+    if (outs === 2 && (runners.first || runners.second || runners.third)) {
+      labels.push('ラストチャンス！');
+    }
+
+    return labels;
+  };
+
+  const situationLabels = getSituationLabels();
+
+  // ガイダンスメッセージ
+  const getGuidanceMessage = () => {
+    switch (phase) {
+      case 'inning_start':
+        return 'イニング開始...';
+      case 'awaiting_instruction':
+        return isPlayerAttacking ? '攻撃指示を選択してください' : '守備指示を選択してください';
+      case 'at_bat':
+        return '打席開始...';
+      case 'play_execution':
+        return 'プレイ実行中...';
+      case 'result_display':
+        return '次の打者へ...';
+      case 'half_inning_end':
+        return 'チェンジ！';
+      default:
+        return '';
+    }
+  };
+
+  const guidanceMessage = getGuidanceMessage();
+
+  // プレイログのフィルタリングとスタイリング
+  const [logFilter, setLogFilter] = useState<number | 'all'>('all');
+  const [showAllLogs, setShowAllLogs] = useState(false);
+
+  const getEventTypeClass = (type: PlayEvent['type']) => {
+    switch (type) {
+      case 'hit':
+        return 'event-hit';
+      case 'home_run':
+        return 'event-homerun';
+      case 'out':
+      case 'strikeout':
+        return 'event-out';
+      case 'walk':
+        return 'event-walk';
+      case 'error':
+        return 'event-error';
+      case 'double_play':
+        return 'event-doubleplay';
+      case 'substitution':
+        return 'event-substitution';
+      case 'inning_start':
+      case 'inning_end':
+        return 'event-inning';
+      case 'game_start':
+      case 'game_end':
+        return 'event-game';
+      default:
+        return 'event-default';
+    }
+  };
+
+  const filteredPlayLog = useMemo(() => {
+    let filtered = playLog;
+    if (logFilter !== 'all') {
+      filtered = playLog.filter(event => event.inning === logFilter);
+    }
+    return filtered.slice().reverse();
+  }, [playLog, logFilter]);
+
+  const displayedPlayLog = showAllLogs ? filteredPlayLog : filteredPlayLog.slice(0, 10);
+
+  // イニングフィルタのオプション生成
+  const inningFilterOptions = useMemo(() => {
+    const innings = new Set(playLog.map(event => event.inning).filter(i => i > 0));
+    return Array.from(innings).sort((a, b) => b - a); // 降順
+  }, [playLog]);
+
   return (
-    <div className="game-screen">
-      <div className="game-container">
-        {/* スコアボード */}
-        <div className="scoreboard">
-          <div className="scoreboard-header">
+    <ErrorBoundary>
+      <div className="game-screen">
+        {/* タスク11: ヘッダーバー（一時停止・設定・ヘルプボタン）*/}
+        <div className="game-header">
+          <button className="header-button" onClick={handlePause} title="一時停止 (ESC)">
+            ⏸️
+          </button>
+          <button className="header-button" onClick={() => setShowSettings(true)} title="設定">
+            ⚙️
+          </button>
+          <button className="header-button" onClick={() => setShowHelp(true)} title="ヘルプ">
+            ❓
+          </button>
+        </div>
+
+        <div className="game-container">
+          {/* スコアボード */}
+          <div className="scoreboard">
+            <div className="scoreboard-header">
             <div className="team-name">{awayTeam.teamName}</div>
             <div className="team-name">{homeTeam.teamName}</div>
           </div>
@@ -882,6 +1130,46 @@ export function GameScreen() {
             <div className="team-score">{score.away}</div>
             <div className="score-divider">-</div>
             <div className="team-score">{score.home}</div>
+          </div>
+          
+          {/* イニング別得点表 */}
+          <div className="innings-table">
+            <div className="innings-row innings-header">
+              <div className="inning-cell team-label"></div>
+              {inningsTable.map(inning => (
+                <div 
+                  key={inning.inning} 
+                  className={`inning-cell ${currentInning === inning.inning ? 'current-inning' : ''}`}
+                >
+                  {inning.inning}
+                </div>
+              ))}
+              <div className="inning-cell total-label">R</div>
+            </div>
+            <div className="innings-row away-row">
+              <div className="inning-cell team-label">{awayTeam.teamName}</div>
+              {inningsTable.map(inning => (
+                <div 
+                  key={inning.inning} 
+                  className={`inning-cell ${currentInning === inning.inning && isTopHalf ? 'active-half' : ''}`}
+                >
+                  {inning.awayScore}
+                </div>
+              ))}
+              <div className="inning-cell total-score">{score.away}</div>
+            </div>
+            <div className="innings-row home-row">
+              <div className="inning-cell team-label">{homeTeam.teamName}</div>
+              {inningsTable.map(inning => (
+                <div 
+                  key={inning.inning} 
+                  className={`inning-cell ${currentInning === inning.inning && !isTopHalf ? 'active-half' : ''}`}
+                >
+                  {inning.homeScore}
+                </div>
+              ))}
+              <div className="inning-cell total-score">{score.home}</div>
+            </div>
           </div>
         </div>
 
@@ -899,26 +1187,65 @@ export function GameScreen() {
               <span className="info-label">攻撃:</span>
               <span className="info-value">{attackingTeam.teamName}</span>
             </div>
+            {currentAtBat && (
+              <div className="info-item">
+                <span className="info-label">打順:</span>
+                <span className="info-value batting-order">{attackingTeam.currentBatterIndex + 1}番</span>
+              </div>
+            )}
           </div>
+          
+          {/* 重要局面ラベル */}
+          {situationLabels.length > 0 && (
+            <div className="situation-labels">
+              {situationLabels.map((label, index) => (
+                <span key={index} className="situation-label">
+                  {label}
+                </span>
+              ))}
+            </div>
+          )}
+          
+          {/* ガイダンスメッセージ */}
+          {guidanceMessage && (
+            <div className="guidance-message">
+              {guidanceMessage}
+            </div>
+          )}
         </div>
 
         {/* 走者表示 */}
         <div className="bases">
           <div className="bases-container">
             <div className={`base second ${runners.second ? 'occupied' : ''}`}>
-              {runners.second ? '●' : '◇'}
+              <span className="base-symbol">{runners.second ? '●' : '◇'}</span>
               <span className="base-label">二塁</span>
+              {runners.second && (
+                <span className="runner-name">{runners.second.playerName}</span>
+              )}
             </div>
             <div className="bases-row">
               <div className={`base third ${runners.third ? 'occupied' : ''}`}>
-                {runners.third ? '●' : '◇'}
+                <span className="base-symbol">{runners.third ? '●' : '◇'}</span>
                 <span className="base-label">三塁</span>
+                {runners.third && (
+                  <span className="runner-name">{runners.third.playerName}</span>
+                )}
               </div>
               <div className={`base first ${runners.first ? 'occupied' : ''}`}>
-                {runners.first ? '●' : '◇'}
+                <span className="base-symbol">{runners.first ? '●' : '◇'}</span>
                 <span className="base-label">一塁</span>
+                {runners.first && (
+                  <span className="runner-name">{runners.first.playerName}</span>
+                )}
               </div>
             </div>
+            {/* 満塁表示 */}
+            {runners.first && runners.second && runners.third && (
+              <div className="bases-loaded-indicator">
+                満塁！
+              </div>
+            )}
           </div>
         </div>
 
@@ -962,6 +1289,13 @@ export function GameScreen() {
                 onSelectPitcher={handlePitcherChange}
               />
             )}
+            
+            {/* タスク14: CPU思考中の表示 */}
+            {!isPlayerAttacking && (
+              <div className="cpu-thinking">
+                <p>（CPU監督が戦術を検討中...）</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -980,23 +1314,90 @@ export function GameScreen() {
 
         {/* プレイログ */}
         <div className="play-log">
-          <div className="play-log-header">プレイログ</div>
+          <div className="play-log-header">
+            <span>プレイログ</span>
+            <div className="play-log-controls">
+              <select 
+                value={logFilter} 
+                onChange={(e) => setLogFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                className="log-filter-select"
+              >
+                <option value="all">全イニング</option>
+                {inningFilterOptions.map(inning => (
+                  <option key={inning} value={inning}>
+                    {inning}回
+                  </option>
+                ))}
+              </select>
+              {filteredPlayLog.length > 10 && (
+                <button 
+                  onClick={() => setShowAllLogs(!showAllLogs)}
+                  className="log-toggle-button"
+                >
+                  {showAllLogs ? '最新のみ表示' : `全て表示 (${filteredPlayLog.length}件)`}
+                </button>
+              )}
+            </div>
+          </div>
           <div className="play-log-content">
-            {playLog
-              .slice()
-              .reverse()
-              .slice(0, 10)
-              .map((event, index) => (
-                <div key={`${event.timestamp}-${index}`} className="play-log-item">
+            {displayedPlayLog.length === 0 ? (
+              <div className="play-log-empty">プレイログはありません</div>
+            ) : (
+              displayedPlayLog.map((event, index) => (
+                <div 
+                  key={`${event.timestamp}-${index}`} 
+                  className={`play-log-item ${getEventTypeClass(event.type)}`}
+                >
                   <span className="play-log-inning">
-                    {event.inning > 0 ? `${event.inning}回${event.isTopHalf ? '表' : '裏'}` : ''}
+                    {event.inning > 0 ? `${event.inning}回${event.isTopHalf ? '表' : '裏'}` : '試合前'}
                   </span>
                   <span className="play-log-description">{event.description}</span>
+                  {event.scoreChange && (
+                    <span className="play-log-score-change">
+                      ({event.scoreChange.away}-{event.scoreChange.home})
+                    </span>
+                  )}
                 </div>
-              ))}
+              ))
+            )}
+          </div>
           </div>
         </div>
+
+        {/* タスク11: モーダルとUI要素 */}
+        <Toast messages={messages} onRemove={removeToast} />
+        
+        <PauseMenu
+          isOpen={showPause}
+          onClose={() => setShowPause(false)}
+          onSaveAndExit={handleSaveAndExit}
+          onExitWithoutSave={handleExitWithoutSave}
+          onOpenSettings={handleOpenSettings}
+          onOpenHelp={handleOpenHelp}
+        />
+
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+        />
+
+        <HelpModal
+          isOpen={showHelp}
+          onClose={() => setShowHelp(false)}
+        />
+
+        <ResumeGameDialog
+          isOpen={showResumeDialog}
+          onResume={() => {
+            setShowResumeDialog(false);
+            info('前回の試合を再開します');
+          }}
+          onStartNew={() => {
+            setShowResumeDialog(false);
+            info('新しい試合を開始します');
+          }}
+        />
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

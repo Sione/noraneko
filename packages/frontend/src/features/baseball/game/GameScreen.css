@@ -1,7 +1,46 @@
 .game-screen {
   min-height: 100vh;
-  padding: 24px;
+  padding: 0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* タスク11: ヘッダーバー */
+.game-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  padding: 12px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.header-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.header-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.header-button:active {
+  transform: translateY(0);
 }
 
 .game-container {
@@ -10,10 +49,11 @@
   background: white;
   border-radius: 16px;
   padding: 24px;
+  margin-top: 24px;
+  margin-bottom: 24px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-/* スコアボード */
 .scoreboard {
   background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
   color: white;
@@ -40,6 +80,7 @@
   justify-content: center;
   align-items: center;
   gap: 24px;
+  margin-bottom: 20px;
 }
 
 .team-score {
@@ -51,6 +92,68 @@
 .score-divider {
   font-size: 32px;
   opacity: 0.6;
+}
+
+/* イニング別得点表 */
+.innings-table {
+  margin-top: 20px;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  padding-top: 16px;
+}
+
+.innings-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.innings-header {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.inning-cell {
+  min-width: 32px;
+  text-align: center;
+  padding: 4px 2px;
+  font-size: 13px;
+}
+
+.inning-cell.team-label {
+  min-width: 80px;
+  text-align: left;
+  font-weight: 600;
+  padding-right: 12px;
+}
+
+.inning-cell.total-label,
+.inning-cell.total-score {
+  min-width: 40px;
+  font-weight: bold;
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+  margin-left: 8px;
+  padding-left: 8px;
+}
+
+.inning-cell.current-inning {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.inning-cell.active-half {
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.away-row {
+  opacity: 0.95;
+}
+
+.home-row {
+  opacity: 0.95;
 }
 
 /* 試合状況 */
@@ -74,6 +177,7 @@
   display: flex;
   justify-content: center;
   gap: 32px;
+  flex-wrap: wrap;
 }
 
 .info-item {
@@ -92,6 +196,57 @@
   font-size: 18px;
   font-weight: bold;
   color: #333;
+}
+
+.info-value.batting-order {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+/* 重要局面ラベル */
+.situation-labels {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.situation-label {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ガイダンスメッセージ */
+.guidance-message {
+  text-align: center;
+  margin-top: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
 }
 
 /* 走者表示 */
@@ -120,9 +275,9 @@
   width: 60px;
   height: 60px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
   color: #999;
   border: 3px solid #ddd;
   background: white;
@@ -137,6 +292,23 @@
   border-color: #667eea;
   background: #f0f4ff;
   box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+  animation: runner-appear 0.5s ease-out;
+}
+
+@keyframes runner-appear {
+  0% {
+    transform: rotate(45deg) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(45deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.base-symbol {
+  font-size: 32px;
+  transform: rotate(-45deg);
 }
 
 .base-label {
@@ -148,6 +320,34 @@
   font-weight: 600;
   color: #666;
   white-space: nowrap;
+}
+
+.runner-name {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-45deg);
+  font-size: 11px;
+  font-weight: 600;
+  color: #667eea;
+  white-space: nowrap;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.bases-loaded-indicator {
+  margin-top: 16px;
+  padding: 8px 24px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+  animation: pulse 2s ease-in-out infinite;
 }
 
 /* 打席情報 */
@@ -270,29 +470,97 @@
 }
 
 .play-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 18px;
   font-weight: bold;
   color: #333;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 2px solid #ddd;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.play-log-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.log-filter-select {
+  padding: 6px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.log-filter-select:hover {
+  border-color: #667eea;
+}
+
+.log-filter-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.log-toggle-button {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+.log-toggle-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+}
+
+.log-toggle-button:active {
+  transform: translateY(0);
 }
 
 .play-log-content {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
+}
+
+.play-log-empty {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
 }
 
 .play-log-item {
   display: flex;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   background: white;
   border-radius: 6px;
-  border-left: 3px solid #667eea;
+  border-left: 4px solid #667eea;
+  transition: all 0.2s ease;
+}
+
+.play-log-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .play-log-inning {
@@ -306,6 +574,61 @@
   flex: 1;
   font-size: 14px;
   color: #333;
+}
+
+.play-log-score-change {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  padding: 2px 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+/* イベントタイプによる色分け */
+.play-log-item.event-hit {
+  border-left-color: #4ecdc4;
+}
+
+.play-log-item.event-homerun {
+  border-left-color: #ffd700;
+  background: linear-gradient(to right, #fffbea 0%, white 100%);
+}
+
+.play-log-item.event-out,
+.play-log-item.event-strikeout {
+  border-left-color: #95a5a6;
+}
+
+.play-log-item.event-walk {
+  border-left-color: #3498db;
+}
+
+.play-log-item.event-error {
+  border-left-color: #e74c3c;
+}
+
+.play-log-item.event-doubleplay {
+  border-left-color: #9b59b6;
+}
+
+.play-log-item.event-substitution {
+  border-left-color: #f39c12;
+}
+
+.play-log-item.event-inning {
+  border-left-color: #2ecc71;
+  background: #f0fff4;
+}
+
+.play-log-item.event-game {
+  border-left-color: #667eea;
+  background: linear-gradient(135deg, #f0f4ff 0%, white 100%);
+  font-weight: bold;
+}
+
+.play-log-item.event-default {
+  border-left-color: #bdc3c7;
 }
 
 /* フェーズメッセージ */
@@ -342,4 +665,142 @@
   font-size: 18px;
   color: #666;
   margin-bottom: 8px;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .game-container {
+    padding: 16px;
+  }
+
+  .scoreboard {
+    padding: 16px;
+  }
+
+  .team-score {
+    font-size: 36px;
+  }
+
+  .innings-table {
+    overflow-x: auto;
+  }
+
+  .inning-cell {
+    min-width: 28px;
+    font-size: 11px;
+  }
+
+  .inning-cell.team-label {
+    min-width: 60px;
+    font-size: 12px;
+  }
+
+  .game-info {
+    gap: 16px;
+  }
+
+  .info-value {
+    font-size: 16px;
+  }
+
+  .bases-row {
+    gap: 80px;
+  }
+
+  .base {
+    width: 50px;
+    height: 50px;
+  }
+
+  .base-symbol {
+    font-size: 24px;
+  }
+
+  .at-bat-display {
+    flex-direction: column;
+  }
+
+  .play-log-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .play-log-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .instruction-buttons {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-screen {
+    padding: 12px;
+  }
+
+  .team-score {
+    font-size: 28px;
+  }
+
+  .inning-info {
+    font-size: 20px;
+  }
+
+  .bases-row {
+    gap: 60px;
+  }
+
+  .base {
+    width: 40px;
+    height: 40px;
+  }
+
+  .base-symbol {
+    font-size: 20px;
+  }
+
+  .runner-name {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .play-log-inning {
+    min-width: 60px;
+    font-size: 11px;
+  }
+
+  .play-log-description {
+    font-size: 13px;
+  }
+}
+
+/* タスク14: CPU思考中の表示 */
+.cpu-thinking {
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+  border-radius: 12px;
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.cpu-thinking p {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
 }

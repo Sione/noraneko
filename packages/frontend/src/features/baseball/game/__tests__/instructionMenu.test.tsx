@@ -29,6 +29,7 @@ function getInitialGameState(): GameState {
     gameId: null,
     homeTeam: null,
     awayTeam: null,
+    allPlayers: [],
     score: {
       home: 0,
       away: 0,
@@ -52,6 +53,9 @@ function getInitialGameState(): GameState {
     shiftLockRemaining: 0,
     gameStartTime: null,
     elapsedSeconds: 0,
+    playerStatuses: {},
+    substitutions: [],
+    mvp: null,
   };
 }
 
@@ -79,8 +83,14 @@ function createTestTeam(teamId: string, teamName: string): TeamInGame {
   return {
     teamId,
     teamName,
+    abbreviation: teamId.substring(0, 3).toUpperCase(),
     lineup: players,
+    bench: [],
     currentBatterIndex: 0,
+    score: 0,
+    hits: 0,
+    errors: 0,
+    leftOnBase: 0,
   };
 }
 

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAppSelector } from '../../../store/hooks';
 import { InstructionOption, DefensiveInstruction, DefensiveShift } from '../types';
+import { getShiftRecommendation, ShiftRecommendation } from './defensiveShiftEngine';
 import './DefensiveInstructionMenu.css';
 
 /**
@@ -155,6 +156,12 @@ export function DefensiveInstructionMenu({
     },
   ];
 
+  // シフト推奨を取得
+  const shiftRecommendation = useMemo(() => {
+    if (!batter) return null;
+    return getShiftRecommendation(batter, gameState);
+  }, [batter, gameState]);
+
   const [showShiftMenu, setShowShiftMenu] = useState(false);
   const [showPitcherMenu, setShowPitcherMenu] = useState(false);
 
@@ -273,23 +280,50 @@ export function DefensiveInstructionMenu({
               <span>長打力: {batter.batting.hrPower}</span>
               <span>打撃傾向: {batter.batterHand === 'left' ? '左打者' : '右打者'}</span>
             </div>
+            
+            {/* シフト推奨表示 (AC 8-15) */}
+            {shiftRecommendation && (
+              <div className={`shift-recommendation ${shiftRecommendation.confidence}`}>
+                <div className="recommendation-header">
+                  <span className="recommendation-badge">
+                    {shiftRecommendation.confidence === 'high' ? '強く推奨' : 
+                     shiftRecommendation.confidence === 'medium' ? '推奨' : '参考'}
+                  </span>
+                  <span className="recommended-shift">
+                    {shiftOptions.find(o => o.shift === shiftRecommendation.recommendedShift)?.label}
+                  </span>
+                </div>
+                <div className="recommendation-reason">{shiftRecommendation.reason}</div>
+                {shiftRecommendation.warning && (
+                  <div className="recommendation-warning">⚠️ {shiftRecommendation.warning}</div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         <div className="shift-options">
-          {shiftOptions.map((option) => (
-            <button
-              key={option.shift}
-              className={`shift-option ${gameState.defensiveShift === option.shift ? 'current' : ''}`}
-              onClick={() => handleSelectShift(option.shift)}
-            >
-              <div className="shift-label">{option.label}</div>
-              <div className="shift-description">{option.description}</div>
-              {gameState.defensiveShift === option.shift && (
-                <div className="current-badge">現在の配置</div>
-              )}
-            </button>
-          ))}
+          {shiftOptions.map((option) => {
+            const isRecommended = shiftRecommendation?.recommendedShift === option.shift;
+            const isCurrent = gameState.defensiveShift === option.shift;
+            
+            return (
+              <button
+                key={option.shift}
+                className={`shift-option ${isCurrent ? 'current' : ''} ${isRecommended ? 'recommended' : ''}`}
+                onClick={() => handleSelectShift(option.shift)}
+              >
+                <div className="shift-label">
+                  {option.label}
+                  {isRecommended && <span className="recommended-badge">推奨</span>}
+                </div>
+                <div className="shift-description">{option.description}</div>
+                {isCurrent && (
+                  <div className="current-badge">現在の配置</div>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         <button 
