@@ -1,10 +1,10 @@
 # Requirements Document
 
 ## Project Description (Input)
-プレイヤーが監督となってプレイ毎に指示を出し勝利を目指す、テキストベースの野球ゲーム
+プレイヤーが監督となってプレイ毎に指示を出し勝利を目指す、ブラウザで動作するWebアプリケーションの野球ゲーム
 
 ## Introduction
-本ドキュメントは、テキストベースの野球監督シミュレーションゲームの要件を定義します。プレイヤーは監督として試合中のプレイ毎に戦術的指示を出し、チームを勝利に導きます。
+本ドキュメントは、ブラウザで動作するWebアプリケーションの野球監督シミュレーションゲームの要件を定義します。プレイヤーは監督として試合中のプレイ毎に戦術的指示を出し、チームを勝利に導きます。
 
 ## Requirements
 
@@ -636,46 +636,46 @@
 #### Acceptance Criteria
 
 **スコアボード表示**
-1. The Game System shall スコアボード（両チームの得点、イニング、アウトカウント、ボールカウント）を画面上部に常時表示する
-2. The Game System shall イニング別の得点経過を表形式で表示する（例：1回=0, 2回=2, 3回=0...）
-3. When 得点が入る、the Game System shall スコアボードをリアルタイムで更新し視覚的に強調する
-4. The Game System shall 現在の打順位置（何番打者か）をスコアボード付近に表示する
-5. When イニングが変わる、the Game System shall イニング表示を更新し攻守交代を明示する
+1. The Game System shall スコアボード（両チームの得点、イニング、アウトカウント、ボールカウント）をブラウザの画面上部に常時表示する
+2. The Game System shall イニング別の得点経過を表形式でHTML要素として表示する（例：1回=0, 2回=2, 3回=0...）
+3. When 得点が入る、the Game System shall スコアボードをリアルタイムで更新しCSSアニメーションまたはクラス変更で視覚的に強調する
+4. The Game System shall 現在の打順位置（何番打者か）をスコアボード付近にDOM要素として表示する
+5. When イニングが変わる、the Game System shall イニング表示をDOM更新で変更し攻守交代を明示する
 
 **ランナー状況の表示**
-6. The Game System shall 塁上のランナー状態を記号（例：●=ランナーあり、○=塁なし）またはテキストで表現する
-7. When ランナーが塁に出る、the Game System shall 該当する塁の表示を即座に更新する
-8. When ランナーが進塁または得点する、the Game System shall ランナー表示をアニメーション風のテキスト演出で更新する
+6. The Game System shall 塁上のランナー状態をHTML/CSS要素（例：●=ランナーあり、○=塁なし）またはテキストで表現する
+7. When ランナーが塁に出る、the Game System shall 該当する塁のDOM要素を即座に更新する
+8. When ランナーが進塁または得点する、the Game System shall ランナー表示をCSS transitionまたはJavaScriptアニメーションで視覚的に更新する
 9. The Game System shall ランナーがいる塁に選手名を表示するオプションを提供する
 10. When 満塁状態になる、the Game System shall 「満塁！」などの状況説明を強調表示する
 
 **プレイ実況と結果表示**
-11. When プレイが実行される、the Game System shall 打席の流れ（投球、打撃、結果）を自然な日本語で実況形式で表示する
+11. When プレイが実行される、the Game System shall 打席の流れ（投球、打撃、結果）を自然な日本語で実況形式でDOM要素に表示する
 12. When プレイ結果が出る、the Game System shall 何が起きたか（ヒット、アウト、得点など）を明確に説明する
 13. When 得点が入る、the Game System shall 「○○選手のタイムリーヒット！△△選手が生還！」などの臨場感ある実況を表示する
-14. When 重要なプレイ（三振、ホームラン、ダブルプレー）が発生する、the Game System shall 特別な強調表示と効果音的な記号（！！！）を使用する
-15. The Game System shall 各プレイの結果を色分けまたは記号で視覚的に区別する（例：ヒット=青、アウト=灰色）
+14. When 重要なプレイ（三振、ホームラン、ダブルプレー）が発生する、the Game System shall CSSクラスによる特別な強調表示と視覚的演出を使用する
+15. The Game System shall 各プレイの結果をCSSクラスによる色分けで視覚的に区別する（例：ヒット=青、アウト=灰色）
 
 **重要局面の強調**
-16. When 得点圏にランナーがいる、the Game System shall 「チャンス！」「ピンチ！」などの状況ラベルを表示する
+16. When 得点圏にランナーがいる、the Game System shall 「チャンス！」「ピンチ！」などの状況ラベルをDOM要素として表示する
 17. When クリーンナップ打者（3-5番）が打席に入る、the Game System shall 「強打者登場」などの注意喚起を表示する
 18. When ツーアウトで攻撃チームに最後のチャンスである、the Game System shall 「ラストチャンス！」と表示する
 19. When 試合終盤（7回以降）で僅差である、the Game System shall 「接戦！」や点差を強調表示する
 20. When サヨナラのチャンスである、the Game System shall 「サヨナラのチャンス！」と大きく表示する
 
 **プレイ履歴とログ**
-21. The Game System shall 試合中の全プレイを時系列で記録する
-22. When プレイヤーがログを要求する、the Game System shall 過去のプレイ履歴をスクロール可能なリストで表示する
-23. When プレイヤーが特定イニングのログを確認する、the Game System shall そのイニングのプレイのみをフィルタ表示する
+21. The Game System shall 試合中の全プレイを時系列でメモリまたはlocalStorageに記録する
+22. When プレイヤーがログを要求する、the Game System shall 過去のプレイ履歴をスクロール可能なHTML要素のリストで表示する
+23. When プレイヤーが特定イニングのログを確認する、the Game System shall そのイニングのプレイのみをJavaScriptフィルタリングで表示する
 24. The Game System shall ログに各プレイの時刻、打者名、結果、スコア変動を含める
 25. When 試合が長時間になる、the Game System shall ログの最大表示件数を制限し古いログは圧縮する
 
 **視覚的なユーザビリティ**
-26. The Game System shall 現在の状況（攻撃中/守備中、指示待ちなど）を明確に表示する
-27. The Game System shall テキストベースでありながら見やすいレイアウト（罫線、スペース、改行）を使用する
-28. When 画面が情報過多になる、the Game System shall 必須情報のみを前面に表示し詳細は要求時に表示する
-29. The Game System shall 色や太字（可能な環境では）を使って情報の重要度を視覚的に表現する
-30. The Game System shall 常に次に何をすべきか（指示選択、確認など）をガイドメッセージで表示する
+26. The Game System shall 現在の状況（攻撃中/守備中、指示待ちなど）をWeb UIとして明確に表示する
+27. The Game System shall レスポンシブデザインとHTML/CSSレイアウトで見やすい画面構成を実現する
+28. When 画面が情報過多になる、the Game System shall 必須情報のみを前面に表示し詳細はモーダルまたは折りたたみ要素で表示する
+29. The Game System shall CSSスタイルを使って情報の重要度を視覚的に表現する
+30. The Game System shall 常に次に何をすべきか（指示選択、確認など）をガイドメッセージとしてDOM要素に表示する
 
 ### Requirement 6: ゲームの勝敗判定
 **Objective:** システムとして、試合の勝敗を正しく判定したい、野球のルールに従った結果を提供するため
@@ -725,45 +725,45 @@
 #### Acceptance Criteria
 
 **入力エラーのハンドリング**
-1. If プレイヤーが無効な指示（範囲外の数値、存在しない選択肢）を入力する、then the Game System shall 「無効な入力です。もう一度選択してください」と表示し再選択を促す
+1. If プレイヤーが無効な指示（範囲外の数値、存在しない選択肢）を入力する、then the Game System shall 「無効な入力です。もう一度選択してください」とブラウザ上にメッセージ表示し再選択を促す
 2. If プレイヤーが現在の状況で選択できない指示を選ぶ、then the Game System shall 理由を説明し（例：「ランナーがいません」）適切な選択肢を再提示する
 3. When 入力エラーが発生する、the Game System shall 試合状態を変更せず同じ場面を維持する
-4. The Game System shall 入力エラー時に警告音的な記号（[!]など）を表示する
-5. If プレイヤーが連続して3回以上エラー入力する、then the Game System shall ヘルプメッセージや選択肢の詳細説明を表示する
+4. The Game System shall 入力エラー時にブラウザの視覚的フィードバック（警告色、アイコンなど）を表示する
+5. If プレイヤーが連続して3回以上エラー入力する、then the Game System shall ヘルプメッセージや選択肢の詳細説明をモーダルまたはツールチップで表示する
 
 **システムエラーとデータ保護**
-6. If システムエラー（例外、クラッシュ）が発生する、then the Game System shall 現在の試合状態を緊急保存する
-7. When システムが予期しないエラーで停止する、the Game System shall エラーログをファイルに記録する
-8. When ゲーム再起動時にクラッシュ履歴がある、the Game System shall 「前回の試合を復元しますか？」と確認する
-9. The Game System shall 自動保存機能を提供し各イニング終了時に試合状態を保存する
-10. If データ保存に失敗する、then the Game System shall 「保存に失敗しました」と警告し再試行オプションを提供する
+6. If システムエラー（例外、クラッシュ）が発生する、then the Game System shall 現在の試合状態をlocalStorageまたはIndexedDBに緊急保存する
+7. When システムが予期しないエラーで停止する、the Game System shall エラーログをlocalStorageまたはブラウザコンソールに記録する
+8. When アプリ再起動時にlocalStorageにクラッシュ履歴がある、the Game System shall 「前回の試合を復元しますか？」とダイアログで確認する
+9. The Game System shall 自動保存機能を提供し各イニング終了時に試合状態をlocalStorageに保存する
+10. If データ保存に失敗する、then the Game System shall 「保存に失敗しました」と警告しブラウザ上で再試行オプションを提供する
 
 **試合の中断と再開**
-11. When プレイヤーが中断（一時停止）を要求する、the Game System shall 試合を一時停止し現在の状態を保持する
-12. When 試合が一時停止される、the Game System shall 「再開」「保存して終了」「保存せずに終了」のオプションを表示する
-13. When プレイヤーが「保存して終了」を選択する、the Game System shall 試合データを保存しメインメニューに戻る
-14. When プレイヤーが次回起動時に「試合を再開」を選択する、the Game System shall 保存された試合状態を正確に復元する
+11. When プレイヤーが中断（一時停止）を要求する、the Game System shall 試合を一時停止し現在の状態をメモリに保持する
+12. When 試合が一時停止される、the Game System shall 「再開」「保存して終了」「保存せずに終了」のオプションをボタンUIで表示する
+13. When プレイヤーが「保存して終了」を選択する、the Game System shall 試合データをlocalStorageに保存しメインメニューに戻る
+14. When プレイヤーが次回起動時に「試合を再開」を選択する、the Game System shall localStorageから試合状態を正確に復元する
 15. The Game System shall 中断前の試合状況（スコア、ランナー、打順、投手）を完全に再現する
 
 **ユーザビリティとガイダンス**
-16. The Game System shall すべての指示選択肢に番号を振り数字入力で選択できるようにする
-17. The Game System shall 各指示オプションに簡潔な説明文（1行）を付ける
-18. When 初回プレイである、the Game System shall 基本的な操作方法を説明するチュートリアルを表示するオプションを提供する
-19. When プレイヤーが「ヘルプ」を要求する、the Game System shall ゲームルールと操作方法を表示する
+16. The Game System shall すべての指示選択肢をボタンまたはクリック可能な要素として提供する
+17. The Game System shall 各指示オプションにツールチップまたは説明文（1行）を付ける
+18. When 初回プレイである、the Game System shall 基本的な操作方法を説明するチュートリアルをオーバーレイまたはモーダルで表示するオプションを提供する
+19. When プレイヤーが「ヘルプ」を要求する、the Game System shall ゲームルールと操作方法をモーダルウィンドウで表示する
 20. The Game System shall 現在選択可能なアクションを常に明示する
 
 **パフォーマンスとレスポンス**
 21. The Game System shall プレイ実行から結果表示までの応答時間を1秒以内に保つ
-22. When プレイヤーが指示を選択する、the Game System shall 即座に受け付け処理を開始する
-23. The Game System shall テキスト表示速度を調整可能にする（即座表示/逐次表示）
-24. The Game System shall 長いテキスト出力は適度に区切り「Enterで続行」を表示する
+22. When プレイヤーが指示を選択する、the Game System shall 即座に受け付けDOM更新を開始する
+23. The Game System shall テキスト表示速度をJavaScriptアニメーション設定で調整可能にする（即座表示/逐次表示）
+24. The Game System shall 長いテキスト出力は適度に区切り「クリックで続行」ボタンを表示する
 25. The Game System shall プレイのテンポを維持し待機時間を最小化する
 
 **アクセシビリティとカスタマイズ**
 26. The Game System shall 表示言語を設定可能にする（日本語/英語など）
-27. When プレイヤーが表示設定を変更する、the Game System shall 設定を保存し次回起動時に適用する
-28. The Game System shall コンソール/ターミナルの幅に応じてレイアウトを調整する
-29. If 表示環境が色表示に非対応である、then the Game System shall 記号や罫線のみで情報を表現する
+27. When プレイヤーが表示設定を変更する、the Game System shall 設定をlocalStorageに保存し次回起動時に適用する
+28. The Game System shall レスポンシブデザインでスマートフォン・タブレット・デスクトップに対応する
+29. The Game System shall ブラウザのダークモード対応またはカラーテーマ切り替え機能を提供する
 30. The Game System shall プレイヤーが難易度（選手能力の幅、乱数の振れ幅）を設定できるオプションを提供する
 
 ### Requirement 8: 試合履歴と戦績管理
@@ -772,51 +772,51 @@
 #### Acceptance Criteria
 
 **試合結果の記録と保存**
-1. When 試合が正常終了する、the Game System shall 試合結果（試合ID、日時、対戦相手、最終スコア、勝敗、試合時間）を自動的に永続化する
+1. When 試合が正常終了する、the Game System shall 試合結果（試合ID、日時、対戦相手、最終スコア、勝敗、試合時間）をlocalStorageまたはIndexedDBに自動的に永続化する
 2. The Game System shall 各試合のイニング別得点を詳細データとして保存する
 3. When 試合が保存される、the Game System shall 主要なプレイイベント（得点シーン、投手交代、サヨナラなど）をハイライトとして記録する
-4. The Game System shall 試合データをJSON形式またはデータベース形式で構造化して保存する
-5. When 保存処理が完了する、the Game System shall 「試合結果を保存しました」と確認メッセージを表示する
+4. The Game System shall 試合データをJSON形式で構造化してブラウザストレージに保存する
+5. When 保存処理が完了する、the Game System shall 「試合結果を保存しました」と確認メッセージをブラウザ上に表示する
 
 **履歴一覧の表示**
-6. When プレイヤーがメインメニューで「試合履歴」を選択する、the Game System shall 過去の試合一覧を新しい順（降順）に表示する
-7. The Game System shall 履歴一覧に各試合の日付、対戦相手、スコア、勝敗を表形式で表示する
-8. When 履歴が10件を超える、the Game System shall ページネーション機能を提供する
-9. When プレイヤーがページを切り替える、the Game System shall 前の10件/次の10件を表示する
-10. The Game System shall 履歴一覧で勝利試合と敗北試合を色分けまたは記号で区別する
+6. When プレイヤーがメインメニューで「試合履歴」を選択する、the Game System shall localStorageから過去の試合一覧を読み込み新しい順（降順）に表示する
+7. The Game System shall 履歴一覧に各試合の日付、対戦相手、スコア、勝敗をHTML表形式で表示する
+8. When 履歴が10件を超える、the Game System shall ページネーション機能またはスクロール機能を提供する
+9. When プレイヤーがページを切り替える、the Game System shall JavaScriptで前の10件/次の10件を表示する
+10. The Game System shall 履歴一覧で勝利試合と敗北試合をCSSクラスによる色分けで区別する
 
 **試合詳細の閲覧**
-11. When プレイヤーが履歴一覧から特定の試合を選択する、the Game System shall その試合の詳細画面に遷移する
-12. When 試合詳細が表示される、the Game System shall 最終スコア、イニング別得点表、試合時間、総安打数を表示する
-13. The Game System shall 試合詳細画面に主要プレイのハイライト（タイムリーヒット、ホームラン、投手交代）を時系列で表示する
-14. When プレイヤーが詳細ログを要求する、the Game System shall その試合の全プレイ履歴を表示する
-15. When プレイヤーが詳細画面から戻る、the Game System shall 履歴一覧に戻る
+11. When プレイヤーが履歴一覧から特定の試合を選択する、the Game System shall その試合の詳細画面にルーティング遷移する
+12. When 試合詳細が表示される、the Game System shall 最終スコア、イニング別得点表、試合時間、総安打数をDOM要素として表示する
+13. The Game System shall 試合詳細画面に主要プレイのハイライト（タイムリーヒット、ホームラン、投手交代）を時系列でリスト表示する
+14. When プレイヤーが詳細ログを要求する、the Game System shall その試合の全プレイ履歴をスクロール可能なリストとして表示する
+15. When プレイヤーが詳細画面から戻る、the Game System shall ブラウザの戻るボタンまたはナビゲーションボタンで履歴一覧に戻る
 
 **通算戦績の集計と表示**
-16. The Game System shall 全試合の戦績を集計し総試合数、勝利数、敗北数、引き分け数を計算する
+16. The Game System shall localStorageから全試合の戦績を集計し総試合数、勝利数、敗北数、引き分け数をJavaScriptで計算する
 17. The Game System shall 勝率を計算し小数点第3位まで表示する（例：.667）
-18. When プレイヤーが戦績画面を開く、the Game System shall 通算成績を見やすくサマリー形式で表示する
+18. When プレイヤーが戦績画面を開く、the Game System shall 通算成績を見やすくサマリー形式でHTML要素として表示する
 19. The Game System shall 最高得点試合、最低失点試合などの記録を「自己ベスト」として表示する
 20. The Game System shall 連勝記録、連敗記録を追跡し表示する
 
 **フィルタリングと検索機能**
-21. When プレイヤーが戦績フィルタを選択する、the Game System shall 期間指定（過去7日間、過去30日間、全期間）のオプションを表示する
-22. When プレイヤーが期間フィルタを適用する、the Game System shall 指定期間内の試合のみを抽出し表示する
+21. When プレイヤーが戦績フィルタを選択する、the Game System shall 期間指定（過去7日間、過去30日間、全期間）のオプションをドロップダウンまたはボタンで表示する
+22. When プレイヤーが期間フィルタを適用する、the Game System shall JavaScriptで指定期間内の試合のみを抽出し表示する
 23. When プレイヤーが勝敗フィルタを適用する、the Game System shall 勝利試合のみ/敗北試合のみを表示する
 24. When プレイヤーが対戦相手で検索する、the Game System shall 特定チームとの対戦成績を抽出表示する
 25. The Game System shall フィルタ適用後も通算成績を再計算し表示する
 
 **データの永続化と管理**
-26. The Game System shall 履歴データをローカルファイルシステム（例：`~/.baseball_game/history.json`）に保存する
-27. When ゲームが起動される、the Game System shall 保存された履歴データを自動的に読み込み復元する
-28. If 履歴ファイルが破損している、then the Game System shall エラーを表示し空の履歴からスタートする
-29. When 履歴データが存在しない、the Game System shall 新規に履歴ファイルを作成する
-30. The Game System shall データのバックアップ機能を提供し手動でエクスポートできるようにする
+26. The Game System shall 履歴データをlocalStorageに保存する
+27. When アプリが起動される、the Game System shall localStorageから保存された履歴データを自動的に読み込み復元する
+28. If localStorageデータが破損している、then the Game System shall エラーを表示し空の履歴からスタートする
+29. When 履歴データが存在しない、the Game System shall 新規にlocalStorageエントリを作成する
+30. The Game System shall データのエクスポート機能を提供しJSON形式でダウンロードできるようにする
 
 **履歴の削除と圧縮**
-31. When 履歴が100試合を超える、the Game System shall 「古い履歴を整理しますか？」と確認メッセージを表示する
-32. When プレイヤーが履歴削除を選択する、the Game System shall 削除する試合の範囲（全て、特定期間、選択した試合）を確認する
-33. When プレイヤーが削除を確定する、the Game System shall 該当する履歴を削除し通算成績を再計算する
+31. When 履歴が100試合を超える、the Game System shall 「古い履歴を整理しますか？」と確認メッセージをダイアログで表示する
+32. When プレイヤーが履歴削除を選択する、the Game System shall 削除する試合の範囲（全て、特定期間、選択した試合）をUIで確認する
+33. When プレイヤーが削除を確定する、the Game System shall localStorageから該当する履歴を削除し通算成績を再計算する
 34. The Game System shall 履歴削除前に「この操作は取り消せません」と警告する
 35. When 大量の履歴データがある、the Game System shall 古い試合の詳細ログを圧縮しサマリーのみを保持するオプションを提供する
 
@@ -824,7 +824,7 @@
 36. The Game System shall 最近10試合の勝率を計算し「最近の調子」として表示する
 37. When 戦績画面が表示される、the Game System shall 得点力（1試合平均得点）と防御力（1試合平均失点）を計算表示する
 38. The Game System shall 最も使用した戦術（バント回数、盗塁回数など）を統計として表示する
-39. When プレイヤーが統計画面を開く、the Game System shall グラフまたはテキストベースのチャートで戦績推移を表示する
+39. When プレイヤーが統計画面を開く、the Game System shall HTML Canvas/SVGまたはチャートライブラリで戦績推移をグラフ表示する
 40. The Game System shall 対戦相手別の勝率を集計しランキング形式で表示する
 
 ### Requirement 9: 選手とチームのデータ管理
@@ -833,100 +833,100 @@
 #### Acceptance Criteria
 
 **選手データの初期化とデフォルト提供**
-1. When アプリが初回起動される、the Game System shall `data/default_players.json` から30人以上のデフォルト選手データをロードする
+1. When アプリが初回起動される、the Game System shall サーバーまたは静的JSONファイル（例: `data/default_players.json`）から30人以上のデフォルト選手データをHTTP/fetchでロードする
 2. The Game System shall デフォルト選手データに両リーグの代表的な選手タイプ（パワーヒッター、俊足、技巧派投手など）を含める
-3. When 選手データをロードする、the Game System shall 全能力値が1-100範囲内であることをバリデートする
-4. If 選手データのバリデーションエラーが発生する、then the Game System shall エラー詳細（選手名、能力名、無効な値）を表示し、該当選手をスキップする
-5. The Game System shall ロード成功時に「○○人の選手をロードしました」と確認メッセージを表示する
+3. When 選手データをロードする、the Game System shall 全能力値が1-100範囲内であることをJavaScriptでバリデートする
+4. If 選手データのバリデーションエラーが発生する、then the Game System shall エラー詳細（選手名、能力名、無効な値）をブラウザ上に表示し、該当選手をスキップする
+5. The Game System shall ロード成功時に「○○人の選手をロードしました」と確認メッセージをブラウザ上に表示する
 
 **選手一覧と検索機能**
-6. When プレイヤーがメインメニューで「選手管理」を選択する、the Game System shall 全選手の一覧を表示する
-7. The Game System shall 選手一覧に選手名、ポジション、総合評価（OVR）、所属チームを表示する
-8. When プレイヤーが検索フィルタを適用する、the Game System shall ポジション、チーム、能力値範囲で絞り込みを実行する
-9. When プレイヤーが並び替えを選択する、the Game System shall 名前、ポジション、総合評価の昇順/降順で並び替える
-10. The Game System shall 一覧表示に50人ずつのページネーション機能を提供する
+6. When プレイヤーがメインメニューで「選手管理」を選択する、the Game System shall 全選手の一覧をDOM要素としてレンダリング表示する
+7. The Game System shall 選手一覧に選手名、ポジション、総合評価（OVR）、所属チームをHTMLテーブルまたはカードUIで表示する
+8. When プレイヤーが検索フィルタを適用する、the Game System shall JavaScriptでポジション、チーム、能力値範囲による絞り込みを実行する
+9. When プレイヤーが並び替えを選択する、the Game System shall JavaScriptで名前、ポジション、総合評価の昇順/降順で並び替える
+10. The Game System shall 一覧表示に50人ずつのページネーションまたは仮想スクロール機能を提供する
 
 **選手の詳細表示**
-11. When プレイヤーが選手一覧から選手を選択する、the Game System shall 選手詳細画面に遷移する
-12. When 選手詳細が表示される、the Game System shall OOTP26準拠の全85能力値を分類表示する（打撃10項目、投手10項目、走塁7項目、守備9項目など）
-13. The Game System shall 各能力値を色分けで表示する（青=90+、緑=70-89、黄=50-69、橙=30-49、赤=1-29）
-14. When 選手詳細画面が表示される、the Game System shall 「編集」「削除」「戻る」のボタンを提供する
-15. When プレイヤーが「戻る」を選択する、the Game System shall 選手一覧に戻る
+11. When プレイヤーが選手一覧から選手を選択する、the Game System shall 選手詳細画面にルーティング遷移またはモーダル表示する
+12. When 選手詳細が表示される、the Game System shall OOTP26準拠の全85能力値を分類してDOM要素にレンダリング表示する（打撃10項目、投手10項目、走塁7項目、守備9項目など）
+13. The Game System shall 各能力値をCSSクラスで色分け表示する（青=90+、緑=70-89、黄=50-69、橙=30-49、赤=1-29）
+14. When 選手詳細画面が表示される、the Game System shall 「編集」「削除」「戻る」のボタンをUIに提供する
+15. When プレイヤーが「戻る」を選択する、the Game System shall ブラウザ履歴またはナビゲーションで選手一覧に戻る
 
 **選手の新規作成**
-16. When プレイヤーが選手一覧で「新規作成」を選択する、the Game System shall 選手作成フォームを表示する
-17. When 選手作成フォームが表示される、the Game System shall 必須項目（名前、ポジション）と能力値入力フィールドを提供する
-18. The Game System shall 各能力値にスライダー（1-100）または数値入力を提供する
-19. When プレイヤーが能力値を変更する、the Game System shall リアルタイムで総合評価（OVR）を再計算し表示する
+16. When プレイヤーが選手一覧で「新規作成」を選択する、the Game System shall 選手作成フォームをモーダルまたは専用画面で表示する
+17. When 選手作成フォームが表示される、the Game System shall 必須項目（名前、ポジション）と能力値入力フィールドをHTML form要素として提供する
+18. The Game System shall 各能力値にHTML range inputスライダー（1-100）または数値入力を提供する
+19. When プレイヤーが能力値を変更する、the Game System shall JavaScriptでリアルタイムに総合評価（OVR）を再計算しDOM更新で表示する
 20. The Game System shall デフォルト値として全能力値を50（平均）に設定する
-21. When プレイヤーが「ランダム生成」を選択する、the Game System shall 指定ポジションに適した能力値をランダムに生成する
-22. When プレイヤーが「保存」を選択する、the Game System shall 選手データをバリデートし、有効な場合はデータベースに保存する
-23. If 必須項目が未入力である、then the Game System shall 「○○を入力してください」とエラー表示し保存を拒否する
-24. When 選手が正常に保存される、the Game System shall 「選手を作成しました（ID: ○○）」と確認メッセージを表示する
+21. When プレイヤーが「ランダム生成」ボタンを選択する、the Game System shall JavaScriptで指定ポジションに適した能力値をランダムに生成する
+22. When プレイヤーが「保存」ボタンを選択する、the Game System shall JavaScriptで選手データをバリデートし、有効な場合はlocalStorageまたはIndexedDBに保存する
+23. If 必須項目が未入力である、then the Game System shall 「○○を入力してください」とブラウザ上にエラー表示し保存を拒否する
+24. When 選手が正常に保存される、the Game System shall 「選手を作成しました（ID: ○○）」と確認メッセージをブラウザ上に表示する
 
 **選手の編集**
-25. When プレイヤーが選手詳細で「編集」を選択する、the Game System shall 選手編集フォームを表示する
+25. When プレイヤーが選手詳細で「編集」ボタンを選択する、the Game System shall 選手編集フォームをモーダルまたは専用画面で表示する
 26. When 選手編集フォームが表示される、the Game System shall 現在の能力値をフォームに事前入力する
-27. When プレイヤーが能力値を変更する、the Game System shall 変更前との差分を強調表示する（例：「Contact: 75 → 80 (+5)」）
-28. When プレイヤーが「保存」を選択する、the Game System shall 変更内容を確認ダイアログで表示する
-29. When プレイヤーが変更を確定する、the Game System shall データベースを更新し「選手を更新しました」と表示する
-30. When プレイヤーが「キャンセル」を選択する、the Game System shall 変更を破棄し選手詳細に戻る
+27. When プレイヤーが能力値を変更する、the Game System shall 変更前との差分をDOM要素で強調表示する（例：「Contact: 75 → 80 (+5)」）
+28. When プレイヤーが「保存」ボタンを選択する、the Game System shall 変更内容を確認ダイアログで表示する
+29. When プレイヤーが変更を確定する、the Game System shall localStorageまたはIndexedDBを更新し「選手を更新しました」とブラウザ上に表示する
+30. When プレイヤーが「キャンセル」ボタンを選択する、the Game System shall 変更を破棄し選手詳細に戻る
 
 **選手の削除**
-31. When プレイヤーが選手詳細で「削除」を選択する、the Game System shall 「本当に削除しますか？この操作は取り消せません」と確認ダイアログを表示する
-32. When プレイヤーが削除を確定する、the Game System shall データベースから選手を削除する
+31. When プレイヤーが選手詳細で「削除」ボタンを選択する、the Game System shall 「本当に削除しますか？この操作は取り消せません」と確認ダイアログを表示する
+32. When プレイヤーが削除を確定する、the Game System shall localStorageまたはIndexedDBから選手を削除する
 33. If 削除対象の選手が既に試合で使用されている、then the Game System shall 「この選手は試合履歴に含まれています。削除しますか？」と追加警告を表示する
-34. When 選手が削除される、the Game System shall 「選手を削除しました」と表示し選手一覧に戻る
+34. When 選手が削除される、the Game System shall 「選手を削除しました」とブラウザ上に表示し選手一覧に戻る
 
 **チーム管理機能**
-35. When プレイヤーが「チーム管理」を選択する、the Game System shall 全チームの一覧を表示する
-36. When プレイヤーが「新規チーム作成」を選択する、the Game System shall チーム作成フォーム（チーム名、略称、ホームスタジアム）を表示する
-37. When プレイヤーがチームを選択する、the Game System shall チーム詳細（ロースター、デフォルト打順）を表示する
-38. When プレイヤーが「ロースター編集」を選択する、the Game System shall 選手の追加/削除インターフェースを提供する
+35. When プレイヤーが「チーム管理」を選択する、the Game System shall 全チームの一覧をDOM要素として表示する
+36. When プレイヤーが「新規チーム作成」ボタンを選択する、the Game System shall チーム作成フォーム（チーム名、略称、ホームスタジアム）をHTML formとして表示する
+37. When プレイヤーがチームを選択する、the Game System shall チーム詳細（ロースター、デフォルト打順）をDOM要素として表示する
+38. When プレイヤーが「ロースター編集」ボタンを選択する、the Game System shall 選手の追加/削除インターフェース（ドラッグ&ドロップまたは選択リスト）を提供する
 39. The Game System shall チームに最低9人の野手と2人の投手を要求する
-40. When ロースターが編集される、the Game System shall 「変更を保存しました」と確認メッセージを表示する
+40. When ロースターが編集される、the Game System shall 「変更を保存しました」と確認メッセージをブラウザ上に表示する
 
 **データのインポート/エクスポート**
-41. When プレイヤーが「データエクスポート」を選択する、the Game System shall エクスポート対象（全選手、特定チーム、選択した選手）を選択させる
-42. When エクスポート対象が選択される、the Game System shall JSON形式でファイルに出力する
+41. When プレイヤーが「データエクスポート」ボタンを選択する、the Game System shall エクスポート対象（全選手、特定チーム、選択した選手）をUIで選択させる
+42. When エクスポート対象が選択される、the Game System shall JSON形式でBlobオブジェクトを生成しブラウザダウンロード機能で出力する
 43. The Game System shall エクスポートファイル名に日時を含める（例：`players_export_2026-01-31.json`）
-44. When エクスポートが完了する、the Game System shall 「○○人の選手を ~/baseball_game/exports/ にエクスポートしました」と表示する
-45. When プレイヤーが「データインポート」を選択する、the Game System shall ファイル選択ダイアログを表示する
-46. When インポートファイルが選択される、the Game System shall JSONフォーマットをバリデートする
-47. If インポートファイルが無効な形式である、then the Game System shall 「ファイル形式が正しくありません」とエラー表示する
-48. When インポートデータが有効である、the Game System shall 既存データとの重複チェックを実行する
-49. If 同名の選手が存在する、then the Game System shall 「上書き」「スキップ」「名前を変更して追加」のオプションを提示する
-50. When インポートが完了する、the Game System shall 「○○人の選手をインポートしました（スキップ: ○人）」と表示する
+44. When エクスポートが完了する、the Game System shall 「○○人の選手をエクスポートしました」とブラウザ上に表示する
+45. When プレイヤーが「データインポート」ボタンを選択する、the Game System shall HTML file input要素でファイル選択ダイアログを表示する
+46. When インポートファイルが選択される、the Game System shall FileReader APIでJSONフォーマットをバリデートする
+47. If インポートファイルが無効な形式である、then the Game System shall 「ファイル形式が正しくありません」とエラーをブラウザ上に表示する
+48. When インポートデータが有効である、the Game System shall JavaScriptで既存データとの重複チェックを実行する
+49. If 同名の選手が存在する、then the Game System shall 「上書き」「スキップ」「名前を変更して追加」のオプションをダイアログで提示する
+50. When インポートが完了する、the Game System shall 「○○人の選手をインポートしました（スキップ: ○人）」とブラウザ上に表示する
 
 **テンプレートとプリセット機能**
-51. The Game System shall 選手作成時に「テンプレート選択」機能を提供する
-52. When プレイヤーが「テンプレート選択」を開く、the Game System shall プリセット（パワーヒッター、俊足、エース投手、クローザーなど）を表示する
-53. When プレイヤーがテンプレートを選択する、the Game System shall 該当タイプの典型的な能力値をフォームに設定する
-54. The Game System shall カスタムテンプレートの保存機能を提供する
-55. When プレイヤーがカスタムテンプレートを保存する、the Game System shall テンプレート名を入力させ `~/.baseball_game/templates/` に保存する
+51. The Game System shall 選手作成時に「テンプレート選択」ボタン機能を提供する
+52. When プレイヤーが「テンプレート選択」ボタンを開く、the Game System shall プリセット（パワーヒッター、俊足、エース投手、クローザーなど）をドロップダウンまたはリストで表示する
+53. When プレイヤーがテンプレートを選択する、the Game System shall 該当タイプの典型的な能力値をJavaScriptでフォームに設定する
+54. The Game System shall カスタムテンプレートの保存機能をlocalStorageで提供する
+55. When プレイヤーがカスタムテンプレートを保存する、the Game System shall テンプレート名を入力させlocalStorageに保存する
 
 **バッチ編集機能**
-56. When プレイヤーが選手一覧で複数選手を選択する、the Game System shall 「バッチ編集」ボタンを有効化する
-57. When プレイヤーが「バッチ編集」を選択する、the Game System shall 一括操作メニュー（チーム変更、能力値補正、削除）を表示する
-58. When バッチで能力値補正が選択される、the Game System shall 全選手に対して一律の増減（例：「全能力+5」）を適用する
-59. When バッチ操作が実行される、the Game System shall 影響を受ける選手数を事前に表示し確認を求める
-60. When バッチ操作が完了する、the Game System shall 「○○人の選手を更新しました」と表示する
+56. When プレイヤーが選手一覧で複数選手をチェックボックスで選択する、the Game System shall 「バッチ編集」ボタンを有効化する
+57. When プレイヤーが「バッチ編集」ボタンを選択する、the Game System shall 一括操作メニュー（チーム変更、能力値補正、削除）をモーダルで表示する
+58. When バッチで能力値補正が選択される、the Game System shall JavaScriptで全選手に対して一律の増減（例：「全能力+5」）を適用する
+59. When バッチ操作が実行される、the Game System shall 影響を受ける選手数を事前にダイアログ表示し確認を求める
+60. When バッチ操作が完了する、the Game System shall 「○○人の選手を更新しました」とブラウザ上に表示する
 
 **データ整合性とバックアップ**
-61. The Game System shall 選手データの変更前に自動バックアップを作成する
-62. The Game System shall バックアップを `~/.baseball_game/backups/` に日時付きで保存する
+61. The Game System shall 選手データの変更前にlocalStorageで自動バックアップを作成する
+62. The Game System shall バックアップをlocalStorageに日時付きキーで保存する
 63. The Game System shall 最大10世代のバックアップを保持し、古いものから自動削除する
-64. When プレイヤーが「バックアップから復元」を選択する、the Game System shall 利用可能なバックアップ一覧を表示する
-65. When バックアップが選択される、the Game System shall 「現在のデータは失われます。復元しますか？」と確認する
-66. When 復元が確定される、the Game System shall バックアップからデータを復元し「データを復元しました」と表示する
-67. The Game System shall データベース整合性チェック機能を提供し、起動時に自動実行する
+64. When プレイヤーが「バックアップから復元」ボタンを選択する、the Game System shall localStorageから利用可能なバックアップ一覧を表示する
+65. When バックアップが選択される、the Game System shall 「現在のデータは失われます。復元しますか？」とダイアログで確認する
+66. When 復元が確定される、the Game System shall localStorageからバックアップデータを復元し「データを復元しました」とブラウザ上に表示する
+67. The Game System shall データベース整合性チェック機能を提供し、起動時にJavaScriptで自動実行する
 68. If データベース破損が検出される、then the Game System shall 最新のバックアップから自動復元を試みる
 
 **ヘルプとドキュメント**
-69. When プレイヤーが選手管理画面で「ヘルプ」を選択する、the Game System shall 選手作成ガイドを表示する
+69. When プレイヤーが選手管理画面で「ヘルプ」ボタンを選択する、the Game System shall 選手作成ガイドをモーダルまたは専用ページで表示する
 70. The Game System shall ヘルプに各能力値の説明とゲームへの影響を記載する
-71. The Game System shall JSON形式のサンプルファイルを `data/sample_player.json` として提供する
-72. When プレイヤーが「能力値ガイド」を開く、the Game System shall OOTP26準拠の能力値説明を表示する
+71. The Game System shall JSON形式のサンプルファイルを静的アセット（例: `data/sample_player.json`）として提供する
+72. When プレイヤーが「能力値ガイド」ボタンを開く、the Game System shall OOTP26準拠の能力値説明をモーダルで表示する
 
 ### Requirement 10: CPU操作チームの戦術AI
 **Objective:** システムとして、プレイヤーの対戦相手となるCPU操作チームに現実的な戦術判断をさせたい、人間の監督と対戦しているような臨場感を提供するため
