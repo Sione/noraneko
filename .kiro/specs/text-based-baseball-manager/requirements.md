@@ -125,40 +125,118 @@
 30. The Game System shall 全てのプレイ結果を自然な日本語のテキストで実況形式で表示する
 
 ### Requirement 4: 選手とチーム情報の管理
-**Objective:** 監督として、選手やチームの状態を詳細に把握したい、選手の特性を活かした適切な指示判断ができるようにするため
+**Objective:** 監督として、選手やチームの状態を詳細に把握したい、Out of the Park Baseball 26のような深みのある選手能力システムで適切な指示判断ができるようにするため
 
 #### Acceptance Criteria
 
-**選手能力データの保持と管理**
-1. The Game System shall 各選手の打撃能力（打率、長打率、出塁率、対左右投手別成績）をデータとして保持する
-2. The Game System shall 各選手の身体能力（走力、守備力、肩力）を数値またはランク形式で保持する
-3. The Game System shall 投手の能力（球速、制球力、スタミナ、球種）をデータとして保持する
-4. The Game System shall 各選手の守備位置（主ポジション、サブポジション）を記録する
-5. The Game System shall 試合中の選手のコンディション（好調、普通、不調）を状態として保持する
+**打撃能力の詳細データ（OOTP26準拠）**
+1. The Game System shall 各野手の「コンタクト能力」（Contact）を1-100スケールで保持し、ヒット確率とBABIPに影響させる
+2. The Game System shall 各野手の「BABIP能力」を保持し、インプレーの打球がヒットになる確率を決定する
+3. The Game System shall 各野手の「ギャップ長打力」（Gap Power）を保持し、二塁打・三塁打の発生率に影響させる
+4. The Game System shall 各野手の「本塁打力」（Home Run Power）を保持し、本塁打の発生率を独立して決定する
+5. The Game System shall 各野手の「選球眼」（Eye/Discipline）を保持し、四球の獲得率に影響させる
+6. The Game System shall 各野手の「三振回避能力」（Avoid K's）を保持し、三振の発生率を決定する
+7. When 打撃判定が実行される、the Game System shall Contact、BABIP、Gap Power、HR Powerを組み合わせて最終的な打撃結果を決定する
+8. The Game System shall 各打者の対左投手成績（vs LHP）と対右投手成績（vs RHP）を分離して保持する
+9. When 投手と打者の左右の組み合わせを判定する、the Game System shall 該当する対左右能力値を適用する
+10. The Game System shall 各打者の「打者タイプ」（Hitter Type：パワーヒッター、コンタクトヒッター、バランス型）を分類する
 
-**チーム編成と打順管理**
-6. When プレイヤーがチーム情報を要求する、the Game System shall スターティングメンバー（打順、守備位置）とベンチメンバーを表示する
-7. When 試合開始前である、the Game System shall プレイヤーに打順と守備位置の編集機能を提供する
-8. If プレイヤーが不適切な守備配置（投手以外が投手など）を設定する、then the Game System shall 警告を表示し修正を促す
-9. The Game System shall ベンチに最低5名以上の控え選手を配置する
+**投手能力の詳細データ（OOTP26準拠）**
+11. The Game System shall 各投手の「球威」（Stuff）を保持し、奪三振率に直接影響させる
+12. The Game System shall 各投手の「変化球」（Movement）を保持し、被安打率と被本塁打率に影響させる
+13. The Game System shall 各投手の「制球力」（Control）を保持し、与四球率を決定する
+14. The Game System shall 各投手の「スタミナ」を保持し、登板可能投球数と疲労蓄積速度を決定する
+15. The Game System shall 各投手の「ゴロ率」（Ground Ball %）を保持し、打球がゴロになる確率を決定する
+16. The Game System shall 各投手の「球速」（Velocity）をデータとして保持する（球威への補正要素として機能）
+17. The Game System shall 各投手の「牽制能力」（Hold Runners）を保持し、盗塁阻止率に影響させる
+18. The Game System shall 各投手の「最も得意な3球種」（先発）または「2球種」（リリーフ）を記録し球威計算に使用する
+19. When 投手が連投する、the Game System shall 前回登板からの日数に応じてStuffとControlを減衰させる
+20. The Game System shall 先発投手とリリーフ投手で異なる能力評価ロジックを適用する
 
-**試合中の選手状態表示**
-10. When 打者が打席に入る、the Game System shall 打者の名前、打率、今試合の成績（打数、安打数）を表示する
-11. When プレイヤーが打者の詳細情報を要求する、the Game System shall 長打率、対左右投手成績、走力を追加表示する
-12. When 投手が登板中である、the Game System shall 投手名、投球数、被安打数、奪三振数を表示する
-13. While 投手が投げている、the Game System shall 投球数と疲労度をリアルタイムで追跡する
+**走塁・盗塁能力（OOTP26準拠）**
+21. The Game System shall 各選手の「走力」（Speed）を保持し、進塁判定と三塁打の発生率に影響させる
+22. The Game System shall 各選手の「盗塁能力」（Stealing Ability）を走力とは独立して保持し、盗塁成功率を決定する
+23. The Game System shall 各選手の「盗塁積極性」（Stealing Aggressiveness）を保持し、盗塁を試みる頻度を決定する
+24. The Game System shall 各選手の「走塁技術」（Baserunning）を保持し、追加進塁の成否と走塁ミスの回避率に影響させる
+25. When 盗塁判定を行う、the Game System shall 走者のStealing Ability、投手のHold Runners、捕手のCatcher Armを総合評価する
+26. When ランナーが進塁機会を得る、the Game System shall SpeedとBaserunningを組み合わせて追加進塁の可否を判定する
+27. The Game System shall 左打者の一塁到達時間を右打者より0.2秒短く設定する
 
-**投手の疲労管理**
-14. The Game System shall 投手の疲労度を投球数に応じて段階的に増加させる（例：0-50球=新鮮、51-80球=普通、81-100球=疲労、100球超=限界）
-15. If 投手の疲労度が「疲労」以上に達する、then the Game System shall 被安打確率とコントロールを悪化させる
-16. If 投手の投球数が設定された閾値（例：100球）を超える、then the Game System shall 監督に投手交代を推奨する警告を表示する
-17. When 投手交代が実行される、the Game System shall 新しい投手の疲労度を初期状態にリセットする
+**バント能力（OOTP26準拠）**
+28. The Game System shall 各選手の「犠打バント能力」（Sacrifice Bunt）を保持し、送りバント成功率を決定する
+29. The Game System shall 各選手の「セーフティバント能力」（Bunt for Hit）を保持し、バントヒット成功率を決定する
+30. When セーフティバントが試みられる、the Game System shall Bunt for Hit能力とSpeedを組み合わせて判定する
+31. When 左打者がバントする、the Game System shall 一塁への距離が近いため成功率を5-10%上昇させる
 
-**選手交代システム**
-18. When プレイヤーが選手交代を要求する、the Game System shall ベンチメンバー一覧と交代可能なポジションを表示する
-19. When 野手が交代する、the Game System shall 交代後の打順を自動的に引き継ぐ
-20. The Game System shall 一度交代した選手は再出場できないルールを適用する
-21. If 代打が起用される、then the Game System shall その打席のみ代打を適用し次の打席から正式に交代するか選択させる
+**守備能力（OOTP26準拠）**
+32. The Game System shall 各選手の「内野守備範囲」（Infield Range）と「外野守備範囲」（Outfield Range）を分離して保持する
+33. The Game System shall 各選手の「内野エラー率」（Infield Error）と「外野エラー率」（Outfield Error）を保持する（高いほどエラーが少ない）
+34. The Game System shall 各選手の「内野肩力」（Infield Arm）と「外野肩力」（Outfield Arm）を保持し、送球判定に使用する
+35. The Game System shall 各選手の「併殺処理能力」（Turn Double Play）を保持し、ダブルプレー成功率に影響させる
+36. The Game System shall 捕手専用能力として「捕手総合能力」（Catcher Ability）を保持し、配球とフレーミングに影響させる
+37. The Game System shall 捕手専用能力として「捕手肩力」（Catcher Arm）を保持し、盗塁阻止率と牽制悪送球率を決定する
+38. When 守備機会が発生する、the Game System shall 選手のポジション適性（主ポジション/サブポジション）に応じてペナルティを適用する
+39. When 打球判定を行う、the Game System shall 守備側のRangeで打球に追いつけるか判定し、Errorでエラーの有無を判定する
+40. The Game System shall 各守備位置に適性レーティング（A/B/C/D/F）を付与し、不慣れなポジションでは能力を減衰させる
+
+**コンディションと選手状態管理**
+41. The Game System shall 各選手の試合中コンディション（絶好調/好調/普通/不調/絶不調）を5段階で保持する
+42. When 選手が絶好調状態である、the Game System shall 全打撃能力を10-15%上昇させる
+43. When 選手が不調状態である、the Game System shall 全打撃能力を10-15%低下させる
+44. The Game System shall コンディションを試合結果（ヒット、アウト）に応じて確率的に変動させる
+45. The Game System shall 各選手の疲労度を保持し、連戦や長時間出場で能力を減衰させる
+
+**チーム編成とロースター管理**
+46. The Game System shall 各チームに先発メンバー9名とベンチ選手5名以上を配置する
+47. When プレイヤーがチーム情報を要求する、the Game System shall スターティングラインナップ（打順、守備位置、選手名、主要能力値）を表示する
+48. When 試合開始前である、the Game System shall プレイヤーに打順編集機能を提供する
+49. When 打順を編集する、the Game System shall ドラッグ&ドロップまたは番号入力で打順を入れ替えられるようにする
+50. If プレイヤーが不適切な守備配置（投手以外を投手に配置など）を試みる、then the Game System shall 警告を表示し修正を促す
+51. The Game System shall 推奨打順機能を提供し、選球眼の高い選手を1-2番、長打力のある選手を3-5番に自動配置する
+52. When プレイヤーが「推奨打順」を選択する、the Game System shall 各選手のContact、Eye、Gap/HR Powerを評価し最適な打順を生成する
+
+**試合中の選手情報表示**
+53. When 打者が打席に入る、the Game System shall 打者名、打順、打率、今試合の成績（打数-安打数）、対左右投手成績を表示する
+54. When プレイヤーが打者詳細を要求する、the Game System shall Contact、Gap Power、HR Power、Eye、Avoid K'sの5能力値を表示する
+55. When プレイヤーが打者詳細を要求する、the Game System shall 現在のコンディション状態とその影響を明示する
+56. When 投手が登板中である、the Game System shall 投手名、投球数、被安打数、奪三振数、与四球数を表示する
+57. When プレイヤーが投手詳細を要求する、the Game System shall Stuff、Movement、Control、Stamina、疲労度を表示する
+58. The Game System shall 各打席前に投手と打者の左右の組み合わせを表示する（例：「右投手 vs 左打者」）
+
+**投手の疲労管理システム（詳細化）**
+59. The Game System shall 投手の現在投球数をリアルタイムで追跡する
+60. The Game System shall 投手の疲労度を以下の段階で分類する：「新鮮」（0-50球）、「普通」（51-75球）、「疲労」（76-100球）、「限界」（101球以上）
+61. When 投手が「疲労」状態になる、the Game System shall Stuffを5-10%、Controlを10-15%低下させる
+62. When 投手が「限界」状態になる、the Game System shall Stuffを15-20%、Controlを20-25%低下させる
+63. If 投手の投球数が個人のStamina閾値を超える、then the Game System shall 追加で能力を5%ずつ低下させる
+64. When 投手の疲労度が「疲労」以上に達する、the Game System shall 監督に「投手が疲れています」と警告メッセージを表示する
+65. If 投手の投球数が100球を超える、then the Game System shall 「投手交代を検討してください」と推奨警告を表示する
+66. When 投手交代が実行される、the Game System shall 新投手の疲労度を「新鮮」状態で初期化する
+67. The Game System shall リリーフ投手の登板可能イニング数をStaminaに基づいて制限する（低Stamina=1-2イニング、高Stamina=3-4イニング）
+
+**選手交代システム（詳細化）**
+68. When プレイヤーが選手交代メニューを開く、the Game System shall ベンチメンバー一覧を能力値と共に表示する
+69. When プレイヤーが代打を選択する、the Game System shall ベンチの野手から選択可能な選手を表示する
+70. When プレイヤーが守備固めを選択する、the Game System shall 現在の守備位置に適性がある選手を表示する
+71. When 代打が起用される、the Game System shall その打席のみ代打が打ち、次の守備から正式に交代するか確認する
+72. When 野手が交代する、the Game System shall 交代後の打順位置を自動的に引き継ぐ
+73. When 投手交代が実行される、the Game System shall DHを採用していない場合、新投手が打順に入ることを確認する
+74. The Game System shall 一度交代した選手は再出場できないルールを厳格に適用する
+75. If プレイヤーが既に交代済みの選手を再び起用しようとする、then the Game System shall 「この選手は既に交代しています」とエラー表示する
+
+**能力値の可視化とスカウト評価**
+76. The Game System shall 全ての能力値を1-100スケールで統一表示する
+77. The Game System shall 能力値を色分けで表現する：青（90+：傑出）、緑（70-89：優秀）、黄（50-69：平均）、橙（30-49：平均以下）、赤（1-29：劣悪）
+78. When 選手詳細を表示する、the Game System shall 各能力値に色付きバーまたは記号を添えて視覚化する
+79. The Game System shall 総合評価（Overall Rating）を主要能力の加重平均で自動計算する
+80. When 打者の総合評価を計算する、the Game System shall Contact（30%）、Gap/HR Power（40%）、Eye（15%）、Speed（15%）で加重する
+81. When 投手の総合評価を計算する、the Game System shall Stuff（40%）、Movement（35%）、Control（25%）で加重する
+
+**統計とトレンド追跡**
+82. The Game System shall 各選手の試合中成績（打数、安打、打点、得点、盗塁など）をリアルタイムで更新する
+83. The Game System shall 投手の試合中成績（投球回、被安打、奪三振、与四球、失点、自責点）をリアルタイムで更新する
+84. When 試合が終了する、the Game System shall 全選手の個人成績を試合結果と共に保存する
+85. The Game System shall シーズン通算成績（複数試合）を集計し表示するオプションを提供する
 
 ### Requirement 5: 試合状況の可視化
 **Objective:** 監督として、現在の試合状況を一目で把握したい、戦術的判断を素早く行えるようにするため

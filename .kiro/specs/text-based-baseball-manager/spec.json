@@ -19,6 +19,7 @@
     }
   },
   "ready_for_implementation": false,
-  "requirements_detail_level": "comprehensive"
+  "requirements_detail_level": "comprehensive",
+  "player_ability_system": "OOTP26-inspired"
 }
 
