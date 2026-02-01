@@ -89,52 +89,294 @@
 4. The Game System shall 各結果の発生確率を選手能力に応じて動的に計算する
 5. When 結果が決定される、the Game System shall 試合状態（スコア、アウトカウント、ランナー）を更新する
 
-**打撃結果の詳細判定**
-6. When 通常打撃が実行される、the Game System shall 打者のContact能力とBABIP能力を組み合わせてヒット確率を計算する
-7. When 打球種類を判定する、the Game System shall 投手のGround Ball %とAvoid K's能力に基づいて三振、ゴロ、フライ、ライナーの打球種類を決定する
-8. When 三振が選択される、the Game System shall 打者をアウトとして処理する
-9. When ゴロが選択される、the Game System shall 守備側のInfield Range（内野守備範囲）とInfield Error（内野エラー率）に基づいてヒット/アウトを判定する
-10. When 打者のSpeed（走力）が高くゴロを打つ、the Game System shall 内野安打の確率を上昇させる（Speed 80+で+15%、90+で+25%）
-11. When フライまたはライナーが選択される、the Game System shall 守備側のOutfield Range（外野守備範囲）とOutfield Error（外野エラー率）に基づいてヒット/アウトを判定する
-12. When ヒットが確定する、the Game System shall 打者のGap Power（二塁打・三塁打）とHR Power（本塁打）に基づいて単打/二塁打/三塁打/本塁打を判定する
-13. When 三塁打を判定する、the Game System shall 打者のSpeed（走力）を追加要素として考慮し、Speed 70+で三塁打確率を+20%、80+で+40%上昇させる
-14. When 投手の疲労度が高い、the Game System shall 投手のStuffとControlを減衰させることで打者有利に確率を補正する
-15. When 打者のコンディションが好調である、the Game System shall Contact、Gap Power、HR Power等の打撃能力値を5-10%上昇させる
+**打撃結果の詳細判定：打席結果の第一段階**
+6. When 通常打撃が実行される、the Game System shall まず投手と打者の対決結果を判定する：「三振」「四球」「インプレー（打球発生）」のいずれかを選択する
+7. When 投手と打者の対決を判定する、the Game System shall 投手のStuffとControl、打者のContactとEye/Discipline、Avoid K'sを総合評価する
+8. When 三振の発生率を判定する、the Game System shall 投手のStuff値と打者のAvoid K's値の差分に応じて漸進的に補正する：（Stuff - Avoid K's）× 0.4%の補正を適用する
+9. When 四球の発生率を判定する、the Game System shall 打者のEye/Discipline値と投手のControl値の差分に応じて漸進的に補正する：（Eye/Discipline - Control）× 0.5%の補正を適用する
+10. When 三振が選択される、the Game System shall 打者をアウトとして処理し、守備判定をスキップする
+11. When 四球が選択される、the Game System shall 打者を一塁に出塁させ、守備判定をスキップする
+12. When インプレーが選択される、the Game System shall 打球種類と打球方向の判定に進む
 
-**バント系プレイの判定**
-11. When バント指示が出される、the Game System shall 打者のSacrifice Bunt（犠打バント能力）を基準として成功率を計算する
-12. When セーフティバントが試みられる、the Game System shall 打者のBunt for Hit（セーフティバント能力）とSpeed（走力）を組み合わせて成功率を計算する
-13. When バント打球が処理される、the Game System shall 内野手のInfield Range（内野守備範囲）とInfield Arm（内野肩力）、打者のSpeed（走力）を総合評価してセーフ/アウトを判定する
-14. When バントが成功する、the Game System shall ランナーを進塁させ打者をアウトにする（犠打の場合）またはセーフにする（セーフティバントの場合）
-15. When バントが失敗する、the Game System shall ファウルまたは打ち損じによるアウトとして処理する
-16. When スクイズが試みられる、the Game System shall 打者のSacrifice Bunt能力、三塁ランナーのSpeed（走力）とBaserunning（走塁技術）、内野手のInfield Armを評価して成否を判定する
-17. When スクイズが成功する、the Game System shall 三塁ランナーを得点させる
-18. If スクイズが失敗する、then the Game System shall 三塁ランナーをアウトにするリスクを適用する
+**打撃結果の詳細判定：打球種類の決定**
+13. When インプレーが発生する、the Game System shall 打球種類を「ゴロ」「フライ」「ライナー」のいずれかに決定する
+14. When 打球種類を判定する、the Game System shall 投手のGround Ball %、打者のContact能力、Gap/HR Powerを総合評価する
+15. When ゴロの発生率を判定する、the Game System shall 投手のGround Ball %値に応じて漸進的に補正する：（Ground Ball % - 50）× 0.35%の補正を適用する
+16. When フライの発生率を判定する、the Game System shall 打者のHR Power値に応じて漸進的に補正する：（HR Power - 50）× 0.25%の補正を適用する
+17. When ライナーの発生率を判定する、the Game System shall 打者のContact値とGap Power値の平均に応じて漸進的に補正する：（（Contact + Gap Power）/ 2 - 60）× 0.2%の補正を適用する
+18. The Game System shall デフォルト打球種類分布を以下に設定する：ゴロ45%、フライ35%、ライナー20%
 
-**走塁プレイの判定**
-19. When 盗塁が試みられる、the Game System shall ランナーのSpeed（走力）とStealing Ability（盗塁能力）、投手のHold Runners（牽制能力）、捕手のCatcher Arm（捕手肩力）を総合的に評価する
-20. When 盗塁が成功する、the Game System shall ランナーを次の塁に進める
-21. When 盗塁が失敗する、the Game System shall ランナーをアウトにしアウトカウントを増加させる
-22. When エンドランが実行される、the Game System shall 打者が打った結果とランナーの走塁を連動させる
-23. If エンドランで打者がゴロを打つ、then the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）に基づいて進塁成功率を通常より高く設定する
+**打撃結果の詳細判定：打球方向と強さの決定**
+19. When 打球種類が決定される、the Game System shall 打球の飛んだ方向を9つのゾーン（三塁線/三遊間/遊撃正面/二遊間/一二塁間/一塁線/左翼/中堅/右翼）から確率的に決定する
+20. When 打球方向を決定する、the Game System shall 打者の利き手（左/右）、打者の打球傾向、投手の投球に基づいて各方向の発生確率を調整する
+21. When 打者が左打者である、the Game System shall 引っ張り方向（右翼/一二塁間/一塁線）の合計確率を45%、中央方向（中堅/遊撃正面/二遊間）を35%、流し打ち方向（左翼/三遊間/三塁線）を20%に設定する
+22. When 打者が右打者である、the Game System shall 引っ張り方向（左翼/三遊間/三塁線）の合計確率を45%、中央方向（中堅/遊撃正面/二遊間）を35%、流し打ち方向（右翼/一二塁間/一塁線）を20%に設定する
+23. When 打球の強さを判定する、the Game System shall 打者のContact、Gap Power、HR Power、投手のStuffとMovementを評価し、「弱い」「中程度」「強い」の3段階に分類する
+24. When 打球が「強い」と判定される、the Game System shall 打者の総合パワー値（（Gap Power + HR Power）/ 2）に応じて守備処理の難易度と長打の発生確率を漸進的に上昇させる：（総合パワー - 50）× 0.3%の補正を適用する
+25. When 打球が「弱い」と判定される、the Game System shall 打者の総合パワー値の逆数に応じて内野安打の発生確率を漸進的に上昇させ長打の発生確率を低下させる：（50 - 総合パワー）× 0.25%の補正を適用する
 
-**ランナー進塁の判定**
-21. When ヒットが出る、the Game System shall 打球の種類（単打/長打）、塁上のランナー位置、ランナーのSpeed（走力）とBaserunning（走塁技術）に応じて進塁を判定する
-22. When 単打が出る、the Game System shall 一塁・二塁ランナーは確実に進塁、三塁ランナーはSpeed（走力）とBaserunning（走塁技術）に基づいて本塁到達を確率的に判定する
-23. When 単打で一塁または二塁ランナーが追加進塁を試みる、the Game System shall ランナーのSpeed（走力80+）とBaserunning（走塁技術70+）、外野手のOutfield Arm（外野肩力）を総合評価して成功を判定する
-24. When 二塁打が出る、the Game System shall 全ランナーを最低2塁分進塁させる
-25. When 二塁打で一塁ランナーが本塁を狙う、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）、外野手のOutfield Arm（外野肩力）を評価して成功を判定する
-26. When 本塁打が出る、the Game System shall 打者と全ランナーを得点させる
-27. When タイムリーヒットで得点が入る、the Game System shall 得点を加算しスコアボードを更新する
+**打撃結果の詳細判定：守備判定への接続**
+26. When 打球種類、方向、強さが決定される、the Game System shall 守備プレイとアウトの判定（Acceptance Criteria 28以降）に処理を引き継ぐ
+27. When 守備判定が完了しヒットが確定する、the Game System shall ヒットの種類（単打/二塁打/三塁打/本塁打）を判定する
+28. When ヒットの種類を判定する、the Game System shall 打球の種類、方向、強さ、打者のGap PowerとHR Power、守備選手の追跡結果を総合評価する
+29. When 外野フライが外野手の守備範囲を大きく超える、the Game System shall 本塁打として処理する
+30. When 外野ライナーまたは強いフライが外野の深い位置に落ちる、the Game System shall 二塁打または三塁打として処理する
+31. When 三塁打を判定する、the Game System shall 打者のSpeed（走力）値に応じて三塁打確率を漸進的に上昇させる：（Speed - 60）× 0.5%の補正を適用する
+32. When 打球が弱く内野を抜ける、the Game System shall 単打として処理する
+33. When 打者のSpeed（走力）が高く弱いゴロを打つ、the Game System shall Speed値に応じて内野安打の確率を漸進的に上昇させる：（Speed - 60）× 0.4%の補正を適用する
 
-**守備プレイとアウトの判定**
-28. When ゴロが打たれる、the Game System shall 守備側のInfield Range（内野守備範囲）で打球に追いつけるかを判定し、追いついた場合はInfield Error（内野エラー率）でエラー発生の可否を判定する
-29. When 内野ゴロで打者走者が一塁を狙う、the Game System shall 内野手のInfield Arm（内野肩力）と打者のSpeed（走力）を比較してセーフ/アウトを判定する
-30. When ダブルプレー機会（ランナー一塁でゴロ）が発生する、the Game System shall 内野手のTurn Double Play（併殺処理能力）とInfield Arm（内野肩力）、ランナーのSpeed（走力）を総合評価してダブルプレーの成否を判定する
-31. When フライが打たれる、the Game System shall 守備側のOutfield Range（外野守備範囲）で打球に追いつけるかを判定し、追いついた場合はOutfield Error（外野エラー率）でエラー発生の可否を判定する
-32. When フライがキャッチされる、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）、外野手のOutfield Arm（外野肩力）に基づいてタッチアップの可能性を判定する
-33. If 守備エラーが発生する、then the Game System shall ランナーを余分に進塁させ、打者を出塁させる
-34. The Game System shall 全てのプレイ結果を自然な日本語のテキストで実況形式で表示する
+**打撃結果の詳細判定：投手・打者状態による補正**
+34. When 投手の疲労度が高い、the Game System shall 投球数に応じて投手のStuffとControlを漸進的に減衰させる：Stuff減衰率 = （投球数 - 50）× 0.15%、Control減衰率 = （投球数 - 50）× 0.2%を適用する
+35. When 打者のコンディションが好調である、the Game System shall コンディションレベルに応じて打撃能力値を漸進的に上昇させる：好調度1段階につき全打撃能力値を2.5%上昇させる
+36. When 打者のコンディションが不調である、the Game System shall コンディションレベルに応じて打撃能力値を漸進的に低下させる：不調度1段階につき全打撃能力値を3%低下させる
+37. When 投手と打者の左右の組み合わせが同じ（右投手vs右打者、左投手vs左打者）、the Game System shall 打者の打撃能力値に対左右能力補正を適用する
+
+**バント系プレイの判定：バント打球の方向決定**
+38. When バント指示が出される、the Game System shall 打者のSacrifice Bunt（犠打バント能力）を基準として成功率を計算する
+39. When セーフティバントが試みられる、the Game System shall 打者のBunt for Hit（セーフティバント能力）とSpeed（走力）を組み合わせて成功率を計算する
+40. When バント打球が発生する、the Game System shall バント打球の方向を「三塁線沿い」「投手正面」「一塁線沿い」のいずれかに決定する
+41. When 左打者がバントする、the Game System shall 一塁線沿いの確率を50%、投手正面を30%、三塁線沿いを20%に設定する（一塁に近いため）
+42. When 右打者がバントする、the Game System shall 三塁線沿いの確率を40%、投手正面を35%、一塁線沿いを25%に設定する
+43. When セーフティバントが試みられる、the Game System shall 打者のBunt for Hit値に応じて逆方向（左打者は三塁線、右打者は一塁線）の確率を漸進的に上昇させる：（Bunt for Hit - 50）× 0.2%の補正を適用する
+
+**バント系プレイの判定：守備選手の特定と処理**
+44. When バント打球が「三塁線沿い」に転がる、the Game System shall 三塁手（3B）を主担当守備選手、投手（P）を補助担当守備選手として特定する
+45. When バント打球が「投手正面」に転がる、the Game System shall 投手（P）を主担当守備選手、捕手（C）を補助担当守備選手として特定する
+46. When バント打球が「一塁線沿い」に転がる、the Game System shall 一塁手（1B）を主担当守備選手、投手（P）を補助担当守備選手として特定する
+47. When バント打球の強さが「弱い」である、the Game System shall 捕手（C）も守備処理に参加可能とし、捕手のInfield Rangeで判定する
+48. When バント打球が処理される、the Game System shall 主担当守備選手のInfield Range（内野守備範囲）で打球に追いつけるかを判定する
+49. When 主担当守備選手が追いつけない、the Game System shall 補助担当守備選手のInfield Rangeで判定する
+50. When どの守備選手も追いつけない、the Game System shall セーフティバント成功として打者を出塁させる
+51. When 守備選手が打球に追いつく、the Game System shall その守備選手のInfield Armと一塁手のInfield Error、打者のSpeed（走力）を総合評価してセーフ/アウトを判定する
+52. When 捕球した守備選手の送球時間を判定する、the Game System shall Infield Arm値に応じて漸進的に補正する：送球時間補正 = （60 - Infield Arm）× 0.006秒、セーフ確率補正 = （60 - Infield Arm）× 0.5%を適用する
+53. When 打者のバント成功率を判定する、the Game System shall Speed値に応じて漸進的に上昇させる：（Speed - 60）× 0.3%の補正を適用する
+54. When 左打者がバントする、the Game System shall 一塁到達時間を-0.2秒短縮し、セーフ確率を+10%上昇させる
+
+**バント系プレイの判定：犠打バントとランナー進塁**
+55. When 犠打バントが成功する、the Game System shall 打者をアウトにし、全ランナーを1塁分進塁させる
+56. When 犠打バントで守備選手がランナーをアウトにしようとする、the Game System shall 守備選手の判断（一塁を狙う/進塁ランナーを狙う）を試合状況に応じて決定する
+57. When ノーアウトまたはワンアウトでランナーが二塁にいる、the Game System shall 守備選手が確実に一塁アウトを狙う確率を80%に設定する
+58. When ランナーが一塁のみでツーアウトである、the Game System shall 守備選手が二塁封殺を狙う確率を40%に設定する
+59. When 守備選手が二塁封殺を狙う、the Game System shall 捕球した守備選手のInfield Armと二塁ベースカバー選手のInfield Error、ランナーのSpeedを評価して封殺成否を判定する
+60. When 二塁封殺が失敗する、the Game System shall 全走者セーフ（打者含む）として処理する
+
+**バント系プレイの判定：スクイズプレイ**
+61. When スクイズが試みられる、the Game System shall 打者のSacrifice Bunt能力、三塁ランナーのSpeed（走力）とBaserunning（走塁技術）を評価する
+62. When スクイズでバント打球が発生する、the Game System shall バント打球の処理を通常バントと同様に実行する
+63. When スクイズでバント打球が処理される、the Game System shall 守備選手が本塁送球を試みるかを判定する
+64. When 守備選手が本塁送球を試みる、the Game System shall 捕球した守備選手のInfield Armと捕手のCatcher Ability、三塁ランナーのSpeedを評価して本塁アウトの可否を判定する
+65. When 本塁アウト確率を判定する、the Game System shall 守備選手のInfield Armと捕手のCatcher Abilityの平均値に応じて漸進的に補正する：（（Infield Arm + Catcher Ability）/ 2 - 60）× 0.4%の補正を適用する
+66. When スクイズ成功率を判定する、the Game System shall 三塁ランナーのSpeed値に応じて漸進的に上昇させる：（Speed - 60）× 0.35%の補正を適用する
+67. When スクイズが成功する、the Game System shall 三塁ランナーを得点させ、打者をアウトまたはセーフにする（バント処理の結果に応じて）
+68. If スクイズが失敗しバントミスが発生する、then the Game System shall 三塁ランナーを本塁でアウトにするリスクを適用する（失敗確率30-50%）
+
+**バント系プレイの判定：バント失敗**
+69. When バント指示が出されバント動作に失敗する、the Game System shall 打者のSacrifice BuntまたはBunt for Hit能力に基づいて失敗確率を計算する
+70. When バントが失敗する、the Game System shall ファウル、空振り、または打ち損じによる凡フライとして処理する
+71. When カウントが2ストライクでバントがファウルになる、the Game System shall 打者を三振アウトとして処理する
+72. When バントの打ち損じで凡フライが上がる、the Game System shall 捕手（C）または投手（P）を守備選手として特定し、通常のフライ処理を実行する
+
+**走塁プレイの判定：盗塁の試行**
+118. When 盗塁が試みられる、the Game System shall ランナーのSpeed（走力）とStealing Ability（盗塁能力）を基本成功率として評価する
+119. When 投手が投球動作に入る、the Game System shall 投手のHold Runners（牽制能力）を使用してランナーのスタート遅延確率を判定する
+120. When 投手のHold Runnersによる盗塁阻止を判定する、the Game System shall Hold Runners値に応じて漸進的に補正する：（Hold Runners - 60）× 0.4%のスタート遅延確率上昇と（Hold Runners - 60）× 0.35%の盗塁成功率低下を適用する
+121. When ランナーのStealing Abilityによる盗塁成功率を判定する、the Game System shall Stealing Ability値に応じて漸進的に上昇させる：（Stealing Ability - 60）× 0.45%の補正を適用する
+
+**走塁プレイの判定：捕手の送球と塁上での処理**
+123. When ランナーがスタートを切る、the Game System shall 捕手が盗塁を察知し送球を試みる
+124. When 捕手が送球する、the Game System shall 捕手のCatcher Arm（捕手肩力）を使用して送球時間と精度を評価する
+125. When 捕手の送球時間と盗塁阻止確率を判定する、the Game System shall Catcher Arm値に応じて漸進的に補正する：送球時間補正 = （70 - Catcher Arm）× 0.004秒、盗塁阻止確率補正 = （Catcher Arm - 60）× 0.45%を適用する
+126. When 二塁盗塁が試みられる、the Game System shall 二塁ベースカバー選手（二塁手または遊撃手）を特定する
+127. When 三塁盗塁が試みられる、the Game System shall 三塁手を塁上の守備選手として特定する
+128. When 塁上の守備選手が送球を受ける、the Game System shall その守備選手のInfield Errorを使用して捕球とタッチプレイの成否を判定する
+129. When タッチプレイ成功率を判定する、the Game System shall 塁上守備選手のInfield Error値に応じて漸進的に補正する：（Infield Error - 75）× 0.25%の補正を適用する
+
+**走塁プレイの判定：盗塁の最終判定**
+132. When 盗塁の最終判定を行う、the Game System shall ランナーのSpeed、Stealing Ability、投手のHold Runners、捕手のCatcher Arm、塁上守備選手のInfield Errorを総合評価する
+133. When 盗塁が成功する、the Game System shall ランナーを次の塁に進め、「○○選手、盗塁成功！」と実況表示する
+134. When 盗塁が失敗する、the Game System shall ランナーをアウトにしアウトカウントを増加させ、「△△選手、盗塁失敗！タッチアウト！」と実況表示する
+135. When 捕手の送球が悪送球となる、the Game System shall ランナーを確実にセーフとし、追加進塁のチャンスを与える
+
+**走塁プレイの判定：ダブルスチール（二重盗塁）**
+136. When ダブルスチール（一塁と三塁、または一塁と二塁）が試みられる、the Game System shall 両ランナーのSpeed平均とStealing Ability平均を基本成功率として評価する
+137. When 捕手が送球先を選択する、the Game System shall 試合状況（アウトカウント、点差）に応じて前の塁（三塁）または後ろの塁（二塁）を選択する
+138. When 接戦（2点差以内）で三塁ランナーがいる、the Game System shall 捕手が三塁送球を優先する確率を70%に設定する
+139. When 点差が大きい（5点差以上）、the Game System shall 捕手が二塁送球を優先する確率を70%に設定する
+140. When 捕手が三塁送球を選択する、the Game System shall 三塁手のInfield Errorを使用してタッチプレイを判定し、二塁ランナーは確実にセーフとする
+141. When 捕手が二塁送球を選択する、the Game System shall 二塁ベースカバー選手のInfield Errorを使用してタッチプレイを判定し、三塁ランナーは確実にセーフとする
+142. When ダブルスチールが成功する、the Game System shall 「ダブルスチール成功！」と実況表示する
+
+**走塁プレイの判定：エンドラン**
+143. When エンドランが実行される、the Game System shall ランナーが打撃と同時にスタートを切る
+144. When エンドランで打者が空振りまたは見逃す、the Game System shall 通常の盗塁判定を実行する（捕手の送球判定を含む）
+145. When エンドランで打者がゴロを打つ、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）の平均値に応じて進塁成功率を漸進的に上昇させる：（（Speed + Baserunning）/ 2 - 50）× 0.4%の補正を適用する
+146. When エンドランでゴロが内野に転がる、the Game System shall ランナーのBaserunning値に応じてダブルプレー回避確率を漸進的に上昇させる：（Baserunning - 50）× 0.5%の補正を適用する
+147. When エンドランで打者がフライを打つ、the Game System shall ランナーが途中で止まり塁に戻る必要があり、追加進塁の機会を失う
+148. When エンドランで打者がヒットを打つ、the Game System shall ランナーの進塁を通常より1塁分多く進める（一塁→三塁、二塁→本塁）
+149. When エンドランでヒットが出る、the Game System shall 「エンドラン成功！○○選手が大きく進塁！」と実況表示する
+
+**走塁プレイの判定：牽制プレイ**
+150. When ランナーが塁上にいる、the Game System shall 投手が牽制を試みる確率を投手のHold Runnersに基づいて決定する：（Hold Runners - 50）× 0.4%の牽制試行確率を適用する
+151. When 投手が牽制を試みる、the Game System shall ランナーのBaserunning（走塁技術）とSpeed（走力）を使用してリード幅を評価する
+152. When 牽制アウト確率を判定する、the Game System shall ランナーのBaserunning値に応じて漸進的に補正する：（70 - Baserunning）× 0.4%の補正を適用する
+154. When 投手が牽制球を投げる、the Game System shall 投手のHold Runnersと塁上守備選手のInfield Error、ランナーのSpeedを総合評価する
+155. When 牽制が成功する、the Game System shall ランナーをアウトとし、「牽制アウト！」と実況表示する
+156. When 牽制球が悪送球となる、the Game System shall ランナーに追加進塁のチャンスを与える
+
+**ランナー進塁の判定：基本進塁ルール**
+73. When ヒットが出る、the Game System shall 打球の種類（単打/二塁打/三塁打/本塁打）、打球方向、塁上のランナー位置を評価する
+74. When 本塁打が出る、the Game System shall 打者と全ランナーを得点させ、進塁判定をスキップする
+75. When 単打が出る、the Game System shall 一塁ランナーは二塁へ、二塁ランナーは三塁へ確実に進塁させる
+76. When 二塁打が出る、the Game System shall 一塁ランナーは三塁へ、二塁ランナーは本塁へ確実に進塁させる
+77. When 三塁打が出る、the Game System shall 全ランナーを得点させる
+
+**ランナー進塁の判定：単打での三塁ランナー本塁到達**
+78. When 単打で三塁ランナーが本塁を狙う、the Game System shall 打球方向に応じた外野手を特定し、その外野手のOutfield Armを評価する
+79. When 単打が浅い外野に落ちる、the Game System shall 外野手の捕球位置から本塁までの距離を「近い」と判定し、本塁送球の脅威を+30%上昇させる
+80. When 単打が深い外野に落ちる、the Game System shall 外野手の捕球位置から本塁までの距離を「遠い」と判定し、三塁ランナーの本塁到達確率を+40%上昇させる
+81. When 外野手のOutfield Armによる送球阻止を判定する、the Game System shall Outfield Arm値に応じて本塁到達成功率を漸進的に補正する：（60 - Outfield Arm）× 0.4%の補正を適用する
+82. When 三塁ランナーのSpeed（走力）による本塁到達を判定する、the Game System shall Speed値に応じて成功率を漸進的に上昇させる：（Speed - 60）× 0.35%の補正を適用する
+83. When 三塁ランナーのBaserunning（走塁技術）による本塁到達を判定する、the Game System shall Baserunning値に応じて成功率を漸進的に上昇させる：（Baserunning - 60）× 0.25%の補正を適用する
+84. When 外野手が本塁に送球する、the Game System shall 捕手のCatcher Abilityを使用してタッチプレイの成否を判定する
+85. When 捕手のタッチアウト成功率を判定する、the Game System shall Catcher Ability値に応じて漸進的に補正する：（Catcher Ability - 60）× 0.3%の補正を適用する
+
+**ランナー進塁の判定：単打での追加進塁（一塁→三塁、二塁→本塁）**
+87. When 単打で一塁ランナーが三塁への追加進塁を試みる、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）の平均値に応じて試行判定する：（（Speed + Baserunning）/ 2 - 65）× 1.5%の試行確率を適用する
+88. When 追加進塁を試みる条件を満たさない、the Game System shall 追加進塁を試みず二塁で止まる
+89. When 追加進塁を試みる、the Game System shall 打球を処理した外野手のOutfield Armと中継内野手（通常は遊撃手または二塁手）のInfield Arm、三塁手のInfield Errorを総合評価する
+90. When 追加進塁阻止確率を判定する、the Game System shall 外野手のOutfield Armと中継内野手のInfield Armの平均値に応じて漸進的に補正する：（（Outfield Arm + Infield Arm）/ 2 - 60）× 0.5%の補正を適用する
+91. When ランナーの追加進塁成功率を判定する、the Game System shall Speed値に応じて漸進的に上昇させる：（Speed - 70）× 0.4%の補正を適用する
+92. When 単打で二塁ランナーが本塁への追加進塁を試みる、the Game System shall 外野手のOutfield Armと中継内野手のInfield Arm、捕手のCatcher Abilityを総合評価する
+93. When 外野手の捕球位置が浅い、the Game System shall 追加進塁を試みる確率を-50%低下させる（リスクが高いため）
+
+**ランナー進塁の判定：二塁打での一塁ランナー本塁到達**
+94. When 二塁打で一塁ランナーが本塁を狙う、the Game System shall ランナーのSpeed（走力75+）とBaserunning（走塁技術70+）を評価する
+95. When 二塁打が外野フェンス際まで飛ぶ、the Game System shall 外野手の捕球位置が遠いため、ランナーの本塁到達確率を+50%上昇させる
+96. When 二塁打が浅い位置に落ちる、the Game System shall ランナーの本塁到達を試みない（リスクが高すぎるため）
+97. When 外野手が中継プレイを実行する、the Game System shall 外野手のOutfield Arm、中継内野手のInfield ArmとInfield Error、捕手のCatcher Abilityを段階的に評価する
+98. When 中継プレイの第一送球（外野→内野）が失敗する、the Game System shall ランナーを確実に本塁到達させる
+99. When 中継プレイの第二送球（内野→本塁）が失敗する、the Game System shall ランナーを確実に本塁到達させる
+100. When 両方の送球が成功する、the Game System shall ランナーのSpeed、Baserunning、捕手のCatcher Abilityでタッチプレイの成否を最終判定する
+
+**ランナー進塁の判定：外野手の送球先選択**
+101. When ヒットで複数のランナーが進塁する、the Game System shall 外野手が送球する塁を試合状況に応じて決定する
+102. When 三塁ランナーが本塁を狙い、一塁ランナーが三塁を狙う、the Game System shall 外野手は本塁送球を優先する（得点阻止が最優先のため）
+103. When 得点差が大きい（5点差以上）、the Game System shall 外野手は前の塁（本塁より二塁または三塁）への送球を優先する（確実なアウトを狙うため）
+104. When 接戦（2点差以内）で7回以降である、the Game System shall 外野手は本塁送球を優先する（得点阻止が重要なため）
+105. When 外野手が二塁送球を選択する、the Game System shall 二塁ベースカバー選手（二塁手または遊撃手）のInfield Errorを使用して送球受け取り判定を行う
+106. When 外野手が三塁送球を選択する、the Game System shall 三塁手のInfield Errorを使用して送球受け取り判定を行う
+107. When 送球が悪送球となる、the Game System shall 全ランナーに追加進塁のチャンスを与える
+
+**ランナー進塁の判定：中継プレイの詳細**
+108. When 外野深くに打球が飛び中継プレイが必要、the Game System shall 中継位置に入る内野手（通常は遊撃手または二塁手）を特定する
+109. When 中継プレイが実行される、the Game System shall 第一送球として外野手のOutfield Armを評価し、中継内野手への送球精度を判定する
+110. When 第一送球が成功する、the Game System shall 第二送球として中継内野手のInfield Armを評価し、目標塁への送球精度を判定する
+111. When 中継プレイの効率を判定する、the Game System shall 中継内野手のInfield Range値に応じて漸進的に補正する：（Infield Range - 60）× 0.3%の補正を適用する
+112. When 第二送球の速度と精度を判定する、the Game System shall 中継内野手のInfield Arm値に応じて漸進的に補正する：（Infield Arm - 60）× 0.35%の補正を適用する
+113. When 中継プレイで任意の段階が失敗する、the Game System shall ランナーに1-2塁分の追加進塁を与える
+
+**ランナー進塁の判定：タイムリーヒットと得点処理**
+114. When ランナーが本塁に到達する、the Game System shall 得点を加算しスコアボードを更新する
+115. When タイムリーヒットが発生する、the Game System shall 「○○選手のタイムリーヒット！△△選手が生還！」と実況表示する
+116. When タイムリーヒットで複数得点が入る、the Game System shall 各ランナーの得点を順次表示する
+117. When ランナーが本塁でアウトになる、the Game System shall 「△△選手、本塁でタッチアウト！」と実況表示し、送球に関与した守備選手名を含める
+
+**守備プレイとアウトの判定：打球方向の決定**
+28. When 打球が発生する、the Game System shall まず打球の種類（ゴロ/フライ/ライナー）を決定する
+29. When 打球の種類が決定される、the Game System shall 打球の飛んだ方向を以下の9つのゾーンから確率的に決定する：「三塁線」「三遊間」「遊撃正面」「二遊間」「一二塁間」「一塁線」「左翼方向」「中堅方向」「右翼方向」
+30. When 打球方向を決定する、the Game System shall 打者の打球傾向（引っ張り/センター/逆方向）と利き手（左/右）に基づいて各方向の発生確率を調整する
+31. When 打者が左打者である、the Game System shall 右翼方向（引っ張り）の確率を40%、中堅方向を30%、左翼方向（逆方向）を30%に設定する
+32. When 打者が右打者である、the Game System shall 左翼方向（引っ張り）の確率を40%、中堅方向を30%、右翼方向（逆方向）を30%に設定する
+33. When 守備シフトが適用されている、the Game System shall シフトの効果を打球方向の確率には影響させず、守備処理の判定時のみ適用する
+34. The Game System shall 打球の強さを3段階（弱・中・強）で判定し、打者のContact能力とGap/HR Powerに基づいて決定する
+
+**守備プレイとアウトの判定：守備位置と担当選手の特定**
+35. The Game System shall 各守備位置に対応する選手を以下のように定義する：投手（P）、捕手（C）、一塁手（1B）、二塁手（2B）、三塁手（3B）、遊撃手（SS）、左翼手（LF）、中堅手（CF）、右翼手（RF）
+36. When 打球方向が「三塁線」である、the Game System shall 三塁手（3B）を主担当守備選手として特定する
+37. When 打球方向が「三遊間」である、the Game System shall 遊撃手（SS）を主担当守備選手、三塁手（3B）を補助担当守備選手として特定する
+38. When 打球方向が「遊撃正面」である、the Game System shall 遊撃手（SS）を主担当守備選手として特定する
+39. When 打球方向が「二遊間」である、the Game System shall 二塁手（2B）を主担当守備選手、遊撃手（SS）を補助担当守備選手として特定する
+40. When 打球方向が「一二塁間」である、the Game System shall 一塁手（1B）を主担当守備選手、二塁手（2B）を補助担当守備選手として特定する
+41. When 打球方向が「一塁線」である、the Game System shall 一塁手（1B）を主担当守備選手として特定する
+42. When 打球方向が「左翼方向」である、the Game System shall 左翼手（LF）を主担当守備選手として特定する
+43. When 打球方向が「中堅方向」である、the Game System shall 中堅手（CF）を主担当守備選手として特定する
+44. When 打球方向が「右翼方向」である、the Game System shall 右翼手（RF）を主担当守備選手として特定する
+45. When フライ打球の深さが「浅い」（内野フライ相当）である、the Game System shall 外野方向でも内野手を主担当守備選手として特定する（左翼方向→SS/3B、中堅方向→2B/SS、右翼方向→1B/2B）
+
+**守備プレイとアウトの判定：ゴロの処理**
+46. When ゴロ打球が発生する、the Game System shall 主担当守備選手のInfield Range（内野守備範囲）を使用して打球に追いつけるかを判定する
+47. When 主担当守備選手が打球に追いつけない場合、the Game System shall 補助担当守備選手のInfield Rangeを使用して追いつけるかを判定する（補助担当がいる場合）
+48. When どの守備選手も追いつけない場合、the Game System shall 内野安打として処理する
+49. When 守備選手が打球に追いつく、the Game System shall その守備選手のInfield Error（内野エラー率）に基づいてエラー発生の可否を判定する
+50. When 守備選手がエラーを犯さず捕球する、the Game System shall 補殺プレイ（一塁への送球）を実行する
+51. When 補殺プレイが実行される、the Game System shall 捕球した守備選手のInfield Arm（内野肩力）と一塁手のInfield Error（捕球エラー率）、打者のSpeed（走力）を総合評価してセーフ/アウトを判定する
+52. When 一塁手が送球を受ける、the Game System shall 一塁手のInfield Errorに基づいて捕球失敗（悪送球または捕球ミス）の可否を判定する
+53. When 送球時間とアウト確率を判定する、the Game System shall 捕球した守備選手のInfield Arm値に応じて漸進的に補正する：送球時間補正 = （65 - Infield Arm）× 0.005秒、アウト確率補正 = （Infield Arm - 60）× 0.25%を適用する
+54. When 打者走者の一塁到達時間を判定する、the Game System shall Speed値に応じて漸進的に補正する：到達時間補正 = （70 - Speed）× 0.005秒、セーフ確率補正 = （Speed - 60）× 0.25%を適用する
+56. When ゴロが投手正面に飛ぶ、the Game System shall 投手（P）を主担当守備選手として特定し、投手のInfield RangeとInfield Armを使用して判定する
+
+**守備プレイとアウトの判定：フライの処理（内野フライ）**
+57. When フライ打球が「浅い」と判定される、the Game System shall 打球方向に応じた内野手を主担当守備選手として特定する
+58. When 内野フライが発生する、the Game System shall 主担当守備選手のInfield Rangeを使用して打球に追いつけるかを判定する
+59. When 内野手が内野フライに追いつく、the Game System shall その内野手のInfield Errorに基づいてエラー発生の可否を判定する
+60. When 内野フライが捕球される、the Game System shall 打者をアウトとして処理する
+61. When 内野フライが落球される、the Game System shall エラーとして処理し、打者を出塁させ、ランナーを進塁させる
+62. When 内野フライで複数の内野手が追いかける、the Game System shall 最も高いInfield Rangeを持つ守備選手を優先的に捕球選手として選択する
+63. When ポップフライが発生する、the Game System shall 捕手（C）または一塁手（1B）を主担当守備選手として特定する
+
+**守備プレイとアウトの判定：フライの処理（外野フライ）**
+64. When フライ打球が「深い」と判定される、the Game System shall 打球方向に応じた外野手を主担当守備選手として特定する
+65. When 外野フライが発生する、the Game System shall 主担当守備選手のOutfield Range（外野守備範囲）を使用して打球に追いつけるかを判定する
+66. When 外野手が外野フライに追いつけない、the Game System shall 長打（二塁打または三塁打）として処理する
+67. When 外野手が外野フライに追いつく、the Game System shall その外野手のOutfield Errorに基づいてエラー発生の可否を判定する
+68. When 外野フライが捕球される、the Game System shall 打者をアウトとして処理する
+69. When 外野フライが落球される、the Game System shall エラーとして処理し、打者を出塁させ（通常は二塁打相当）、ランナーを進塁させる
+70. When 外野フライで複数の外野手が追いかける（例：左中間）、the Game System shall 両外野手のOutfield Rangeの平均値を使用して判定する
+71. When 外野フライが捕球され、ランナーが塁上にいる、the Game System shall タッチアップ判定を実行する
+
+**守備プレイとアウトの判定：ライナーの処理**
+72. When ライナー打球が発生する、the Game System shall 打球方向に応じた守備選手（内野手または外野手）を主担当守備選手として特定する
+73. When ライナーが内野方向に飛ぶ、the Game System shall 主担当内野手のInfield Rangeを使用して捕球可否を判定し、ライナー打球特性により捕球難易度に一律+20%の補正を適用する
+74. When ライナーが外野方向に飛ぶ、the Game System shall 主担当外野手のOutfield Rangeを使用して捕球可否を判定し、ライナー打球特性により捕球難易度に一律+15%の補正を適用する
+75. When ライナーが捕球される、the Game System shall 打者をアウトとして処理する
+76. When ライナーが捕球されず落ちる、the Game System shall ヒット（内野ライナーは単打、外野ライナーは単打または二塁打）として処理する
+77. When ライナーが捕球され、ランナーが塁上にいる、the Game System shall ランナーの帰塁判定を実行し、帰塁が間に合わない場合は併殺の可能性を判定する
+
+**守備プレイとアウトの判定：ダブルプレーの処理**
+78. When ダブルプレー機会（ランナー一塁でゴロ）が発生する、the Game System shall 打球を処理した内野手のTurn Double Play（併殺処理能力）を評価する
+79. When 打球が二塁手または遊撃手に飛ぶ、the Game System shall 二塁ベースカバーに入る反対側の内野手（二塁手→遊撃手がカバー、遊撃手→二塁手がカバー）を特定する
+80. When 打球が三塁手または一塁手に飛ぶ、the Game System shall 二塁ベースカバーに最も近い内野手（通常は遊撃手または二塁手）を特定する
+81. When ダブルプレーを試みる、the Game System shall 第一段階として、捕球した内野手のInfield Armと二塁ベースカバー選手のInfield Error、一塁ランナーのSpeedを評価して二塁封殺の成否を判定する
+82. When 二塁封殺が成功する、the Game System shall 第二段階として、二塁ベースカバー選手のInfield Armと一塁手のInfield Error、打者走者のSpeedを評価して一塁封殺の成否を判定する
+83. When 二塁封殺が失敗する、the Game System shall ダブルプレー失敗として処理し、一塁ランナーをセーフ、打者走者を一塁にする
+84. When 一塁封殺が失敗する、the Game System shall シングルアウトとして処理し、一塁ランナーをアウト、打者走者をセーフにする
+85. When 両方の封殺が成功する、the Game System shall ダブルプレー成立として処理し、2アウトを記録する
+86. When ダブルプレー機会で打球が強すぎる、the Game System shall ダブルプレー試行を放棄し、確実に一塁アウトのみを狙う判定を行う
+
+**守備プレイとアウトの判定：タッチアップとランナー進塁阻止**
+87. When 外野フライが捕球され、三塁ランナーがタッチアップを試みる、the Game System shall 捕球した外野手のOutfield Arm、捕手のCatcher Ability、三塁ランナーのSpeedとBaserunningを総合評価する
+88. When 外野フライが捕球され、二塁ランナーがタッチアップを試みる、the Game System shall 捕球した外野手のOutfield Arm、三塁手のInfield Error、二塁ランナーのSpeedとBaserunningを総合評価する
+89. When タッチアップ阻止確率を判定する、the Game System shall 外野手のOutfield Arm値に応じて漸進的に補正する：（Outfield Arm - 60）× 0.35%の補正を適用する
+90. When タッチアップ成功確率を判定する、the Game System shall ランナーのSpeedとBaserunningの平均値に応じて漸進的に補正する：（（Speed + Baserunning）/ 2 - 60）× 0.4%の補正を適用する
+91. When 受け取る守備選手の処理成功率を判定する、the Game System shall 捕手のCatcher Abilityまたは三塁手のInfield Error値に応じて漸進的に補正する：（能力値 - 60）× 0.3%の補正を適用する
+92. When タッチアップが成功する、the Game System shall ランナーを進塁させる
+93. When タッチアップが失敗する、the Game System shall ランナーをアウトとして処理する
+
+**守備プレイとアウトの判定：複数ランナー時の選択的送球**
+94. When ヒットでランナーが追加進塁を試みる、the Game System shall 外野手が送球する塁（二塁/三塁/本塁）を試合状況に応じて決定する
+95. When 外野手が二塁への送球を選択する、the Game System shall 外野手のOutfield Armと二塁ベースカバー選手（二塁手または遊撃手）のInfield Errorを評価する
+96. When 外野手が三塁への送球を選択する、the Game System shall 外野手のOutfield Armと三塁手のInfield Errorを評価する
+97. When 外野手が本塁への送球を選択する、the Game System shall 外野手のOutfield Armと捕手のCatcher Abilityを評価する
+98. When 中継プレイが発生する（外野→内野→塁）、the Game System shall 第一送球（外野→内野）と第二送球（内野→塁）の両方を個別に評価し、各段階で送球ミスの可能性を判定する
+99. When 中継プレイで内野手が中継する、the Game System shall 中継内野手のInfield ArmとInfield Errorを使用して中継精度を判定する
+
+**守備プレイとアウトの判定：エラーの詳細処理**
+100. When 守備エラーが発生する、the Game System shall エラーの種類（捕球エラー/送球エラー/判断ミス）を判定する
+101. When 捕球エラーが発生する、the Game System shall 打者を出塁させ、ランナーを1塁分進塁させる
+102. When 送球エラーが発生する、the Game System shall 打者と全ランナーを1-2塁分余分に進塁させる（送球エラーの重大度に応じて）
+103. When 判断ミスが発生する、the Game System shall 間違った塁に送球したとして、ランナーに追加進塁のチャンスを与える
+104. When エラーが発生する、the Game System shall エラーを犯した守備選手名と状況を実況テキストで表示する（例：「三塁手○○がエラー！打球を弾いてしまった！」）
+105. The Game System shall 全てのプレイ結果を自然な日本語のテキストで実況形式で表示し、担当守備選手名を含める
 
 ### Requirement 4: 選手とチーム情報の管理
 **Objective:** 監督として、選手やチームの状態を詳細に把握したい、Out of the Park Baseball 26のような深みのある選手能力システムで適切な指示判断ができるようにするため
@@ -780,21 +1022,19 @@
 15. The Game System shall 守備シフトが選択されてから3打席継続するまで変更できないルールを適用する（オプション設定で変更可能）
 
 **守備シフトが打撃結果に与える効果：ゴロ打球**
-16. When 右打ちシフトが適用され、打者が右方向にゴロを打つ、the Game System shall 内野安打の発生率を-30%低下させる
-17. When 右打ちシフトが適用され、打者が左方向にゴロを打つ、the Game System shall 内野安打の発生率を+40%上昇させる
-18. When 左打ちシフトが適用され、打者が左方向にゴロを打つ、the Game System shall 内野安打の発生率を-30%低下させる
-19. When 左打ちシフトが適用され、打者が右方向にゴロを打つ、the Game System shall 内野安打の発生率を+40%上昇させる
-20. When 極端シフトが適用され、打者が引っ張り方向にゴロを打つ、the Game System shall 内野安打の発生率を-50%低下させ、アウト確率を+20%上昇させる
-21. When 極端シフトが適用され、打者が逆方向にゴロを打つ、the Game System shall 内野安打の発生率を+60%上昇させ、確実安打として処理する確率を+30%上昇させる
-22. When 前進守備が適用され、打者が内野ゴロを打つ、the Game System shall 内野手の一塁到達までの時間を-0.3秒短縮し、打者走者のアウト確率を+25%上昇させる
-23. When 前進守備が適用され、三塁ランナーがいる状態でゴロが打たれる、the Game System shall 三塁ランナーの本塁到達を阻止する確率を+40%上昇させる
+16. When シフトが適用されたゴロ打球の処理を判定する、the Game System shall シフトの種類と方向に応じた基本補正値に、守備選手のInfield Range平均値を掛け合わせて漸進的に補正する：シフト効果 = 基本補正 × （守備選手Infield Range平均 / 70）を適用する
+17. When 右打ちシフトまたは左打ちシフトが適用され、シフト方向にゴロが飛ぶ、the Game System shall 内野安打の発生率を基本-30%補正に守備範囲を加味して補正する
+18. When 右打ちシフトまたは左打ちシフトが適用され、逆方向にゴロが飛ぶ、the Game System shall 内野安打の発生率を基本+40%補正に守備穴を加味して補正する
+19. When 極端シフトが適用され、引っ張り方向にゴロが飛ぶ、the Game System shall 内野安打の発生率を基本-50%補正、アウト確率を基本+20%補正に守備範囲を加味して補正する
+20. When 極端シフトが適用され、逆方向にゴロが飛ぶ、the Game System shall 内野安打の発生率を基本+60%補正、確実安打確率を基本+30%補正に守備穴を加味して補正する
+21. When 前進守備が適用され、打者が内野ゴロを打つ、the Game System shall 内野手の平均Infield Arm値に応じて一塁到達までの時間短縮と打者走者のアウト確率を漸進的に補正する：時間短縮 = -0.3秒 × （平均Infield Arm / 65）、アウト確率補正 = +25% × （平均Infield Arm / 65）を適用する
+22. When 前進守備が適用され、三塁ランナーがいる状態でゴロが打たれる、the Game System shall 内野手の平均Infield Armと捕手のCatcher Abilityに応じて本塁到達阻止確率を漸進的に補正する：阻止確率補正 = +40% × （（平均Infield Arm + Catcher Ability）/ 2 / 65）を適用する
 
 **守備シフトが打撃結果に与える効果：フライ・ライナー打球**
-24. When 深守備が適用され、打者が外野フライを打つ、the Game System shall 外野手のOutfield Range（外野守備範囲）を+20%拡大し、長打性の打球をアウトにする確率を+15%上昇させる
-25. When 深守備が適用され、打者が内野フライを打つ、the Game System shall 内野手の処理範囲を-10%縮小し、ポテンヒットの発生率を+15%上昇させる
-26. When 前進守備が適用され、打者が外野フライを打つ、the Game System shall 外野手の処理範囲を-10%縮小し、長打（二塁打・三塁打）の発生率を+10%上昇させる
-27. When 右打ちシフトまたは左打ちシフトが適用され、打者がライナーを打つ、the Game System shall シフト方向のライナーの捕球確率を+15%上昇させ、逆方向のライナーの捕球確率を-20%低下させる
-28. When 極端シフトが適用され、打者がライナーを打つ、the Game System shall シフト方向のライナーの捕球確率を+25%上昇させ、逆方向のライナーは確実安打（二塁打以上）として処理する確率を+40%上昇させる
+24. When 深守備が適用され、打者が外野フライを打つ、the Game System shall 外野手のOutfield Range平均値に応じて守備範囲拡大と長打性打球のアウト確率を漸進的に補正する：範囲拡大 = +20% × （平均Outfield Range / 70）、アウト確率補正 = +15% × （平均Outfield Range / 70）を適用する
+25. When 深守備が適用され、打者が内野フライを打つ、the Game System shall 内野手のInfield Range平均値に応じて処理範囲縮小とポテンヒット発生率を漸進的に補正する：範囲縮小 = -10% × （80 / 平均Infield Range）、ポテンヒット補正 = +15% × （80 / 平均Infield Range）を適用する
+26. When 前進守備が適用され、打者が外野フライを打つ、the Game System shall 外野手のOutfield Range平均値に応じて処理範囲縮小と長打発生率を漸進的に補正する：範囲縮小 = -10% × （80 / 平均Outfield Range）、長打補正 = +10% × （80 / 平均Outfield Range）を適用する
+27. When シフトが適用され、打者がライナーを打つ、the Game System shall シフト方向の守備選手のRange値とシフト種類（通常/極端）に応じて捕球確率を漸進的に補正する：シフト方向捕球確率 = 基本補正（通常+15%/極端+25%）× （シフト方向守備Range / 70）、逆方向捕球確率 = 基本補正（通常-20%/極端-40%）× （70 / 逆方向守備Range）を適用する
 
 **守備シフトが打撃結果に与える効果：長打と進塁**
 29. When 右打ちシフトまたは左打ちシフトが適用され、打者が二塁打を打つ、the Game System shall シフト逆方向への二塁打の発生率を+20%上昇させる
