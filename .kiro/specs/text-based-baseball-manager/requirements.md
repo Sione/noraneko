@@ -434,3 +434,104 @@
 38. The Game System shall 最も使用した戦術（バント回数、盗塁回数など）を統計として表示する
 39. When プレイヤーが統計画面を開く、the Game System shall グラフまたはテキストベースのチャートで戦績推移を表示する
 40. The Game System shall 対戦相手別の勝率を集計しランキング形式で表示する
+
+### Requirement 9: 選手とチームのデータ管理
+**Objective:** プレイヤーとして、カスタム選手とチームを作成・編集したい、自分好みの野球ゲーム体験をカスタマイズできるようにするため
+
+#### Acceptance Criteria
+
+**選手データの初期化とデフォルト提供**
+1. When アプリが初回起動される、the Game System shall `data/default_players.json` から30人以上のデフォルト選手データをロードする
+2. The Game System shall デフォルト選手データに両リーグの代表的な選手タイプ（パワーヒッター、俊足、技巧派投手など）を含める
+3. When 選手データをロードする、the Game System shall 全能力値が1-100範囲内であることをバリデートする
+4. If 選手データのバリデーションエラーが発生する、then the Game System shall エラー詳細（選手名、能力名、無効な値）を表示し、該当選手をスキップする
+5. The Game System shall ロード成功時に「○○人の選手をロードしました」と確認メッセージを表示する
+
+**選手一覧と検索機能**
+6. When プレイヤーがメインメニューで「選手管理」を選択する、the Game System shall 全選手の一覧を表示する
+7. The Game System shall 選手一覧に選手名、ポジション、総合評価（OVR）、所属チームを表示する
+8. When プレイヤーが検索フィルタを適用する、the Game System shall ポジション、チーム、能力値範囲で絞り込みを実行する
+9. When プレイヤーが並び替えを選択する、the Game System shall 名前、ポジション、総合評価の昇順/降順で並び替える
+10. The Game System shall 一覧表示に50人ずつのページネーション機能を提供する
+
+**選手の詳細表示**
+11. When プレイヤーが選手一覧から選手を選択する、the Game System shall 選手詳細画面に遷移する
+12. When 選手詳細が表示される、the Game System shall OOTP26準拠の全85能力値を分類表示する（打撃10項目、投手10項目、走塁7項目、守備9項目など）
+13. The Game System shall 各能力値を色分けで表示する（青=90+、緑=70-89、黄=50-69、橙=30-49、赤=1-29）
+14. When 選手詳細画面が表示される、the Game System shall 「編集」「削除」「戻る」のボタンを提供する
+15. When プレイヤーが「戻る」を選択する、the Game System shall 選手一覧に戻る
+
+**選手の新規作成**
+16. When プレイヤーが選手一覧で「新規作成」を選択する、the Game System shall 選手作成フォームを表示する
+17. When 選手作成フォームが表示される、the Game System shall 必須項目（名前、ポジション）と能力値入力フィールドを提供する
+18. The Game System shall 各能力値にスライダー（1-100）または数値入力を提供する
+19. When プレイヤーが能力値を変更する、the Game System shall リアルタイムで総合評価（OVR）を再計算し表示する
+20. The Game System shall デフォルト値として全能力値を50（平均）に設定する
+21. When プレイヤーが「ランダム生成」を選択する、the Game System shall 指定ポジションに適した能力値をランダムに生成する
+22. When プレイヤーが「保存」を選択する、the Game System shall 選手データをバリデートし、有効な場合はデータベースに保存する
+23. If 必須項目が未入力である、then the Game System shall 「○○を入力してください」とエラー表示し保存を拒否する
+24. When 選手が正常に保存される、the Game System shall 「選手を作成しました（ID: ○○）」と確認メッセージを表示する
+
+**選手の編集**
+25. When プレイヤーが選手詳細で「編集」を選択する、the Game System shall 選手編集フォームを表示する
+26. When 選手編集フォームが表示される、the Game System shall 現在の能力値をフォームに事前入力する
+27. When プレイヤーが能力値を変更する、the Game System shall 変更前との差分を強調表示する（例：「Contact: 75 → 80 (+5)」）
+28. When プレイヤーが「保存」を選択する、the Game System shall 変更内容を確認ダイアログで表示する
+29. When プレイヤーが変更を確定する、the Game System shall データベースを更新し「選手を更新しました」と表示する
+30. When プレイヤーが「キャンセル」を選択する、the Game System shall 変更を破棄し選手詳細に戻る
+
+**選手の削除**
+31. When プレイヤーが選手詳細で「削除」を選択する、the Game System shall 「本当に削除しますか？この操作は取り消せません」と確認ダイアログを表示する
+32. When プレイヤーが削除を確定する、the Game System shall データベースから選手を削除する
+33. If 削除対象の選手が既に試合で使用されている、then the Game System shall 「この選手は試合履歴に含まれています。削除しますか？」と追加警告を表示する
+34. When 選手が削除される、the Game System shall 「選手を削除しました」と表示し選手一覧に戻る
+
+**チーム管理機能**
+35. When プレイヤーが「チーム管理」を選択する、the Game System shall 全チームの一覧を表示する
+36. When プレイヤーが「新規チーム作成」を選択する、the Game System shall チーム作成フォーム（チーム名、略称、ホームスタジアム）を表示する
+37. When プレイヤーがチームを選択する、the Game System shall チーム詳細（ロースター、デフォルト打順）を表示する
+38. When プレイヤーが「ロースター編集」を選択する、the Game System shall 選手の追加/削除インターフェースを提供する
+39. The Game System shall チームに最低9人の野手と2人の投手を要求する
+40. When ロースターが編集される、the Game System shall 「変更を保存しました」と確認メッセージを表示する
+
+**データのインポート/エクスポート**
+41. When プレイヤーが「データエクスポート」を選択する、the Game System shall エクスポート対象（全選手、特定チーム、選択した選手）を選択させる
+42. When エクスポート対象が選択される、the Game System shall JSON形式でファイルに出力する
+43. The Game System shall エクスポートファイル名に日時を含める（例：`players_export_2026-01-31.json`）
+44. When エクスポートが完了する、the Game System shall 「○○人の選手を ~/baseball_game/exports/ にエクスポートしました」と表示する
+45. When プレイヤーが「データインポート」を選択する、the Game System shall ファイル選択ダイアログを表示する
+46. When インポートファイルが選択される、the Game System shall JSONフォーマットをバリデートする
+47. If インポートファイルが無効な形式である、then the Game System shall 「ファイル形式が正しくありません」とエラー表示する
+48. When インポートデータが有効である、the Game System shall 既存データとの重複チェックを実行する
+49. If 同名の選手が存在する、then the Game System shall 「上書き」「スキップ」「名前を変更して追加」のオプションを提示する
+50. When インポートが完了する、the Game System shall 「○○人の選手をインポートしました（スキップ: ○人）」と表示する
+
+**テンプレートとプリセット機能**
+51. The Game System shall 選手作成時に「テンプレート選択」機能を提供する
+52. When プレイヤーが「テンプレート選択」を開く、the Game System shall プリセット（パワーヒッター、俊足、エース投手、クローザーなど）を表示する
+53. When プレイヤーがテンプレートを選択する、the Game System shall 該当タイプの典型的な能力値をフォームに設定する
+54. The Game System shall カスタムテンプレートの保存機能を提供する
+55. When プレイヤーがカスタムテンプレートを保存する、the Game System shall テンプレート名を入力させ `~/.baseball_game/templates/` に保存する
+
+**バッチ編集機能**
+56. When プレイヤーが選手一覧で複数選手を選択する、the Game System shall 「バッチ編集」ボタンを有効化する
+57. When プレイヤーが「バッチ編集」を選択する、the Game System shall 一括操作メニュー（チーム変更、能力値補正、削除）を表示する
+58. When バッチで能力値補正が選択される、the Game System shall 全選手に対して一律の増減（例：「全能力+5」）を適用する
+59. When バッチ操作が実行される、the Game System shall 影響を受ける選手数を事前に表示し確認を求める
+60. When バッチ操作が完了する、the Game System shall 「○○人の選手を更新しました」と表示する
+
+**データ整合性とバックアップ**
+61. The Game System shall 選手データの変更前に自動バックアップを作成する
+62. The Game System shall バックアップを `~/.baseball_game/backups/` に日時付きで保存する
+63. The Game System shall 最大10世代のバックアップを保持し、古いものから自動削除する
+64. When プレイヤーが「バックアップから復元」を選択する、the Game System shall 利用可能なバックアップ一覧を表示する
+65. When バックアップが選択される、the Game System shall 「現在のデータは失われます。復元しますか？」と確認する
+66. When 復元が確定される、the Game System shall バックアップからデータを復元し「データを復元しました」と表示する
+67. The Game System shall データベース整合性チェック機能を提供し、起動時に自動実行する
+68. If データベース破損が検出される、then the Game System shall 最新のバックアップから自動復元を試みる
+
+**ヘルプとドキュメント**
+69. When プレイヤーが選手管理画面で「ヘルプ」を選択する、the Game System shall 選手作成ガイドを表示する
+70. The Game System shall ヘルプに各能力値の説明とゲームへの影響を記載する
+71. The Game System shall JSON形式のサンプルファイルを `data/sample_player.json` として提供する
+72. When プレイヤーが「能力値ガイド」を開く、the Game System shall OOTP26準拠の能力値説明を表示する
