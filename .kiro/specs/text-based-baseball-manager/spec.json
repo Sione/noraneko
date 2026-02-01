@@ -1,7 +1,7 @@
 {
   "feature_name": "text-based-baseball-manager",
   "created_at": "2026-01-31T00:00:00Z",
-  "updated_at": "2026-01-31T00:00:00Z",
+  "updated_at": "2026-02-01T00:00:00Z",
   "language": "ja",
   "phase": "design-generated",
   "approvals": {
@@ -21,9 +21,9 @@
   "ready_for_implementation": false,
   "requirements_detail_level": "comprehensive",
   "player_ability_system": "OOTP26-inspired",
-  "architecture_pattern": "state-machine-layered",
-  "technology_stack": "Python-Textual-SQLite",
-  "total_requirements": 9,
-  "total_components": 21
+  "architecture_pattern": "redux-saga-feature-first",
+  "technology_stack": "React-Vite-Redux-Dexie",
+  "total_requirements": 11,
+  "total_components": 17
 }
 
