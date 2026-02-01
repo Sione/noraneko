@@ -1,0 +1,345 @@
+.game-screen {
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.game-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* スコアボード */
+.scoreboard {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.scoreboard-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.team-name {
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.scoreboard-scores {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+}
+
+.team-score {
+  font-size: 48px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.score-divider {
+  font-size: 32px;
+  opacity: 0.6;
+}
+
+/* 試合状況 */
+.game-status {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.inning-info {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.game-info {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.info-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 走者表示 */
+.bases {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bases-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.bases-row {
+  display: flex;
+  gap: 120px;
+  align-items: center;
+}
+
+.base {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #999;
+  border: 3px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  transform: rotate(45deg);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.base.occupied {
+  color: #667eea;
+  border-color: #667eea;
+  background: #f0f4ff;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.base-label {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-45deg);
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* 打席情報 */
+.at-bat-display {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.batter-info,
+.pitcher-info {
+  flex: 1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.batter-info h3,
+.pitcher-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.player-name {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.count {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 16px;
+}
+
+.count-label {
+  opacity: 0.9;
+}
+
+.balls,
+.strikes {
+  font-weight: bold;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+}
+
+/* 指示パネル */
+.instruction-panel {
+  background: #fff8e1;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.instruction-panel h3 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.instruction-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.instruction-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.instruction-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.instruction-button:active {
+  transform: translateY(0);
+}
+
+.instruction-button.secondary {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+}
+
+.instruction-button.secondary:hover {
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+}
+
+.instruction-note {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+/* プレイログ */
+.play-log {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.play-log-header {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #ddd;
+}
+
+.play-log-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.play-log-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.play-log-inning {
+  min-width: 80px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.play-log-description {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+/* フェーズメッセージ */
+.phase-message {
+  text-align: center;
+  padding: 40px;
+  background: #f0f4ff;
+  border-radius: 12px;
+  margin-top: 24px;
+}
+
+.phase-message h2 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 12px;
+}
+
+.phase-message p {
+  font-size: 18px;
+  color: #666;
+}
+
+/* 打席情報 */
+.at-bat-info {
+  text-align: center;
+  padding: 40px;
+  background: #fff8e1;
+  border-radius: 12px;
+  margin-top: 24px;
+}
+
+.at-bat-info p {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 8px;
+}

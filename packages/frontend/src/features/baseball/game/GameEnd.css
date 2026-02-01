@@ -1,0 +1,286 @@
+.game-end {
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-end-container {
+  max-width: 1000px;
+  width: 100%;
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.game-end-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 3px solid #667eea;
+}
+
+.game-end-title {
+  font-size: 36px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.game-end-message {
+  font-size: 24px;
+  font-weight: 600;
+  color: #667eea;
+  margin: 0;
+}
+
+/* 最終スコア */
+.final-score {
+  margin-bottom: 32px;
+}
+
+.final-score-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.final-score-header h2 {
+  font-size: 24px;
+  color: #333;
+  margin: 0;
+}
+
+.final-score-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+
+.team-score-card {
+  flex: 1;
+  max-width: 300px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.team-score-card.winner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.team-score-card .team-name {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.team-score-card.winner .team-name {
+  color: white;
+}
+
+.team-final-score {
+  font-size: 64px;
+  font-weight: bold;
+  color: #333;
+}
+
+.team-score-card.winner .team-final-score {
+  color: white;
+}
+
+.winner-badge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: #ffd700;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.score-separator {
+  font-size: 48px;
+  font-weight: bold;
+  color: #999;
+}
+
+.draw-message {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #666;
+  margin-top: 16px;
+}
+
+/* 試合統計 */
+.game-stats {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.game-stats h3 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* イニング別スコア */
+.inning-scores {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.inning-scores h3 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.innings-table {
+  overflow-x: auto;
+}
+
+.innings-header,
+.innings-row {
+  display: grid;
+  grid-template-columns: 80px repeat(auto-fit, minmax(40px, 1fr)) 60px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+}
+
+.innings-header {
+  background: #667eea;
+  color: white;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.innings-row {
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.innings-label,
+.innings-team {
+  font-weight: 600;
+  text-align: center;
+}
+
+.inning-number,
+.inning-score {
+  text-align: center;
+  font-weight: 600;
+}
+
+.innings-total,
+.innings-total-score {
+  font-weight: bold;
+  text-align: center;
+}
+
+.innings-total-score {
+  background: #f0f4ff;
+  padding: 4px;
+  border-radius: 4px;
+  color: #667eea;
+}
+
+/* アクションボタン */
+.game-end-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.action-button {
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-button.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.action-button.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.action-button.secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.action-button.secondary:hover:not(:disabled) {
+  background: #f0f4ff;
+}
+
+.action-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+  border: none;
+  color: #666;
+}

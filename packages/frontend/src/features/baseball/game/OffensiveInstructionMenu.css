@@ -1,0 +1,180 @@
+.offensive-instruction-menu {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.instruction-menu-title {
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+  color: #333;
+  text-align: center;
+  font-weight: bold;
+}
+
+.current-situation {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+}
+
+.batter-info-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.batter-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #1976d2;
+}
+
+.batter-count {
+  font-size: 1rem;
+  color: #666;
+  font-family: monospace;
+}
+
+.runners-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.runner-label {
+  font-weight: bold;
+  color: #666;
+}
+
+.no-runners {
+  color: #999;
+}
+
+.runner-base {
+  padding: 4px 12px;
+  background: #4caf50;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.instruction-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.instruction-option {
+  padding: 16px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.instruction-option:hover:not(.disabled) {
+  border-color: #1976d2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+}
+
+.instruction-option.disabled {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.instruction-option.warning {
+  border-color: #ff9800;
+}
+
+.instruction-option.warning:hover:not(.disabled) {
+  border-color: #f57c00;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+}
+
+.option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.option-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.instruction-option.disabled .option-label {
+  color: #999;
+}
+
+.option-success-rate {
+  font-size: 0.85rem;
+  color: #1976d2;
+  font-weight: bold;
+  background: #e3f2fd;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.option-description {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.instruction-option.disabled .option-description {
+  color: #aaa;
+}
+
+.option-warning {
+  font-size: 0.85rem;
+  color: #f57c00;
+  font-weight: bold;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: #fff3e0;
+  border-radius: 4px;
+  border-left: 3px solid #ff9800;
+}
+
+.instruction-note {
+  padding: 12px;
+  background: #fff8e1;
+  border-radius: 6px;
+  border-left: 4px solid #ffc107;
+}
+
+.instruction-note p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .instruction-options {
+    grid-template-columns: 1fr;
+  }
+
+  .instruction-menu-title {
+    font-size: 1.2rem;
+  }
+
+  .batter-name {
+    font-size: 1rem;
+  }
+}

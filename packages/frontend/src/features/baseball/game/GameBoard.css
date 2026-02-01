@@ -1,0 +1,336 @@
+.main-menu {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.main-menu-container {
+  background: white;
+  border-radius: 16px;
+  padding: 48px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+}
+
+.game-title {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 48px;
+  color: #333;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.menu-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.menu-button {
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.menu-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.menu-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.menu-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* チーム選択画面のスタイル */
+.team-setup {
+  min-height: 100vh;
+  padding: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.team-setup-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.team-setup-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.team-setup-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.team-setup-subtitle {
+  font-size: 16px;
+  color: #666;
+}
+
+.team-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.team-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-select-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.team-select {
+  padding: 12px;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.team-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.side-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.side-selection-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.side-options {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.side-option {
+  flex: 1;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.side-option:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.side-option.selected {
+  border-color: #667eea;
+  background: #667eea;
+  color: white;
+}
+
+.team-setup-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.action-button {
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-button.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.action-button.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.action-button.secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.action-button.secondary:hover {
+  background: #f0f4ff;
+}
+
+.action-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* 打順編集画面のスタイル */
+.lineup-edit {
+  min-height: 100vh;
+  padding: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.lineup-edit-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.lineup-edit-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.lineup-edit-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.lineup-edit-subtitle {
+  font-size: 16px;
+  color: #666;
+}
+
+.teams-info {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 32px;
+  align-items: center;
+}
+
+.team-info {
+  flex: 1;
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.team-info-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.lineup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lineup-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lineup-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.lineup-position {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  padding: 4px 8px;
+  background: #f0f4ff;
+  color: #667eea;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.lineup-name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.vs-divider {
+  font-size: 32px;
+  font-weight: bold;
+  color: #667eea;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lineup-edit-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
