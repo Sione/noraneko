@@ -174,7 +174,7 @@ stateDiagram-v2
 - `AtBat` → `ManagerInstruction`: プレイヤーまたはCPUの指示待ち（意思決定ポイント）
 - `ManagerInstruction`: タイムアウトなしで選択待ちを継続。指示は打席開始時に1回のみ
 
-**ゲーム進行の基本原則（Req 2 AC 0a-0aa）**:
+**ゲーム進行の基本原則（Req 2 AC 2.1-2.26）**:
 
 *指示待機の必須化*:
 - プレイヤーからの指示入力を受けるまでゲームは進行しない
@@ -317,7 +317,7 @@ flowchart TB
 | 要件 | サマリー | コンポーネント | インターフェース | フロー |
 |-----|---------|--------------|----------------|-------|
 | 1.1-1.18 | 試合開始とゲームフロー | GameSlice, GameSaga, GameBoard | GameState, GameActions | 試合進行フロー |
-| 2.0a-0aa | ゲーム進行の基本原則（指示待機、意思決定ポイント、オートモード、投球表示、CPU動作） | GameSaga, InstructionPanel, SettingsSlice, AutoModeIndicator | GamePhase, aiDelegationMode, autoModeScope, DecisionPoint | 試合進行フロー |
+| 2.1-2.26 | ゲーム進行の基本原則（指示待機、意思決定ポイント、オートモード、投球表示、CPU動作） | GameSaga, InstructionPanel, SettingsSlice, AutoModeIndicator | GamePhase, aiDelegationMode, autoModeScope, DecisionPoint | 試合進行フロー |
 | 2.1-2.23 | プレイ毎の監督指示 | InstructionPanel, GameSaga | ManagerInstruction, InstructionType | 打席フロー |
 | 3.1-3.156 | プレイ結果判定とシミュレーション | SimulationEngine, ProbabilityEngine | PlayResult, BattingResult | 打席判定フロー |
 | 4.1-4.85 | 選手とチーム情報管理 | PlayersSlice, PlayersSaga, PlayerEditor | Player, PlayerAbilities | - |
@@ -342,15 +342,15 @@ flowchart TB
 - **主要データ**: `ManagerInstruction`, `InstructionType`, `aiDelegationMode`, `autoModeScope`, `DecisionPoint`
 - **フロー**: 指示待ち→指示確定→プレイ実行→結果表示
 
-#### ゲーム進行の基本原則（AC 0a-0aa）
+#### ゲーム進行の基本原則（AC 2.1-2.26）
 
-**指示待機の必須化（AC 0a-0d）**
+**指示待機の必須化（AC 2.1-2.4）**
 - プレイヤーからの指示入力を受けるまでゲームは進行しない
 - 指示選択画面は無期限に表示され、タイムアウトなし
 - 離席時も試合状態を保持し続ける
 - `awaiting_instruction`フェーズは明示的操作があるまで遷移しない
 
-**意思決定ポイントの定義（AC 0e-0g）**
+**意思決定ポイントの定義（AC 2.5-2.7）**
 - 意思決定ポイント一覧: 
   - 打席開始時の攻撃指示
   - 打席開始前の守備指示
@@ -359,7 +359,7 @@ flowchart TB
   - チーム選択とホーム/ビジター選択
 - 意思決定ポイント以外（1球判定ループ、守備判定、走者進塁処理）は自動進行
 
-**指示待機中に許可される操作（AC 0h-0j）**
+**指示待機中に許可される操作（AC 2.8-2.10）**
 - ヘルプ/ルール説明の表示
 - 選手詳細情報の確認
 - 試合状況（スコアボード、プレイログ）の確認
@@ -367,24 +367,24 @@ flowchart TB
 - 試合の一時中断（Pauseメニュー）
 - 操作完了後は指示選択画面に戻り待機継続
 
-**オートモード例外条件（AC 0k-0o）**
+**オートモード例外条件（AC 2.11-2.15）**
 - `aiDelegationMode: 'auto'`時はAI委譲で自動進行
 - 「オートモード中」インジケーター常時表示
 - 「手動操作に戻す」ボタン常時表示
 - 解除時は次の意思決定ポイントから通常動作に復帰
 
-**オートモードの開始と終了（AC 0p-0s）**
+**オートモードの開始と終了（AC 2.16-2.19）**
 - 開始方法: 設定画面での有効化、指示画面での「AI委譲」ボタン、イニング/試合単位の委譲
 - 終了方法: 「手動操作に戻す」ボタン、Escキー/中断ボタン
 - イニング委譲時はイニング終了後に確認ダイアログ表示
 - 試合委譲時は重要場面のみハイライト表示オプション提供
 
-**投球表示設定との関係（AC 0t-0w）**
+**投球表示設定との関係（AC 2.20-2.23）**
 - 詳細モード: 1球毎表示、打席開始時のみ指示待機
 - 簡易モード: 最終結果のみ表示、打席開始時のみ指示待機
 - 「クリックで続行」は結果確認であり指示選択ではない
 
-**CPU vs プレイヤーチームの動作差異（AC 0x-0aa）**
+**CPU vs プレイヤーチームの動作差異（AC 2.24-2.26）**
 - プレイヤーチーム: 意思決定ポイントで指示待機（オートモード無効時）
 - CPUチーム: AI判断で自動進行（0.5-1.5秒思考時間）
 - CPUターンはプレイヤーが観戦、結果のみ確認
@@ -494,7 +494,7 @@ flowchart TB
 - AI委譲統計（使用回数/得点率/勝率）はPlayLogの`source`集計で算出する
 - 守備シフトの使用回数/成功率/被長打率を試合後と戦績画面で表示する
 
-**ゲーム進行の基本原則対応（AC 0a-0aa）**:
+**ゲーム進行の基本原則対応（AC 2.1-2.26）**:
 - **指示待機動作**: 意思決定ポイントで指示選択画面を表示し、プレイヤー入力があるまで無期限に待機（タイムアウトなし、離席対応）
 - **意思決定ポイント明示**: 現在の意思決定ポイント種別（攻撃指示/守備指示/選手交代等）をヘッダーに表示
 - **指示待機中の補助操作**: ヘルプ、選手詳細、設定、中断ボタンを指示選択画面に配置。操作後は指示選択に戻る
@@ -520,7 +520,7 @@ flowchart TB
 - 試合状態（スコア、イニング、アウト、ランナー）の保持
 - ゲームフェーズの遷移管理
 - 現在打席の状態管理
-- **ゲーム進行の基本原則（AC 0a-0aa）**:
+- **ゲーム進行の基本原則（AC 2.1-2.26）**:
   - `awaiting_instruction`フェーズではプレイヤーの指示入力があるまで無期限に待機
   - 意思決定ポイント（打席開始、守備指示、選手交代、打順編集、チーム選択）でのみ待機
   - 意思決定ポイント以外（1球判定、守備判定、進塁処理）は自動進行
@@ -530,7 +530,7 @@ flowchart TB
 - イニング終了時の自動保存と中断/再開状態の保持
 - **試合時間計測ポリシー**:
   - `elapsedSeconds` は「実プレイ時間」を表す
-  - 指示待機中（`awaiting_instruction`）も計測を継続する（AC 0j）
+  - 指示待機中（`awaiting_instruction`）も計測を継続する（AC 2.10）
   - `paused` 中は計測を停止し、再開で続きから計測する
 
 **依存**
@@ -586,21 +586,21 @@ interface GameState {
   gameStartTime: number;
   elapsedSeconds: number;
 
-  // オートモード状態（AC 0k-0s）
+  // オートモード状態（AC 2.11-2.19）
   isAutoModeActive: boolean;           // オートモード有効時はtrue
   autoModeScope: AutoModeScope | null; // オートモードの範囲
   autoModeInningEnd: number | null;    // イニング委譲時の終了イニング
   showHighlightsOnly: boolean;         // 試合委譲時のハイライト表示モード
 }
 
-// オートモードの範囲（AC 0p-0r）
+// オートモードの範囲（AC 2.16-2.18）
 type AutoModeScope = 
   | 'at_bat'     // 打席単位（「AI委譲」ボタン押下時）
   | 'inning'     // イニング単位（「このイニングをAIに委譲」）
   | 'game'       // 試合単位（「試合全体をAIに委譲」）
   | 'always';    // 常時（設定での「常にAI委譲」）
 
-// 意思決定ポイント種別（AC 0e）
+// 意思決定ポイント種別（AC 2.5）
 type DecisionPointType = 
   | 'offensive_instruction'   // 打席開始時の攻撃指示
   | 'defensive_instruction'   // 打席開始前の守備指示
@@ -916,7 +916,7 @@ type AbilityDefinitions = AbilityDefinition[];
 | フィールド | 詳細 |
 |-----------|------|
 | 目的 | 表示・操作・難易度などユーザー設定を管理 |
-| 要件 | 2.0a-0aa（ゲーム進行の基本原則）, 7.16-7.30, 10.73-10.103, 11.15, 6.8 |
+| 要件 | 2.1-2.26（ゲーム進行の基本原則）, 7.16-7.30, 10.73-10.103, 11.15, 6.8 |
 
 **コントラクト**: State [ ✓ ]
 
@@ -941,25 +941,25 @@ interface SettingsState {
   showCountHighlight: boolean;  // カウント状況に応じた色分け表示
   showPitchByPitchLog: boolean;  // 1球毎のログを詳細表示
 
-  // 難易度とAI委譲（AC 0k-0s, AC 0p-0r）
+  // 難易度とAI委譲（AC 2.11-2.19, AC 2.16-2.18）
   cpuDifficulty: 'easy' | 'normal' | 'hard';
   
   // aiDelegationMode（ゲーム進行の基本原則との関係）:
-  //   'off' - プレイヤー指示必須（AC 0a-0d: 全意思決定ポイントで待機）
-  //   'confirm' - AI推奨を表示し、プレイヤーが確認後に実行（AC 0h: 指示待機中の補助操作）
-  //   'auto' - オートモード: AI委譲で自動進行（AC 0k-0o: 基本原則の例外条件）
+  //   'off' - プレイヤー指示必須（AC 2.1-2.4: 全意思決定ポイントで待機）
+  //   'confirm' - AI推奨を表示し、プレイヤーが確認後に実行（AC 2.8: 指示待機中の補助操作）
+  //   'auto' - オートモード: AI委譲で自動進行（AC 2.11-2.15: 基本原則の例外条件）
   aiDelegationMode: 'off' | 'confirm' | 'auto';
   
-  // defaultAutoModeScope（AC 0p: オートモード開始方法）:
+  // defaultAutoModeScope（AC 2.16: オートモード開始方法）:
   //   'at_bat' - 打席単位で委譲
-  //   'inning' - イニング単位で委譲（AC 0q: イニング終了後に確認ダイアログ）
-  //   'game' - 試合単位で委譲（AC 0r: 重要場面のみハイライト表示オプション）
+  //   'inning' - イニング単位で委譲（AC 2.17: イニング終了後に確認ダイアログ）
+  //   'game' - 試合単位で委譲（AC 2.18: 重要場面のみハイライト表示オプション）
   defaultAutoModeScope: 'at_bat' | 'inning' | 'game';
   
   aiDelegationAggression: 'conservative' | 'normal' | 'aggressive';
   showAiRecommendations: boolean;
   
-  // highlightOnlyMode（AC 0r: 試合委譲時のハイライト表示）
+  // highlightOnlyMode（AC 2.18: 試合委譲時のハイライト表示）
   highlightOnlyMode: boolean;
   
   randomnessLevel: 'low' | 'normal' | 'high';
@@ -1258,7 +1258,7 @@ interface DirectionProbabilities {
 | フィールド | 詳細 |
 |-----------|------|
 | 目的 | CPU操作チームの戦術判断およびプレイヤーのAI委譲を行う |
-| 要件 | 2.0k-0aa（オートモード）, 10.1-10.106 |
+| 要件 | 2.11-2.26（オートモード）, 10.1-10.106 |
 
 **コントラクト**: Service [ ✓ ]
 
@@ -1316,17 +1316,17 @@ interface AIDefensiveInput {
 **実装ノート**
 - 難易度別の判断精度: 初級30-40%ミス、中級15-20%ミス、上級5%未満ミス
 - 状況別確率はAC 10.6-10.72に準拠
-- CPU指示は0.5-1.5秒の思考遅延をGameSaga側で挿入（AC 0y）
+- CPU指示は0.5-1.5秒の思考遅延をGameSaga側で挿入（AC 2.25）
 - 指示選択画面で5秒無操作の場合はAI推奨を表示する
 
-**ゲーム進行の基本原則対応（AC 0k-0aa）**:
-- **オートモード自動進行（AC 0k）**: `isAutoModeActive: true` の場合、プレイヤーチームの指示もAIEngineが自動決定し、`awaiting_instruction`フェーズでの待機をスキップ
-- **オートモード範囲（AC 0p-0r）**: `autoModeScope`に応じて委譲範囲を制御
+**ゲーム進行の基本原則対応（AC 2.11-2.26）**:
+- **オートモード自動進行（AC 2.11）**: `isAutoModeActive: true` の場合、プレイヤーチームの指示もAIEngineが自動決定し、`awaiting_instruction`フェーズでの待機をスキップ
+- **オートモード範囲（AC 2.16-2.18）**: `autoModeScope`に応じて委譲範囲を制御
   - `'at_bat'`: 打席単位で委譲、打席終了後に手動に戻る
   - `'inning'`: イニング終了後に確認ダイアログを表示
   - `'game'`: 試合終了まで自動進行、`highlightOnlyMode`で重要場面のみ表示
-- **手動復帰（AC 0n, 0s）**: `isAutoModeActive`をfalseに設定し、次の意思決定ポイントから通常動作に復帰
-- **CPU操作チーム（AC 0y-0aa）**: CPUチームは常にAIEngineで判断し、プレイヤーの指示待機なしで自動進行
+- **手動復帰（AC 2.14, 2.19）**: `isAutoModeActive`をfalseに設定し、次の意思決定ポイントから通常動作に復帰
+- **CPU操作チーム（AC 2.25-2.26）**: CPUチームは常にAIEngineで判断し、プレイヤーの指示待機なしで自動進行
 
 ### Persistence Layer
 
