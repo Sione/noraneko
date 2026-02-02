@@ -1,136 +1,195 @@
 .game-screen {
   min-height: 100vh;
   padding: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
-/* タスク11: ヘッダーバー */
+/* コンパクトヘッダーバー（スコアボード統合） */
 .game-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-  padding: 12px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%);
+  padding: 8px 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .header-button {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 16px;
   cursor: pointer;
   transition: all 0.2s;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 36px;
+  min-height: 36px;
 }
 
 .header-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .header-button:active {
   transform: translateY(0);
 }
 
-.game-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  margin-top: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+/* コンパクトスコア表示 */
+.compact-score {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
 }
 
-.scoreboard {
-  background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%);
+.compact-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-team-name {
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-team-score {
+  font-size: 28px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  min-width: 36px;
+  text-align: center;
+}
+
+.compact-team-score.leading {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.compact-divider {
+  font-size: 20px;
+  opacity: 0.5;
+  margin: 0 4px;
+}
+
+/* イニング・アウト表示 */
+.compact-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   color: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  position: relative;
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.compact-inning {
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.compact-outs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.out-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.out-dot.active {
+  background: #ffd700;
+  border-color: #ffd700;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+}
+
+/* イニング詳細（アコーディオン） */
+.innings-accordion {
+  background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%);
+  border-radius: 8px;
+  margin: 8px 16px;
   overflow: hidden;
 }
 
-.scoreboard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
-  animation: scoreboard-glow 3s ease-in-out infinite;
-}
-
-@keyframes scoreboard-glow {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.scoreboard-header {
+.innings-toggle {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  font-size: 13px;
+  cursor: pointer;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.team-name {
-  font-size: 18px;
-  font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
-  letter-spacing: 0.5px;
-}
-
-.scoreboard-scores {
-  display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  transition: background 0.2s;
 }
 
-.team-score {
-  font-size: 52px;
-  font-weight: bold;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
-  font-family: 'Courier New', monospace;
-  transition: all 0.3s ease;
+.innings-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.team-score.leading {
-  color: #ffd700;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 3px 3px 6px rgba(0, 0, 0, 0.4);
+.innings-toggle-icon {
+  transition: transform 0.3s;
 }
 
-.score-divider {
-  font-size: 32px;
-  opacity: 0.6;
+.innings-toggle-icon.expanded {
+  transform: rotate(180deg);
 }
 
-/* イニング別得点表 */
+.innings-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.innings-content.expanded {
+  max-height: 200px;
+}
+
 .innings-table {
-  margin-top: 20px;
-  border-top: 2px solid rgba(255, 255, 255, 0.2);
-  padding-top: 16px;
+  padding: 0 16px 12px;
 }
 
 .innings-row {
@@ -141,157 +200,234 @@
 
 .innings-header {
   font-weight: bold;
-  font-size: 12px;
-  margin-bottom: 8px;
+  font-size: 11px;
+  margin-bottom: 6px;
+  opacity: 0.8;
 }
 
 .inning-cell {
-  min-width: 32px;
+  min-width: 24px;
   text-align: center;
-  padding: 4px 2px;
-  font-size: 13px;
+  padding: 3px 2px;
+  font-size: 12px;
+  color: white;
 }
 
 .inning-cell.team-label {
-  min-width: 80px;
+  min-width: 60px;
   text-align: left;
   font-weight: 600;
-  padding-right: 12px;
+  padding-right: 8px;
+  font-size: 11px;
 }
 
 .inning-cell.total-label,
 .inning-cell.total-score {
-  min-width: 40px;
+  min-width: 32px;
   font-weight: bold;
-  border-left: 2px solid rgba(255, 255, 255, 0.3);
-  margin-left: 8px;
-  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  margin-left: 6px;
+  padding-left: 6px;
 }
 
 .inning-cell.current-inning {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
   font-weight: bold;
 }
 
 .inning-cell.active-half {
   background: rgba(255, 215, 0, 0.3);
-  border-radius: 4px;
+  border-radius: 3px;
   font-weight: bold;
 }
 
-.away-row {
-  opacity: 0.95;
-}
-
-.home-row {
-  opacity: 0.95;
-}
-
-/* 試合状況 */
-.game-status {
-  background: #f9f9f9;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.inning-info {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.game-info {
+/* 2カラムレイアウト */
+.game-layout {
   display: flex;
-  justify-content: center;
-  gap: 32px;
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.game-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.game-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+/* メインコンテナ */
+.game-container {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* コンパクト試合状況 */
+.game-status-compact {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
-.info-item {
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* コンパクト塁ベース表示 */
+.bases-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.bases-compact-row {
+  display: flex;
+  gap: 18px;
+}
+
+.base-compact {
+  width: 16px;
+  height: 16px;
+  transform: rotate(45deg);
+  border: 2px solid #bbb;
+  background: white;
+  transition: all 0.3s;
+}
+
+.base-compact.occupied {
+  background: #667eea;
+  border-color: #667eea;
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.5);
+}
+
+/* カウント表示（ドット形式） */
+.count-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.count-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.count-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #666;
+  width: 14px;
+}
+
+.count-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.count-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: #eee;
+  transition: all 0.2s;
+}
+
+.count-dot.ball.active {
+  background: #4caf50;
+  border-color: #388e3c;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+}
+
+.count-dot.strike.active {
+  background: #f44336;
+  border-color: #d32f2f;
+  box-shadow: 0 0 4px rgba(244, 67, 54, 0.5);
+}
+
+.count-dot.out.active {
+  background: #ffc107;
+  border-color: #ffa000;
+  box-shadow: 0 0 4px rgba(255, 193, 7, 0.5);
+}
+
+/* 打者/投手情報（コンパクト） */
+.matchup-compact {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 13px;
 }
 
-.info-label {
-  font-size: 14px;
+.matchup-player {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.matchup-label {
+  color: #999;
+  font-size: 11px;
+}
+
+.matchup-name {
   font-weight: 600;
-  color: #666;
-}
-
-.info-value {
-  font-size: 18px;
-  font-weight: bold;
   color: #333;
 }
 
-.info-value.batting-order {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.matchup-order {
+  background: #667eea;
   color: white;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 16px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 700;
 }
 
-/* 重要局面ラベル */
+.matchup-vs {
+  color: #ccc;
+  font-size: 11px;
+}
+
+/* 重要局面ラベル（コンパクト版） */
 .situation-labels {
   display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 6px;
   flex-wrap: wrap;
-  animation: fade-in 0.5s ease-out;
-}
-
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .situation-label {
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
   color: white;
-  padding: 10px 20px;
-  border-radius: 24px;
-  font-size: 15px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: bold;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 3px 12px rgba(255, 107, 107, 0.4);
-  animation: label-pulse 2s ease-in-out infinite, label-glow 2s ease-in-out infinite;
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
-}
-
-.situation-label::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: shine 3s infinite;
-}
-
-@keyframes shine {
-  0% {
-    transform: translateX(-100%) translateY(-100%) rotate(45deg);
-  }
-  100% {
-    transform: translateX(100%) translateY(100%) rotate(45deg);
-  }
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  animation: label-pulse 2s ease-in-out infinite;
 }
 
 @keyframes label-pulse {
@@ -299,16 +435,7 @@
     transform: scale(1);
   }
   50% {
-    transform: scale(1.06);
-  }
-}
-
-@keyframes label-glow {
-  0%, 100% {
-    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.4);
-  }
-  50% {
-    box-shadow: 0 5px 20px rgba(255, 107, 107, 0.6), 0 0 30px rgba(255, 107, 107, 0.3);
+    transform: scale(1.03);
   }
 }
 
@@ -324,544 +451,255 @@
 .situation-label.close-game {
   background: linear-gradient(135deg, #ffd93d 0%, #f39c12 100%);
   color: #333;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
 }
 
 .situation-label.sayonara {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  animation: label-pulse 1s ease-in-out infinite, label-glow-intense 1.5s ease-in-out infinite;
-}
-
-@keyframes label-glow-intense {
-  0%, 100% {
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
-  }
-  50% {
-    box-shadow: 0 6px 28px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.5);
-  }
 }
 
 .situation-label.last-chance {
   background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
 }
 
-/* ガイダンスメッセージ */
+/* ガイダンスメッセージ（コンパクト版） */
 .guidance-message {
-  text-align: center;
-  margin-top: 12px;
-  padding: 14px 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.35);
-  line-height: 1.5;
-  animation: guidance-fade-in 0.4s ease-out;
-  position: relative;
-  overflow: hidden;
-}
-
-@keyframes guidance-fade-in {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .guidance-message::before {
   content: '💡';
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 18px;
-  opacity: 0.8;
+  font-size: 14px;
 }
 
-.guidance-message::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: shine-guidance 3s infinite;
-}
-
-@keyframes shine-guidance {
-  0% {
-    left: -100%;
-  }
-  50%, 100% {
-    left: 100%;
-  }
-}
-
-/* 走者表示 */
+/* 走者表示（非表示 - コンパクト版を使用） */
 .bases {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: 12px;
-  padding: 32px 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: visible;
+  display: none;
 }
 
-.bases-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.bases-row {
-  display: flex;
-  gap: 120px;
-  align-items: center;
-}
-
-.base {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  border: 3px solid #ddd;
-  background: white;
-  border-radius: 8px;
-  transform: rotate(45deg);
-  position: relative;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.base.occupied {
-  color: #667eea;
-  border-color: #667eea;
-  background: linear-gradient(135deg, #f0f4ff 0%, #e0ebff 100%);
-  box-shadow: 0 0 24px rgba(102, 126, 234, 0.5), 0 4px 8px rgba(0, 0, 0, 0.1);
-  animation: runner-appear 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), runner-pulse 2s ease-in-out infinite;
-  transform: rotate(45deg) scale(1.05);
-}
-
-@keyframes runner-appear {
-  0% {
-    transform: rotate(45deg) scale(0.5);
-    opacity: 0;
-  }
-  50% {
-    transform: rotate(45deg) scale(1.15);
-  }
-  100% {
-    transform: rotate(45deg) scale(1.05);
-    opacity: 1;
-  }
-}
-
-@keyframes runner-pulse {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4), 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(102, 126, 234, 0.6), 0 6px 12px rgba(0, 0, 0, 0.15);
-  }
-}
-
-.base-symbol {
-  font-size: 34px;
-  transform: rotate(-45deg);
-  transition: all 0.3s ease;
-}
-
-.base.occupied .base-symbol {
-  animation: bounce 0.6s ease-in-out;
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: rotate(-45deg) translateY(0);
-  }
-  50% {
-    transform: rotate(-45deg) translateY(-4px);
-  }
-}
-
-.base-label {
-  position: absolute;
-  bottom: -28px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-45deg);
-  font-size: 12px;
-  font-weight: 600;
-  color: #666;
-  white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-}
-
-.runner-name {
-  position: absolute;
-  top: -36px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-45deg);
-  font-size: 12px;
-  font-weight: 700;
-  color: #667eea;
-  white-space: nowrap;
-  background: white;
-  padding: 4px 10px;
-  border-radius: 6px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 0 0 2px rgba(102, 126, 234, 0.1);
-  animation: slide-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-@keyframes slide-in {
-  0% {
-    opacity: 0;
-    top: -20px;
-  }
-  100% {
-    opacity: 1;
-    top: -36px;
-  }
-}
-
-.bases-loaded-indicator {
-  margin-top: 16px;
-  padding: 10px 28px;
+/* 満塁インジケータ（コンパクト版） */
+.bases-loaded-compact {
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
   color: white;
-  border-radius: 24px;
-  font-size: 18px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
   font-weight: bold;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.5);
-  animation: pulse-scale 2s ease-in-out infinite, glow 2s ease-in-out infinite;
-  letter-spacing: 1px;
+  animation: pulse-scale 2s ease-in-out infinite;
 }
 
 @keyframes pulse-scale {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2);
-  }
-  50% {
-    box-shadow: 0 6px 24px rgba(255, 107, 107, 0.6), 0 0 40px rgba(255, 107, 107, 0.4);
-  }
-}
-
-/* 打席情報 */
+/* 打席情報（非表示 - コンパクト版を使用） */
 .at-bat-display {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 24px;
+  display: none;
 }
 
-.batter-info,
-.pitcher-info {
-  flex: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.batter-info h3,
-.pitcher-info h3 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  opacity: 0.9;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.player-name {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 12px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.count {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  font-size: 16px;
-}
-
-.count-label {
-  opacity: 0.9;
-}
-
-.balls,
-.strikes {
-  font-weight: bold;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-}
-
-/* 指示パネル */
+/* 指示パネル（コンパクト版） */
 .instruction-panel {
-  background: #fff8e1;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid #ffd54f;
+}
+
+/* フェーズメッセージ（コンパクト版） */
+.phase-message {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8ecf8 100%);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.phase-message h2 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #667eea;
+  margin: 0 0 8px 0;
+}
+
+.phase-message h3 {
+  font-size: 16px;
+  color: #667eea;
+  margin: 0;
+}
+
+.phase-message p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* CPU思考中表示 */
+.cpu-thinking {
+  margin-top: 12px;
+  padding: 10px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 8px;
   text-align: center;
 }
 
-.instruction-panel h3 {
-  font-size: 20px;
-  color: #333;
-  margin-bottom: 16px;
+.cpu-thinking p {
+  color: #1565c0;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0;
 }
 
-.instruction-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.instruction-button {
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.instruction-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.instruction-button:active {
-  transform: translateY(0);
-}
-
-.instruction-button.secondary {
-  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-}
-
-.instruction-button.secondary:hover {
-  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
-}
-
-.instruction-note {
-  font-size: 14px;
-  color: #666;
-  font-style: italic;
-}
-
-/* プレイログ */
+/* プレイログ（サイドバー版） */
 .play-log {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  height: fit-content;
+  max-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 80px;
 }
 
 .play-log-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #dee2e6;
-  flex-wrap: wrap;
-  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dee2e6;
 }
 
 .play-log-controls {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .log-filter-select {
-  padding: 8px 14px;
-  border: 2px solid #ced4da;
-  border-radius: 8px;
+  padding: 4px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
   background: white;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #333;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.log-filter-select:hover {
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .log-filter-select:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
 .log-toggle-button {
-  padding: 8px 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 4px 8px;
+  background: #667eea;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 4px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
 }
 
 .log-toggle-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.log-toggle-button:active {
-  transform: translateY(0);
+  background: #5568d3;
 }
 
 .play-log-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 400px;
+  gap: 6px;
   overflow-y: auto;
+  flex: 1;
   padding-right: 4px;
 }
 
 /* カスタムスクロールバー */
 .play-log-content::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
 
 .play-log-content::-webkit-scrollbar-track {
   background: #e9ecef;
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
 .play-log-content::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.play-log-content::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
+  background: #667eea;
+  border-radius: 2px;
 }
 
 .play-log-empty {
   text-align: center;
-  padding: 32px 20px;
+  padding: 20px 10px;
   color: #adb5bd;
   font-style: italic;
-  font-size: 15px;
+  font-size: 12px;
 }
 
 .play-log-item {
   display: flex;
-  gap: 12px;
-  padding: 12px 14px;
-  background: white;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  animation: log-item-appear 0.3s ease-out;
-}
-
-@keyframes log-item-appear {
-  0% {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+  font-size: 12px;
 }
 
 .play-log-item:hover {
-  transform: translateX(6px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #e9ecef;
 }
 
 .play-log-inning {
-  min-width: 80px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: #667eea;
-  display: flex;
-  align-items: center;
 }
 
 .play-log-description {
-  flex: 1;
-  font-size: 14px;
+  font-size: 12px;
   color: #333;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .play-log-score-change {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: #495057;
-  padding: 3px 10px;
+  padding: 2px 6px;
   background: #e9ecef;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
-/* イベントタイプによる色分け - 強化版 */
+/* イベントタイプによる色分け（コンパクト版） */
 .play-log-item.event-hit {
   border-left-color: #20c997;
-  background: linear-gradient(to right, rgba(32, 201, 151, 0.05) 0%, white 100%);
-}
-
-.play-log-item.event-hit:hover {
-  background: linear-gradient(to right, rgba(32, 201, 151, 0.1) 0%, white 100%);
+  background: rgba(32, 201, 151, 0.1);
 }
 
 .play-log-item.event-homerun {
   border-left-color: #ffd700;
-  background: linear-gradient(to right, rgba(255, 215, 0, 0.15) 0%, #fffbea 50%, white 100%);
-  box-shadow: 0 3px 8px rgba(255, 215, 0, 0.2);
-}
-
-.play-log-item.event-homerun:hover {
-  background: linear-gradient(to right, rgba(255, 215, 0, 0.2) 0%, #fffbea 50%, white 100%);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  background: rgba(255, 215, 0, 0.15);
 }
 
 .play-log-item.event-homerun .play-log-description {
@@ -872,18 +710,17 @@
 .play-log-item.event-out,
 .play-log-item.event-strikeout {
   border-left-color: #6c757d;
-  background: linear-gradient(to right, rgba(108, 117, 125, 0.05) 0%, white 100%);
+  background: rgba(108, 117, 125, 0.08);
 }
 
 .play-log-item.event-walk {
   border-left-color: #3498db;
-  background: linear-gradient(to right, rgba(52, 152, 219, 0.05) 0%, white 100%);
+  background: rgba(52, 152, 219, 0.1);
 }
 
 .play-log-item.event-error {
   border-left-color: #e74c3c;
-  background: linear-gradient(to right, rgba(231, 76, 60, 0.08) 0%, white 100%);
-  box-shadow: 0 2px 6px rgba(231, 76, 60, 0.15);
+  background: rgba(231, 76, 60, 0.1);
 }
 
 .play-log-item.event-error .play-log-description {
@@ -893,396 +730,222 @@
 
 .play-log-item.event-doubleplay {
   border-left-color: #9b59b6;
-  background: linear-gradient(to right, rgba(155, 89, 182, 0.08) 0%, white 100%);
-}
-
-.play-log-item.event-doubleplay .play-log-description {
-  font-weight: 600;
-  color: #8e44ad;
+  background: rgba(155, 89, 182, 0.1);
 }
 
 .play-log-item.event-substitution {
   border-left-color: #f39c12;
-  background: linear-gradient(to right, rgba(243, 156, 18, 0.08) 0%, white 100%);
+  background: rgba(243, 156, 18, 0.1);
 }
 
 .play-log-item.event-inning {
   border-left-color: #2ecc71;
-  background: linear-gradient(to right, rgba(46, 204, 113, 0.1) 0%, #f0fff4 50%, white 100%);
-  font-weight: 600;
+  background: rgba(46, 204, 113, 0.1);
 }
 
 .play-log-item.event-inning .play-log-description {
   color: #27ae60;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .play-log-item.event-game {
   border-left-color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, #f0f4ff 50%, white 100%);
-  font-weight: bold;
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+  background: rgba(102, 126, 234, 0.12);
 }
 
 .play-log-item.event-game .play-log-description {
   color: #5568d3;
   font-weight: 700;
-  font-size: 15px;
 }
 
 .play-log-item.event-default {
   border-left-color: #bdc3c7;
 }
 
-/* フェーズメッセージ */
-.phase-message {
-  text-align: center;
-  padding: 40px;
-  background: #f0f4ff;
-  border-radius: 12px;
-  margin-top: 24px;
-}
-
-.phase-message h2 {
-  font-size: 28px;
-  font-weight: bold;
-  color: #667eea;
-  margin-bottom: 12px;
-}
-
-.phase-message p {
-  font-size: 18px;
-  color: #666;
-}
-
-/* 打席情報 */
-.at-bat-info {
-  text-align: center;
-  padding: 40px;
-  background: #fff8e1;
-  border-radius: 12px;
-  margin-top: 24px;
-}
-
-.at-bat-info p {
-  font-size: 18px;
-  color: #666;
-  margin-bottom: 8px;
-}
-
 /* レスポンシブデザイン */
-@media (max-width: 768px) {
-  .game-container {
-    padding: 16px;
-    margin-top: 16px;
-  }
-
-  .scoreboard {
-    padding: 16px;
-  }
-
-  .team-score {
-    font-size: 36px;
-  }
-
-  .innings-table {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .inning-cell {
-    min-width: 28px;
-    font-size: 11px;
-    padding: 4px 1px;
-  }
-
-  .inning-cell.team-label {
-    min-width: 60px;
-    font-size: 12px;
-  }
-
-  .game-info {
-    gap: 16px;
-  }
-
-  .info-value {
-    font-size: 16px;
-  }
-
-  .situation-labels {
-    gap: 8px;
-  }
-
-  .situation-label {
-    padding: 8px 14px;
-    font-size: 13px;
-  }
-
-  .bases {
-    padding: 20px 16px;
-  }
-
-  .bases-row {
-    gap: 80px;
-  }
-
-  .base {
-    width: 56px;
-    height: 56px;
-  }
-
-  .base-symbol {
-    font-size: 28px;
-  }
-
-  .runner-name {
-    font-size: 11px;
-    padding: 3px 8px;
-    top: -34px;
-  }
-
-  .at-bat-display {
+@media (max-width: 1024px) {
+  .game-layout {
     flex-direction: column;
-    gap: 16px;
+  }
+
+  .game-sidebar {
+    width: 100%;
   }
 
   .play-log {
-    padding: 16px;
+    position: static;
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .game-header {
+    flex-wrap: wrap;
+    padding: 6px 12px;
   }
 
-  .play-log-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .header-center {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+    padding-top: 6px;
+  }
+
+  .compact-team-name {
+    max-width: 60px;
+    font-size: 12px;
+  }
+
+  .compact-team-score {
+    font-size: 22px;
+  }
+
+  .compact-status {
+    padding-left: 12px;
     gap: 8px;
   }
 
-  .play-log-controls {
-    width: 100%;
-    justify-content: space-between;
+  .compact-inning {
+    font-size: 12px;
+    padding: 3px 8px;
   }
 
-  .play-log-item {
-    padding: 10px 12px;
-    gap: 10px;
+  .game-layout {
+    padding: 12px;
   }
 
-  .play-log-inning {
-    min-width: 70px;
+  .game-container {
+    padding: 12px;
   }
 
-  .instruction-buttons {
+  .game-status-compact {
     flex-direction: column;
-  }
-
-  .game-header {
-    padding: 10px 16px;
     gap: 10px;
+    padding: 10px;
   }
 
-  .header-button {
-    min-width: 40px;
-    min-height: 40px;
-    padding: 6px 12px;
-    font-size: 18px;
+  .status-left,
+  .status-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .matchup-compact {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* モバイルでプレイログを折りたたみ可能に */
+  .play-log {
+    max-height: none;
+  }
+
+  .play-log.collapsed .play-log-content {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .play-log-header {
+    cursor: pointer;
+  }
+
+  .play-log-header::after {
+    content: '▼';
+    font-size: 10px;
+    margin-left: 6px;
+    transition: transform 0.3s;
+  }
+
+  .play-log.collapsed .play-log-header::after {
+    transform: rotate(-90deg);
   }
 }
 
 @media (max-width: 480px) {
-  .game-screen {
-    padding: 0;
-  }
-
-  .game-container {
-    margin-top: 12px;
-    margin-bottom: 12px;
-    padding: 12px;
-    border-radius: 12px;
-  }
-
-  .scoreboard {
-    padding: 12px;
-  }
-
-  .team-name {
-    font-size: 16px;
-  }
-
-  .team-score {
-    font-size: 32px;
-  }
-
-  .inning-info {
-    font-size: 20px;
-  }
-
-  .game-info {
-    gap: 12px;
-  }
-
-  .info-value {
-    font-size: 14px;
-  }
-
-  .situation-labels {
-    gap: 6px;
-  }
-
-  .situation-label {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  .guidance-message {
-    font-size: 13px;
-    padding: 10px;
-  }
-
-  .bases {
-    padding: 16px 12px;
-  }
-
-  .bases-row {
-    gap: 60px;
-  }
-
-  .base {
-    width: 48px;
-    height: 48px;
-  }
-
-  .base-symbol {
-    font-size: 24px;
-  }
-
-  .base-label {
-    bottom: -26px;
-    font-size: 11px;
-  }
-
-  .runner-name {
-    font-size: 10px;
-    padding: 2px 6px;
-    top: -32px;
-  }
-
-  .bases-loaded-indicator {
-    font-size: 16px;
-    padding: 8px 20px;
-  }
-
-  .at-bat-display {
-    gap: 12px;
-  }
-
-  .batter-info,
-  .pitcher-info {
-    padding: 16px;
-  }
-
-  .player-name {
-    font-size: 20px;
-  }
-
-  .count {
-    font-size: 14px;
-  }
-
-  .play-log {
-    padding: 14px;
-  }
-
-  .play-log-header {
-    font-size: 16px;
-    margin-bottom: 12px;
-  }
-
-  .play-log-item {
-    padding: 8px 10px;
-    gap: 8px;
-  }
-
-  .play-log-inning {
-    min-width: 60px;
-    font-size: 11px;
-  }
-
-  .play-log-description {
-    font-size: 13px;
-  }
-
-  .play-log-score-change {
-    font-size: 11px;
-    padding: 2px 6px;
-  }
-
   .game-header {
-    padding: 8px 12px;
-    gap: 8px;
+    padding: 4px 8px;
   }
 
   .header-button {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 4px 8px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 4px 6px;
+    font-size: 14px;
+  }
+
+  .compact-team-name {
+    max-width: 50px;
+    font-size: 11px;
+  }
+
+  .compact-team-score {
+    font-size: 20px;
+    min-width: 28px;
+  }
+
+  .compact-divider {
     font-size: 16px;
   }
-}
 
-/* 折りたたみ可能セクション */
-.collapsible-section {
-  margin-bottom: 16px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
+  .out-dot {
+    width: 8px;
+    height: 8px;
+  }
 
-.collapsible-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.2s ease;
-}
+  .compact-inning {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
 
-.collapsible-header:hover {
-  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
-}
+  .game-layout {
+    padding: 8px;
+  }
 
-.collapsible-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  .game-container {
+    padding: 10px;
+    border-radius: 8px;
+  }
 
-.collapsible-icon {
-  font-size: 14px;
-  transition: transform 0.3s ease;
-}
+  .count-display {
+    gap: 8px;
+  }
 
-.collapsible-section.collapsed .collapsible-icon {
-  transform: rotate(-90deg);
-}
+  .count-dot {
+    width: 8px;
+    height: 8px;
+  }
 
-.collapsible-content {
-  max-height: 1000px;
-  overflow: hidden;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
-  padding: 16px 20px;
-  opacity: 1;
-}
+  .base-compact {
+    width: 14px;
+    height: 14px;
+  }
 
-.collapsible-section.collapsed .collapsible-content {
-  max-height: 0;
-  padding: 0 20px;
-  opacity: 0;
+  .bases-compact-row {
+    gap: 14px;
+  }
+
+  .guidance-message {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .situation-label {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .phase-message {
+    padding: 16px;
+  }
+
+  .phase-message h2 {
+    font-size: 18px;
+  }
+
+  .phase-message p {
+    font-size: 12px;
+  }
 }
 
 /* アクセシビリティ改善 */
@@ -1298,32 +961,30 @@
   border: 0;
 }
 
-.focus-visible:focus {
-  outline: 3px solid #667eea;
-  outline-offset: 2px;
-}
-
 button:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 3px solid #667eea;
+  outline: 2px solid #667eea;
   outline-offset: 2px;
 }
 
 /* 高コントラストモード対応 */
 @media (prefers-contrast: high) {
-  .game-screen,
+  .game-screen {
+    background: #000;
+  }
+
   .game-container {
     background: white;
   }
 
   .situation-label,
-  .bases-loaded-indicator {
+  .bases-loaded-compact {
     border: 2px solid currentColor;
   }
 
-  .base.occupied {
-    border-width: 4px;
+  .base-compact.occupied {
+    border-width: 3px;
   }
 }
 
@@ -1335,34 +996,5 @@ a:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* タスク14: CPU思考中の表示 */
-.cpu-thinking {
-  margin-top: 20px;
-  padding: 16px;
-  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-  border-radius: 12px;
-  text-align: center;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.cpu-thinking p {
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
   }
 }

@@ -1,117 +1,84 @@
+/* コンパクト版攻撃指示メニュー */
 .offensive-instruction-menu {
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0;
 }
 
 .instruction-menu-title {
-  margin: 0 0 20px 0;
-  font-size: 1.5rem;
+  margin: 0 0 10px 0;
+  font-size: 14px;
   color: #333;
   text-align: center;
   font-weight: bold;
 }
 
+/* 現在状況（非表示 - GameScreenで表示） */
 .current-situation {
-  margin-bottom: 20px;
-  padding: 15px;
-  background: white;
-  border-radius: 6px;
-  border: 2px solid #e0e0e0;
+  display: none;
 }
 
-.batter-info-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.batter-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #1976d2;
-}
-
-.batter-count {
-  font-size: 1rem;
-  color: #666;
-  font-family: monospace;
-}
-
-.runners-summary {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.runner-label {
-  font-weight: bold;
-  color: #666;
-}
-
-.no-runners {
-  color: #999;
-}
-
-.runner-base {
-  padding: 4px 12px;
-  background: #4caf50;
-  color: white;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
+/* コンパクトボタン配置 */
 .instruction-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
+/* メインボタン（通常打撃、待て） */
 .instruction-option {
-  padding: 16px;
+  padding: 10px 16px;
   background: white;
   border: 2px solid #ddd;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  text-align: left;
+  text-align: center;
+  flex: 0 0 auto;
+  min-width: 100px;
+}
+
+.instruction-option[data-type="normal_swing"] {
+  flex: 1 1 45%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+}
+
+.instruction-option[data-type="normal_swing"] .option-label {
+  color: white;
+}
+
+.instruction-option[data-type="normal_swing"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .instruction-option:hover:not(.disabled) {
   border-color: #1976d2;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
 }
 
 .instruction-option.disabled {
   background: #f5f5f5;
   border-color: #e0e0e0;
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .instruction-option.warning {
   border-color: #ff9800;
 }
 
-.instruction-option.warning:hover:not(.disabled) {
-  border-color: #f57c00;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
-}
-
 .option-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 4px;
 }
 
 .option-label {
-  font-size: 1.1rem;
+  font-size: 13px;
   font-weight: bold;
   color: #333;
 }
@@ -121,60 +88,178 @@
 }
 
 .option-success-rate {
-  font-size: 0.85rem;
+  font-size: 10px;
   color: #1976d2;
-  font-weight: bold;
+  font-weight: 600;
   background: #e3f2fd;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
+/* 説明は非表示（コンパクト化） */
 .option-description {
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-
-.instruction-option.disabled .option-description {
-  color: #aaa;
+  display: none;
 }
 
 .option-warning {
-  font-size: 0.85rem;
+  font-size: 10px;
   color: #f57c00;
   font-weight: bold;
-  margin-top: 8px;
-  padding: 6px 8px;
+  margin-top: 4px;
+  padding: 2px 4px;
   background: #fff3e0;
-  border-radius: 4px;
-  border-left: 3px solid #ff9800;
+  border-radius: 3px;
 }
 
-.instruction-note {
-  padding: 12px;
-  background: #fff8e1;
+/* AI委譲セクション */
+.ai-delegate-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.ai-delegate-button {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+  color: white;
+  border: none;
   border-radius: 6px;
-  border-left: 4px solid #ffc107;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.instruction-note p {
-  margin: 0;
-  font-size: 0.9rem;
+.ai-delegate-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(25, 84, 123, 0.3);
+}
+
+.ai-delegate-hint {
+  font-size: 10px;
+  color: #999;
+}
+
+/* ノート非表示 */
+.instruction-note {
+  display: none;
+}
+
+/* AI推奨モード */
+.ai-recommendation-mode {
+  padding: 12px;
+}
+
+.ai-recommendation-card {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  border: 2px solid #1976d2;
+}
+
+.ai-recommendation-card.high {
+  border-color: #4caf50;
+}
+
+.ai-recommendation-card.medium {
+  border-color: #1976d2;
+}
+
+.ai-recommendation-card.low {
+  border-color: #ff9800;
+}
+
+.recommendation-header {
+  margin-bottom: 8px;
+}
+
+.confidence-badge {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.recommended-instruction h4 {
+  font-size: 12px;
   color: #666;
+  margin: 0 0 4px 0;
+}
+
+.instruction-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.recommendation-reason {
+  margin-top: 8px;
+}
+
+.recommendation-reason h4 {
+  font-size: 11px;
+  color: #666;
+  margin: 0 0 4px 0;
+}
+
+.recommendation-reason p {
+  font-size: 12px;
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.recommendation-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.execute-button {
+  flex: 1;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-button {
+  padding: 8px 12px;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 /* レスポンシブ対応 */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .instruction-options {
-    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
-  .instruction-menu-title {
-    font-size: 1.2rem;
+  .instruction-option {
+    padding: 8px 12px;
+    min-width: 80px;
   }
 
-  .batter-name {
-    font-size: 1rem;
+  .option-label {
+    font-size: 12px;
+  }
+
+  .ai-delegate-section {
+    flex-direction: column;
+    gap: 4px;
   }
 }

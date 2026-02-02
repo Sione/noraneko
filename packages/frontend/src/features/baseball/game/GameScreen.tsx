@@ -1235,264 +1235,308 @@ export function GameScreen() {
     return Array.from(innings).sort((a, b) => b - a); // 降順
   }, [playLog]);
 
+  // イニング詳細表示の折りたたみ状態
+  const [showInningsDetail, setShowInningsDetail] = useState(false);
+  // モバイルでのプレイログ折りたたみ状態
+  const [playLogCollapsed, setPlayLogCollapsed] = useState(false);
+
   return (
     <ErrorBoundary>
       <div className="game-screen">
-        {/* タスク11: ヘッダーバー（一時停止・設定・ヘルプボタン）*/}
+        {/* コンパクトヘッダー（スコアボード統合） */}
         <div className="game-header">
-          <button className="header-button" onClick={handlePause} title="一時停止 (ESC)">
-            ⏸️
-          </button>
-          <button className="header-button" onClick={() => setShowSettings(true)} title="設定">
-            ⚙️
-          </button>
-          <button className="header-button" onClick={() => setShowHelp(true)} title="ヘルプ">
-            ❓
-          </button>
-        </div>
-
-        <div className="game-container">
-          {/* スコアボード */}
-          <div className="scoreboard">
-            <div className="scoreboard-header">
-            <div className="team-name">{awayTeam.teamName}</div>
-            <div className="team-name">{homeTeam.teamName}</div>
-          </div>
-          <div className="scoreboard-scores">
-            <div className={`team-score ${score.away > score.home ? 'leading' : ''}`}>{score.away}</div>
-            <div className="score-divider">-</div>
-            <div className={`team-score ${score.home > score.away ? 'leading' : ''}`}>{score.home}</div>
+          <div className="header-left">
+            <button className="header-button" onClick={handlePause} title="一時停止 (ESC)">
+              ⏸️
+            </button>
           </div>
           
-          {/* イニング別得点表 */}
-          <div className="innings-table">
-            <div className="innings-row innings-header">
-              <div className="inning-cell team-label"></div>
-              {inningsTable.map(inning => (
-                <div 
-                  key={inning.inning} 
-                  className={`inning-cell ${currentInning === inning.inning ? 'current-inning' : ''}`}
-                >
-                  {inning.inning}
-                </div>
-              ))}
-              <div className="inning-cell total-label">R</div>
-            </div>
-            <div className="innings-row away-row">
-              <div className="inning-cell team-label">{awayTeam.teamName}</div>
-              {inningsTable.map(inning => (
-                <div 
-                  key={inning.inning} 
-                  className={`inning-cell ${currentInning === inning.inning && isTopHalf ? 'active-half' : ''}`}
-                >
-                  {inning.awayScore}
-                </div>
-              ))}
-              <div className="inning-cell total-score">{score.away}</div>
-            </div>
-            <div className="innings-row home-row">
-              <div className="inning-cell team-label">{homeTeam.teamName}</div>
-              {inningsTable.map(inning => (
-                <div 
-                  key={inning.inning} 
-                  className={`inning-cell ${currentInning === inning.inning && !isTopHalf ? 'active-half' : ''}`}
-                >
-                  {inning.homeScore}
-                </div>
-              ))}
-              <div className="inning-cell total-score">{score.home}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* 試合状況 */}
-        <div className="game-status">
-          <div className="inning-info">
-            {currentInning}回{isTopHalf ? '表' : '裏'}
-          </div>
-          <div className="game-info">
-            <div className="info-item">
-              <span className="info-label">アウト:</span>
-              <span className="info-value">{outs}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">攻撃:</span>
-              <span className="info-value">{attackingTeam.teamName}</span>
-            </div>
-            {currentAtBat && (
-              <div className="info-item">
-                <span className="info-label">打順:</span>
-                <span className="info-value batting-order">{attackingTeam.currentBatterIndex + 1}番</span>
-              </div>
-            )}
-          </div>
-          
-          {/* 重要局面ラベル */}
-          {situationLabels.length > 0 && (
-            <div className="situation-labels">
-              {situationLabels.map((label, index) => (
-                <span key={index} className={`situation-label ${label.type}`}>
-                  {label.text}
+          <div className="header-center">
+            {/* コンパクトスコア表示 */}
+            <div className="compact-score">
+              <div className="compact-team">
+                <span className="compact-team-name">{awayTeam.teamName}</span>
+                <span className={`compact-team-score ${score.away > score.home ? 'leading' : ''}`}>
+                  {score.away}
                 </span>
-              ))}
-            </div>
-          )}
-          
-          {/* ガイダンスメッセージ */}
-          {guidanceMessage && (
-            <div className="guidance-message">
-              {guidanceMessage}
-            </div>
-          )}
-        </div>
-
-        {/* 走者表示 */}
-        <div className="bases">
-          <div className="bases-container">
-            <div className={`base second ${runners.second ? 'occupied' : ''}`}>
-              <span className="base-symbol">{runners.second ? '●' : '◇'}</span>
-              <span className="base-label">二塁</span>
-              {runners.second && (
-                <span className="runner-name">{runners.second.playerName}</span>
-              )}
-            </div>
-            <div className="bases-row">
-              <div className={`base third ${runners.third ? 'occupied' : ''}`}>
-                <span className="base-symbol">{runners.third ? '●' : '◇'}</span>
-                <span className="base-label">三塁</span>
-                {runners.third && (
-                  <span className="runner-name">{runners.third.playerName}</span>
-                )}
               </div>
-              <div className={`base first ${runners.first ? 'occupied' : ''}`}>
-                <span className="base-symbol">{runners.first ? '●' : '◇'}</span>
-                <span className="base-label">一塁</span>
-                {runners.first && (
-                  <span className="runner-name">{runners.first.playerName}</span>
-                )}
+              <span className="compact-divider">-</span>
+              <div className="compact-team">
+                <span className={`compact-team-score ${score.home > score.away ? 'leading' : ''}`}>
+                  {score.home}
+                </span>
+                <span className="compact-team-name">{homeTeam.teamName}</span>
               </div>
             </div>
-            {/* 満塁表示 */}
-            {runners.first && runners.second && runners.third && (
-              <div className="bases-loaded-indicator">
-                満塁！
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 打席情報 */}
-        {currentAtBat && (
-          <div className="at-bat-display">
-            <div className="batter-info">
-              <h3>打席</h3>
-              <div className="player-name">
-                {attackingTeam.currentBatterIndex + 1}番 {currentAtBat.batterName}
-              </div>
-              <div className="count">
-                <span className="count-label">カウント:</span>
-                <span className="balls">{currentAtBat.balls}B</span>
-                <span className="strikes">{currentAtBat.strikes}S</span>
-              </div>
-            </div>
-            <div className="pitcher-info">
-              <h3>投手</h3>
-              <div className="player-name">{currentAtBat.pitcherName}</div>
-            </div>
-          </div>
-        )}
-
-        {/* フェーズ表示 */}
-        {phase === 'inning_start' && (
-          <div className="phase-message">
-            <h2>{currentInning}回{isTopHalf ? '表' : '裏'}の攻撃です</h2>
-            <p>{attackingTeam.teamName}の攻撃</p>
-          </div>
-        )}
-
-        {phase === 'awaiting_instruction' && (
-          <div className="instruction-panel">
-            {isPlayerAttacking ? (
-              <OffensiveInstructionMenu onSelectInstruction={handleOffensiveInstruction} />
-            ) : (
-              <DefensiveInstructionMenu 
-                onSelectInstruction={handleDefensiveInstruction}
-                onSelectShift={handleShiftChange}
-                onSelectPitcher={handlePitcherChange}
-              />
-            )}
             
-            {/* タスク14: CPU思考中の表示 */}
-            {!isPlayerAttacking && (
-              <div className="cpu-thinking">
-                <p>（CPU監督が戦術を検討中...）</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {phase === 'result_display' && (
-          <div className="phase-message">
-            <h3>次の打者へ...</h3>
-          </div>
-        )}
-
-        {phase === 'half_inning_end' && (
-          <div className="phase-message">
-            <h2>チェンジ！</h2>
-            <p>{currentInning}回{isTopHalf ? '表' : '裏'}が終了しました</p>
-          </div>
-        )}
-
-        {/* プレイログ */}
-        <div className="play-log">
-          <div className="play-log-header">
-            <span>プレイログ</span>
-            <div className="play-log-controls">
-              <select 
-                value={logFilter} 
-                onChange={(e) => setLogFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-                className="log-filter-select"
-              >
-                <option value="all">全イニング</option>
-                {inningFilterOptions.map(inning => (
-                  <option key={inning} value={inning}>
-                    {inning}回
-                  </option>
+            {/* イニング・アウト表示 */}
+            <div className="compact-status">
+              <span className="compact-inning">{currentInning}回{isTopHalf ? '表' : '裏'}</span>
+              <div className="compact-outs">
+                {[0, 1, 2].map(i => (
+                  <span key={i} className={`out-dot ${i < outs ? 'active' : ''}`} />
                 ))}
-              </select>
-              {filteredPlayLog.length > maxDisplayLogs && (
-                <button 
-                  onClick={() => setShowAllLogs(!showAllLogs)}
-                  className="log-toggle-button"
-                >
-                  {showAllLogs ? '最新のみ表示' : `全て表示 (${filteredPlayLog.length}件)`}
-                </button>
-              )}
+              </div>
             </div>
           </div>
-          <div className="play-log-content">
-            {displayedPlayLog.length === 0 ? (
-              <div className="play-log-empty">プレイログはありません</div>
-            ) : (
-              displayedPlayLog.map((event, index) => (
-                <div 
-                  key={`${event.timestamp}-${index}`} 
-                  className={`play-log-item ${getEventTypeClass(event.type)}`}
-                >
-                  <span className="play-log-inning">
-                    {event.inning > 0 ? `${event.inning}回${event.isTopHalf ? '表' : '裏'}` : '試合前'}
-                  </span>
-                  <span className="play-log-description">{event.description}</span>
-                  {event.scoreChange && (
-                    <span className="play-log-score-change">
-                      ({event.scoreChange.away}-{event.scoreChange.home})
-                    </span>
+          
+          <div className="header-right">
+            <button className="header-button" onClick={() => setShowSettings(true)} title="設定">
+              ⚙️
+            </button>
+            <button className="header-button" onClick={() => setShowHelp(true)} title="ヘルプ">
+              ❓
+            </button>
+          </div>
+        </div>
+
+        {/* イニング詳細（アコーディオン） */}
+        <div className="innings-accordion">
+          <button 
+            className="innings-toggle"
+            onClick={() => setShowInningsDetail(!showInningsDetail)}
+          >
+            <span>イニング詳細</span>
+            <span className={`innings-toggle-icon ${showInningsDetail ? 'expanded' : ''}`}>▼</span>
+          </button>
+          <div className={`innings-content ${showInningsDetail ? 'expanded' : ''}`}>
+            <div className="innings-table">
+              <div className="innings-row innings-header">
+                <div className="inning-cell team-label"></div>
+                {inningsTable.map(inning => (
+                  <div 
+                    key={inning.inning} 
+                    className={`inning-cell ${currentInning === inning.inning ? 'current-inning' : ''}`}
+                  >
+                    {inning.inning}
+                  </div>
+                ))}
+                <div className="inning-cell total-label">R</div>
+              </div>
+              <div className="innings-row away-row">
+                <div className="inning-cell team-label">{awayTeam.teamName}</div>
+                {inningsTable.map(inning => (
+                  <div 
+                    key={inning.inning} 
+                    className={`inning-cell ${currentInning === inning.inning && isTopHalf ? 'active-half' : ''}`}
+                  >
+                    {inning.awayScore}
+                  </div>
+                ))}
+                <div className="inning-cell total-score">{score.away}</div>
+              </div>
+              <div className="innings-row home-row">
+                <div className="inning-cell team-label">{homeTeam.teamName}</div>
+                {inningsTable.map(inning => (
+                  <div 
+                    key={inning.inning} 
+                    className={`inning-cell ${currentInning === inning.inning && !isTopHalf ? 'active-half' : ''}`}
+                  >
+                    {inning.homeScore}
+                  </div>
+                ))}
+                <div className="inning-cell total-score">{score.home}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2カラムレイアウト */}
+        <div className="game-layout">
+          {/* メインコンテンツ */}
+          <div className="game-main">
+            <div className="game-container">
+              {/* コンパクト試合状況 */}
+              <div className="game-status-compact">
+                <div className="status-left">
+                  {/* コンパクト塁ベース */}
+                  <div className="bases-compact">
+                    <div className="bases-compact-row">
+                      <div className={`base-compact ${runners.second ? 'occupied' : ''}`} title="二塁" />
+                    </div>
+                    <div className="bases-compact-row">
+                      <div className={`base-compact ${runners.third ? 'occupied' : ''}`} title="三塁" />
+                      <div className={`base-compact ${runners.first ? 'occupied' : ''}`} title="一塁" />
+                    </div>
+                  </div>
+                  
+                  {/* 満塁インジケータ */}
+                  {runners.first && runners.second && runners.third && (
+                    <span className="bases-loaded-compact">満塁</span>
+                  )}
+                  
+                  {/* カウント表示（ドット形式） */}
+                  {currentAtBat && (
+                    <div className="count-display">
+                      <div className="count-group">
+                        <span className="count-label">B</span>
+                        <div className="count-dots">
+                          {[0, 1, 2, 3].map(i => (
+                            <span key={i} className={`count-dot ball ${i < currentAtBat.balls ? 'active' : ''}`} />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="count-group">
+                        <span className="count-label">S</span>
+                        <div className="count-dots">
+                          {[0, 1, 2].map(i => (
+                            <span key={i} className={`count-dot strike ${i < currentAtBat.strikes ? 'active' : ''}`} />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="count-group">
+                        <span className="count-label">O</span>
+                        <div className="count-dots">
+                          {[0, 1, 2].map(i => (
+                            <span key={i} className={`count-dot out ${i < outs ? 'active' : ''}`} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
-              ))
-            )}
+                
+                <div className="status-right">
+                  {/* 打者/投手情報（コンパクト） */}
+                  {currentAtBat && (
+                    <div className="matchup-compact">
+                      <div className="matchup-player">
+                        <span className="matchup-order">{attackingTeam.currentBatterIndex + 1}番</span>
+                        <span className="matchup-name">{currentAtBat.batterName}</span>
+                      </div>
+                      <span className="matchup-vs">vs</span>
+                      <div className="matchup-player">
+                        <span className="matchup-label">投</span>
+                        <span className="matchup-name">{currentAtBat.pitcherName}</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* 重要局面ラベル */}
+                  {situationLabels.length > 0 && (
+                    <div className="situation-labels">
+                      {situationLabels.map((label, index) => (
+                        <span key={index} className={`situation-label ${label.type}`}>
+                          {label.text}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ガイダンスメッセージ */}
+              {guidanceMessage && (
+                <div className="guidance-message">
+                  {guidanceMessage}
+                </div>
+              )}
+
+              {/* フェーズ表示 */}
+              {phase === 'inning_start' && (
+                <div className="phase-message">
+                  <h2>{currentInning}回{isTopHalf ? '表' : '裏'}の攻撃です</h2>
+                  <p>{attackingTeam.teamName}の攻撃</p>
+                </div>
+              )}
+
+              {phase === 'awaiting_instruction' && (
+                <div className="instruction-panel">
+                  {isPlayerAttacking ? (
+                    <OffensiveInstructionMenu onSelectInstruction={handleOffensiveInstruction} />
+                  ) : (
+                    <DefensiveInstructionMenu 
+                      onSelectInstruction={handleDefensiveInstruction}
+                      onSelectShift={handleShiftChange}
+                      onSelectPitcher={handlePitcherChange}
+                    />
+                  )}
+                  
+                  {/* CPU思考中の表示 */}
+                  {!isPlayerAttacking && (
+                    <div className="cpu-thinking">
+                      <p>（CPU監督が戦術を検討中...）</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {phase === 'result_display' && (
+                <div className="phase-message">
+                  <h3>次の打者へ...</h3>
+                </div>
+              )}
+
+              {phase === 'half_inning_end' && (
+                <div className="phase-message">
+                  <h2>チェンジ！</h2>
+                  <p>{currentInning}回{isTopHalf ? '表' : '裏'}が終了しました</p>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* サイドバー（プレイログ） */}
+          <div className="game-sidebar">
+            <div className={`play-log ${playLogCollapsed ? 'collapsed' : ''}`}>
+              <div 
+                className="play-log-header"
+                onClick={() => setPlayLogCollapsed(!playLogCollapsed)}
+              >
+                <span>プレイログ</span>
+                <div className="play-log-controls">
+                  <select 
+                    value={logFilter} 
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      setLogFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value));
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="log-filter-select"
+                  >
+                    <option value="all">全て</option>
+                    {inningFilterOptions.map(inning => (
+                      <option key={inning} value={inning}>
+                        {inning}回
+                      </option>
+                    ))}
+                  </select>
+                  {filteredPlayLog.length > maxDisplayLogs && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAllLogs(!showAllLogs);
+                      }}
+                      className="log-toggle-button"
+                    >
+                      {showAllLogs ? '最新' : `全${filteredPlayLog.length}件`}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="play-log-content">
+                {displayedPlayLog.length === 0 ? (
+                  <div className="play-log-empty">ログなし</div>
+                ) : (
+                  displayedPlayLog.map((event, index) => (
+                    <div 
+                      key={`${event.timestamp}-${index}`} 
+                      className={`play-log-item ${getEventTypeClass(event.type)}`}
+                    >
+                      <span className="play-log-inning">
+                        {event.inning > 0 ? `${event.inning}回${event.isTopHalf ? '表' : '裏'}` : '試合前'}
+                      </span>
+                      <span className="play-log-description">{event.description}</span>
+                      {event.scoreChange && (
+                        <span className="play-log-score-change">
+                          {event.scoreChange.away}-{event.scoreChange.home}
+                        </span>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

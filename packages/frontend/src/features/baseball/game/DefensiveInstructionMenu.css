@@ -1,107 +1,84 @@
+/* コンパクト版守備指示メニュー */
 .defensive-instruction-menu {
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0;
 }
 
 .instruction-menu-title {
-  margin: 0 0 20px 0;
-  font-size: 1.5rem;
+  margin: 0 0 10px 0;
+  font-size: 14px;
   color: #333;
   text-align: center;
   font-weight: bold;
 }
 
+/* 現在状況（非表示 - GameScreenで表示） */
 .current-situation {
-  margin-bottom: 20px;
-  padding: 15px;
-  background: white;
-  border-radius: 6px;
-  border: 2px solid #e0e0e0;
+  display: none;
 }
 
-.pitcher-info-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.pitcher-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #d32f2f;
-}
-
-.pitcher-count {
-  font-size: 1rem;
-  color: #666;
-  font-family: monospace;
-}
-
-.fatigue-warning {
-  padding: 8px 12px;
-  background: #fff3e0;
-  border-radius: 4px;
-  color: #f57c00;
-  font-weight: bold;
-  text-align: center;
-}
-
-.fatigue-warning.exhausted {
-  background: #ffebee;
-  color: #c62828;
-}
-
+/* コンパクトボタン配置 */
 .instruction-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
+/* メインボタン（通常守備） */
 .instruction-option {
-  padding: 16px;
+  padding: 10px 16px;
   background: white;
   border: 2px solid #ddd;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  text-align: left;
+  text-align: center;
+  flex: 0 0 auto;
+  min-width: 100px;
+}
+
+.instruction-option[data-type="normal"] {
+  flex: 1 1 45%;
+  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+  border: none;
+  color: white;
+}
+
+.instruction-option[data-type="normal"] .option-label {
+  color: white;
+}
+
+.instruction-option[data-type="normal"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
 }
 
 .instruction-option:hover:not(.disabled) {
   border-color: #d32f2f;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
 }
 
 .instruction-option.disabled {
   background: #f5f5f5;
   border-color: #e0e0e0;
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .instruction-option.warning {
   border-color: #ff9800;
 }
 
-.instruction-option.warning:hover:not(.disabled) {
-  border-color: #f57c00;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
-}
-
 .option-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 4px;
 }
 
 .option-label {
-  font-size: 1.1rem;
+  font-size: 13px;
   font-weight: bold;
   color: #333;
 }
@@ -111,62 +88,47 @@
 }
 
 .option-success-rate {
-  font-size: 0.85rem;
+  font-size: 10px;
   color: #d32f2f;
-  font-weight: bold;
+  font-weight: 600;
   background: #ffebee;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
+/* 説明は非表示（コンパクト化） */
 .option-description {
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-
-.instruction-option.disabled .option-description {
-  color: #aaa;
+  display: none;
 }
 
 .option-warning {
-  font-size: 0.85rem;
+  font-size: 10px;
   color: #f57c00;
   font-weight: bold;
-  margin-top: 8px;
-  padding: 6px 8px;
+  margin-top: 4px;
+  padding: 2px 4px;
   background: #fff3e0;
-  border-radius: 4px;
-  border-left: 3px solid #ff9800;
+  border-radius: 3px;
 }
 
+/* ノート非表示 */
 .instruction-note {
-  padding: 12px;
-  background: #e3f2fd;
-  border-radius: 6px;
-  border-left: 4px solid #1976d2;
-}
-
-.instruction-note p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #666;
+  display: none;
 }
 
 /* 投手交代サブメニュー */
 .current-pitcher-info {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .current-pitcher-info h4 {
-  margin: 0 0 10px 0;
-  font-size: 1rem;
+  margin: 0 0 6px 0;
+  font-size: 12px;
   color: #666;
 }
 
 .pitcher-card {
-  padding: 12px;
+  padding: 10px;
   background: white;
   border: 2px solid #e0e0e0;
   border-radius: 6px;
@@ -186,26 +148,23 @@
 
 .pitcher-card.selectable:hover {
   border-color: #1976d2;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(25, 118, 210, 0.2);
 }
 
 .pitcher-card .pitcher-name {
-  font-size: 1.1rem;
+  font-size: 14px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .pitcher-stats {
   display: flex;
-  gap: 15px;
-  font-size: 0.9rem;
+  gap: 10px;
+  font-size: 11px;
   color: #666;
-}
-
-.pitcher-stats span {
-  display: inline-block;
+  flex-wrap: wrap;
 }
 
 .fatigue-level {
@@ -229,78 +188,135 @@
 }
 
 .bullpen-pitchers {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .bullpen-pitchers h4 {
-  margin: 0 0 10px 0;
-  font-size: 1rem;
+  margin: 0 0 6px 0;
+  font-size: 12px;
   color: #666;
 }
 
 .pitcher-list {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .no-pitchers {
-  padding: 20px;
+  padding: 12px;
   text-align: center;
   color: #999;
   font-style: italic;
+  font-size: 12px;
 }
 
 /* 守備シフトサブメニュー */
 .batter-info-card {
-  margin-bottom: 20px;
-  padding: 15px;
+  margin-bottom: 12px;
+  padding: 10px;
   background: white;
   border-radius: 6px;
   border: 2px solid #1976d2;
 }
 
 .batter-info-card h4 {
-  margin: 0 0 10px 0;
-  font-size: 1rem;
+  margin: 0 0 6px 0;
+  font-size: 11px;
   color: #666;
 }
 
 .batter-info-card .batter-name {
-  font-size: 1.2rem;
+  font-size: 14px;
   font-weight: bold;
   color: #1976d2;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .batter-tendency {
   display: flex;
-  gap: 15px;
-  font-size: 0.9rem;
+  gap: 10px;
+  font-size: 11px;
   color: #666;
 }
 
+/* シフト推奨 */
+.shift-recommendation {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.shift-recommendation.high {
+  background: #e8f5e9;
+  border: 1px solid #4caf50;
+}
+
+.shift-recommendation.medium {
+  background: #e3f2fd;
+  border: 1px solid #1976d2;
+}
+
+.shift-recommendation.low {
+  background: #fff3e0;
+  border: 1px solid #ff9800;
+}
+
+.shift-recommendation .recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.shift-recommendation .recommendation-badge {
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: white;
+}
+
+.shift-recommendation .recommended-shift {
+  font-weight: bold;
+  color: #333;
+}
+
+.shift-recommendation .recommendation-reason {
+  color: #666;
+  line-height: 1.4;
+}
+
+.shift-recommendation .recommendation-warning {
+  color: #f57c00;
+  margin-top: 4px;
+}
+
 .shift-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .shift-option {
-  padding: 16px;
+  padding: 8px 12px;
   background: white;
   border: 2px solid #ddd;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  text-align: left;
+  text-align: center;
+  flex: 0 0 auto;
+  min-width: 90px;
   position: relative;
 }
 
 .shift-option:hover {
   border-color: #1976d2;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+  transform: translateY(-1px);
 }
 
 .shift-option.current {
@@ -308,39 +324,54 @@
   background: #f1f8e9;
 }
 
-.shift-label {
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 8px;
+.shift-option.recommended {
+  border-color: #1976d2;
+  background: #e3f2fd;
 }
 
+.shift-label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.shift-label .recommended-badge {
+  font-size: 9px;
+  background: #1976d2;
+  color: white;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* 説明非表示（コンパクト化） */
 .shift-description {
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.4;
+  display: none;
 }
 
 .current-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 4px 8px;
+  top: -6px;
+  right: -6px;
+  padding: 2px 4px;
   background: #4caf50;
   color: white;
-  font-size: 0.75rem;
+  font-size: 9px;
   font-weight: bold;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .back-button {
   width: 100%;
-  padding: 12px;
+  padding: 8px;
   background: #757575;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 12px;
   font-weight: bold;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -351,21 +382,32 @@
 }
 
 /* レスポンシブ対応 */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .instruction-options,
   .shift-options {
-    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
-  .instruction-menu-title {
-    font-size: 1.2rem;
+  .instruction-option,
+  .shift-option {
+    padding: 6px 10px;
+    min-width: 70px;
   }
 
-  .pitcher-name {
-    font-size: 1rem;
+  .option-label,
+  .shift-label {
+    font-size: 11px;
   }
 
-  .batter-info-card .batter-name {
-    font-size: 1rem;
+  .pitcher-card {
+    padding: 8px;
+  }
+
+  .pitcher-card .pitcher-name {
+    font-size: 12px;
+  }
+
+  .pitcher-stats {
+    font-size: 10px;
   }
 }

@@ -258,6 +258,7 @@ export function OffensiveInstructionMenu({ onSelectInstruction }: OffensiveInstr
         {instructionOptions.map((option) => (
           <button
             key={option.type}
+            data-type={option.type}
             className={`instruction-option ${!option.enabled ? 'disabled' : ''} ${option.warning ? 'warning' : ''}`}
             onClick={() => handleSelectInstruction(option)}
             disabled={!option.enabled}
