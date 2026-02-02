@@ -175,7 +175,8 @@ export function createNewPlayer(
 }
 
 /**
- * ランダムな選手を生成
+ * ランダムな選手を生成（ポジション特化）
+ * AC 9.21: 指定ポジションに適した能力値をランダムに生成
  */
 export function generateRandomPlayer(position: Position): Player {
   const names = [
@@ -194,58 +195,191 @@ export function generateRandomPlayer(position: Position): Player {
   const randomName = names[Math.floor(Math.random() * names.length)];
   const player = createNewPlayer(randomName, position);
   
-  // ランダムな能力値を設定
-  const randomAbility = () => Math.floor(Math.random() * 50) + 30; // 30-80
+  // ランダムな能力値を設定（ポジション特化）
+  const randomAbility = (min: number = 30, max: number = 80) => 
+    Math.floor(Math.random() * (max - min + 1)) + min;
   
-  player.batting = {
-    contact: randomAbility(),
-    babip: randomAbility(),
-    gapPower: randomAbility(),
-    hrPower: randomAbility(),
-    eye: randomAbility(),
-    avoidKs: randomAbility(),
-    vsLHP: randomAbility(),
-    vsRHP: randomAbility(),
-  };
-  
-  player.running = {
-    speed: randomAbility(),
-    stealingAbility: randomAbility(),
-    stealingAggr: randomAbility(),
-    baserunning: randomAbility(),
-  };
-  
-  player.fielding = {
-    infieldRange: randomAbility(),
-    outfieldRange: randomAbility(),
-    infieldError: randomAbility() + 20, // 50-100
-    outfieldError: randomAbility() + 20,
-    infieldArm: randomAbility(),
-    outfieldArm: randomAbility(),
-    turnDP: randomAbility(),
-    sacrificeBunt: randomAbility(),
-    buntForHit: randomAbility(),
-    positionRatings: {
-      [position]: ['A', 'B', 'C'][Math.floor(Math.random() * 3)] as 'A' | 'B' | 'C',
-    },
-  };
-  
-  if (position === 'P' && player.pitching) {
-    player.pitching = {
-      stuff: randomAbility(),
-      movement: randomAbility(),
-      control: randomAbility(),
-      stamina: randomAbility(),
-      groundBallPct: randomAbility(),
-      velocity: randomAbility(),
-      holdRunners: randomAbility(),
+  // ポジション別の能力値調整
+  if (position === 'P') {
+    // 投手: 投手能力を強化
+    player.batting = {
+      contact: randomAbility(20, 40),
+      babip: randomAbility(20, 40),
+      gapPower: randomAbility(20, 35),
+      hrPower: randomAbility(15, 30),
+      eye: randomAbility(25, 45),
+      avoidKs: randomAbility(20, 40),
+      vsLHP: randomAbility(30, 50),
+      vsRHP: randomAbility(30, 50),
+    };
+    
+    if (player.pitching) {
+      player.pitching = {
+        stuff: randomAbility(50, 90),
+        movement: randomAbility(50, 90),
+        control: randomAbility(40, 85),
+        stamina: randomAbility(40, 90),
+        groundBallPct: randomAbility(30, 70),
+        velocity: randomAbility(50, 95),
+        holdRunners: randomAbility(40, 80),
+      };
+    }
+    
+    player.running = {
+      speed: randomAbility(20, 50),
+      stealingAbility: randomAbility(20, 40),
+      stealingAggr: randomAbility(20, 40),
+      baserunning: randomAbility(30, 55),
+    };
+    
+    player.fielding = {
+      ...player.fielding,
+      infieldRange: randomAbility(40, 70),
+      outfieldRange: randomAbility(30, 50),
+      infieldError: randomAbility(60, 85),
+      outfieldError: randomAbility(60, 80),
+      infieldArm: randomAbility(40, 70),
+      outfieldArm: randomAbility(30, 60),
+      turnDP: randomAbility(40, 70),
+      sacrificeBunt: randomAbility(50, 80),
+      buntForHit: randomAbility(30, 60),
+    };
+  } else if (position === 'C') {
+    // 捕手: 捕手能力とリーダーシップを強化
+    player.batting = {
+      contact: randomAbility(40, 75),
+      babip: randomAbility(40, 70),
+      gapPower: randomAbility(40, 75),
+      hrPower: randomAbility(45, 80),
+      eye: randomAbility(50, 75),
+      avoidKs: randomAbility(45, 70),
+      vsLHP: randomAbility(50, 75),
+      vsRHP: randomAbility(50, 75),
+    };
+    
+    player.running = {
+      speed: randomAbility(25, 55),
+      stealingAbility: randomAbility(20, 45),
+      stealingAggr: randomAbility(20, 40),
+      baserunning: randomAbility(40, 65),
+    };
+    
+    player.fielding = {
+      ...player.fielding,
+      infieldRange: randomAbility(40, 75),
+      outfieldRange: randomAbility(30, 50),
+      infieldError: randomAbility(65, 90),
+      outfieldError: randomAbility(60, 80),
+      infieldArm: randomAbility(50, 80),
+      outfieldArm: randomAbility(40, 60),
+      turnDP: randomAbility(40, 70),
+      catcherAbility: randomAbility(50, 90),
+      catcherArm: randomAbility(50, 90),
+      sacrificeBunt: randomAbility(50, 75),
+      buntForHit: randomAbility(30, 60),
+    };
+  } else if (['SS', '2B', '3B', '1B'].includes(position)) {
+    // 内野手: 守備範囲と肩力を強化
+    player.batting = {
+      contact: randomAbility(45, 80),
+      babip: randomAbility(45, 75),
+      gapPower: randomAbility(40, 75),
+      hrPower: randomAbility(35, 70),
+      eye: randomAbility(45, 75),
+      avoidKs: randomAbility(45, 75),
+      vsLHP: randomAbility(50, 75),
+      vsRHP: randomAbility(50, 75),
+    };
+    
+    player.running = {
+      speed: randomAbility(40, 80),
+      stealingAbility: randomAbility(35, 75),
+      stealingAggr: randomAbility(35, 70),
+      baserunning: randomAbility(45, 80),
+    };
+    
+    player.fielding = {
+      ...player.fielding,
+      infieldRange: randomAbility(55, 90),
+      outfieldRange: randomAbility(40, 65),
+      infieldError: randomAbility(70, 95),
+      outfieldError: randomAbility(60, 80),
+      infieldArm: randomAbility(55, 90),
+      outfieldArm: randomAbility(45, 70),
+      turnDP: randomAbility(50, 90),
+      sacrificeBunt: randomAbility(45, 80),
+      buntForHit: randomAbility(40, 75),
+    };
+  } else if (['LF', 'CF', 'RF'].includes(position)) {
+    // 外野手: 走力と外野守備を強化
+    player.batting = {
+      contact: randomAbility(45, 80),
+      babip: randomAbility(45, 80),
+      gapPower: randomAbility(45, 85),
+      hrPower: randomAbility(40, 85),
+      eye: randomAbility(45, 75),
+      avoidKs: randomAbility(45, 75),
+      vsLHP: randomAbility(50, 75),
+      vsRHP: randomAbility(50, 75),
+    };
+    
+    player.running = {
+      speed: randomAbility(55, 90),
+      stealingAbility: randomAbility(45, 85),
+      stealingAggr: randomAbility(40, 75),
+      baserunning: randomAbility(50, 85),
+    };
+    
+    player.fielding = {
+      ...player.fielding,
+      infieldRange: randomAbility(35, 60),
+      outfieldRange: randomAbility(60, 95),
+      infieldError: randomAbility(60, 85),
+      outfieldError: randomAbility(70, 95),
+      infieldArm: randomAbility(40, 70),
+      outfieldArm: randomAbility(55, 90),
+      turnDP: randomAbility(30, 55),
+      sacrificeBunt: randomAbility(35, 65),
+      buntForHit: randomAbility(35, 70),
+    };
+  } else {
+    // その他（DH等）: バランス型
+    player.batting = {
+      contact: randomAbility(40, 75),
+      babip: randomAbility(40, 75),
+      gapPower: randomAbility(45, 80),
+      hrPower: randomAbility(45, 80),
+      eye: randomAbility(45, 75),
+      avoidKs: randomAbility(45, 75),
+      vsLHP: randomAbility(50, 75),
+      vsRHP: randomAbility(50, 75),
+    };
+    
+    player.running = {
+      speed: randomAbility(35, 70),
+      stealingAbility: randomAbility(30, 65),
+      stealingAggr: randomAbility(30, 60),
+      baserunning: randomAbility(40, 70),
+    };
+    
+    player.fielding = {
+      ...player.fielding,
+      infieldRange: randomAbility(40, 70),
+      outfieldRange: randomAbility(40, 70),
+      infieldError: randomAbility(65, 85),
+      outfieldError: randomAbility(65, 85),
+      infieldArm: randomAbility(40, 70),
+      outfieldArm: randomAbility(40, 70),
+      turnDP: randomAbility(40, 70),
+      sacrificeBunt: randomAbility(40, 70),
+      buntForHit: randomAbility(35, 65),
     };
   }
   
-  if (position === 'C') {
-    player.fielding.catcherAbility = randomAbility();
-    player.fielding.catcherArm = randomAbility();
-  }
+  // ポジション適性をランダム設定
+  player.fielding.positionRatings = {
+    [position]: ['A', 'B', 'C'][Math.floor(Math.random() * 3)] as 'A' | 'B' | 'C',
+  };
   
   return player;
 }

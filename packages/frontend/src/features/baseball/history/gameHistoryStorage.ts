@@ -318,3 +318,27 @@ export function importHistory(jsonData: string): boolean {
     return false;
   }
 }
+
+/**
+ * 選手が試合履歴に含まれているかをチェック
+ * AC 9.33: 削除時の試合履歴警告
+ */
+export function isPlayerInHistory(playerId: string): {
+  inHistory: boolean;
+  gamesCount: number;
+  lastGameDate: Date | null;
+} {
+  const history = loadGameHistory();
+  const games = history.games.filter((game) => {
+    // ホームチームまたはアウェイチームのロースターに選手が含まれているか
+    const homeRoster = game.homeTeam.roster || [];
+    const awayRoster = game.awayTeam.roster || [];
+    return homeRoster.includes(playerId) || awayRoster.includes(playerId);
+  });
+
+  return {
+    inHistory: games.length > 0,
+    gamesCount: games.length,
+    lastGameDate: games.length > 0 ? games[0].date : null,
+  };
+}

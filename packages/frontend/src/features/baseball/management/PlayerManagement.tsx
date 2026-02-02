@@ -7,12 +7,10 @@ import { Player, Position } from '../types';
 import {
   loadPlayers,
   savePlayers,
-  exportData,
-  importData,
-  getBackups,
-  restoreFromBackup,
+  loadTeams,
   checkDataIntegrity,
 } from '../data/playerStorage';
+import { isPlayerInHistory } from '../history/gameHistoryStorage';
 import {
   calculateOverallRating,
   getHitterType,
@@ -26,6 +24,8 @@ import {
 } from '../data/playerUtils';
 import PlayerEditor from './PlayerEditor';
 import PlayerDetail from './PlayerDetail';
+import BackupManager from './BackupManager';
+import ImportExportDialog from './ImportExportDialog';
 import './PlayerManagement.css';
 
 type SortBy = 'name' | 'position' | 'overall';
@@ -38,9 +38,16 @@ const PlayerManagement: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   
+  // ダイアログ表示状態
+  const [showBackupManager, setShowBackupManager] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  
   // フィルター・ソート状態
   const [filterPosition, setFilterPosition] = useState<Position | ''>('');
   const [searchText, setSearchText] = useState('');
+  const [filterMinOVR, setFilterMinOVR] = useState<number>(0);
+  const [filterMaxOVR, setFilterMaxOVR] = useState<number>(100);
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   
@@ -60,7 +67,7 @@ const PlayerManagement: React.FC = () => {
   // フィルター・ソート適用
   useEffect(() => {
     applyFiltersAndSort();
-  }, [players, filterPosition, searchText, sortBy, sortOrder]);
+  }, [players, filterPosition, searchText, filterMinOVR, filterMaxOVR, sortBy, sortOrder]);
   
   const loadData = () => {
     const loadedPlayers = loadPlayers();
@@ -80,6 +87,8 @@ const PlayerManagement: React.FC = () => {
     result = filterPlayers(result, {
       position: filterPosition || undefined,
       searchText: searchText || undefined,
+      minOverall: filterMinOVR > 0 ? filterMinOVR : undefined,
+      maxOverall: filterMaxOVR < 100 ? filterMaxOVR : undefined,
     });
     
     // ソート
@@ -108,7 +117,19 @@ const PlayerManagement: React.FC = () => {
   };
   
   const handleDelete = (player: Player) => {
-    if (!confirm(`本当に「${player.name}」を削除しますか？この操作は取り消せません。`)) {
+    // AC 9.33: 試合履歴に含まれているかチェック
+    const historyCheck = isPlayerInHistory(player.id);
+    
+    let confirmMessage = `本当に「${player.name}」を削除しますか？この操作は取り消せません。`;
+    
+    if (historyCheck.inHistory) {
+      confirmMessage = 
+        `「${player.name}」は試合履歴に含まれています（${historyCheck.gamesCount}試合に出場）。\n\n` +
+        `削除しても履歴は保持されますが、選手データは失われます。\n\n` +
+        `本当に削除しますか？`;
+    }
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
     
@@ -147,49 +168,11 @@ const PlayerManagement: React.FC = () => {
   };
   
   const handleExport = () => {
-    try {
-      const data = exportData(false); // 選手データのみ
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `players_export_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      showMessage(`${players.length}人の選手をエクスポートしました`, 'success');
-    } catch (error) {
-      showMessage('エクスポートに失敗しました', 'error');
-    }
+    setShowExportDialog(true);
   };
   
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const jsonData = e.target?.result as string;
-        const result = importData(jsonData, { skipDuplicates: false });
-        
-        if (result.success) {
-          loadData();
-          showMessage(
-            `${result.imported}人の選手をインポートしました（スキップ: ${result.skipped}人）`,
-            'success'
-          );
-        } else {
-          showMessage(`インポート失敗: ${result.errors.join(', ')}`, 'error');
-        }
-      } catch (error) {
-        showMessage('ファイル形式が正しくありません', 'error');
-      }
-    };
-    reader.readAsText(file);
-    
-    // ファイル入力をリセット
-    event.target.value = '';
+  const handleImport = () => {
+    setShowImportDialog(true);
   };
   
   const handleCheckIntegrity = () => {
@@ -198,32 +181,24 @@ const PlayerManagement: React.FC = () => {
     if (result.isValid) {
       showMessage('データの整合性チェック: 問題なし', 'success');
     } else {
-      showMessage(`データの整合性チェック: エラーあり (${result.errors.length}件)`, 'error');
-      console.error('Integrity errors:', result.errors);
+      const errorCount = result.errors.filter((e) => e.severity === 'error').length;
+      const warningCount = result.errors.filter((e) => e.severity === 'warning').length;
+      
+      showMessage(
+        `データの整合性チェック: エラー ${errorCount}件、警告 ${warningCount}件`,
+        errorCount > 0 ? 'error' : 'info'
+      );
+      
+      console.group('整合性チェック結果');
+      console.log('統計:', result.stats);
+      console.log('エラー:', result.errors);
+      console.log('警告:', result.warnings);
+      console.groupEnd();
     }
   };
   
-  const handleRestoreBackup = () => {
-    const backups = getBackups();
-    
-    if (backups.length === 0) {
-      showMessage('バックアップが見つかりません', 'error');
-      return;
-    }
-    
-    const latestBackup = backups[0];
-    const date = new Date(latestBackup.timestamp).toLocaleString('ja-JP');
-    
-    if (!confirm(`最新のバックアップ（${date}）から復元しますか？現在のデータは失われます。`)) {
-      return;
-    }
-    
-    if (restoreFromBackup(latestBackup.timestamp)) {
-      loadData();
-      showMessage('バックアップから復元しました', 'success');
-    } else {
-      showMessage('復元に失敗しました', 'error');
-    }
+  const handleShowBackupManager = () => {
+    setShowBackupManager(true);
   };
   
   // ページネーション
@@ -245,20 +220,14 @@ const PlayerManagement: React.FC = () => {
           <button onClick={handleExport} className="btn btn-secondary">
             エクスポート
           </button>
-          <label className="btn btn-secondary">
+          <button onClick={handleImport} className="btn btn-secondary">
             インポート
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImport}
-              style={{ display: 'none' }}
-            />
-          </label>
+          </button>
           <button onClick={handleCheckIntegrity} className="btn btn-secondary">
             整合性チェック
           </button>
-          <button onClick={handleRestoreBackup} className="btn btn-secondary">
-            バックアップ復元
+          <button onClick={handleShowBackupManager} className="btn btn-secondary">
+            バックアップ管理
           </button>
         </div>
       </header>
@@ -298,6 +267,42 @@ const PlayerManagement: React.FC = () => {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
               />
+            </div>
+            
+            <div className="filter-group">
+              <label>総合評価（OVR）範囲</label>
+              <div className="ovr-filter-inputs">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="最小"
+                  value={filterMinOVR || ''}
+                  onChange={(e) => setFilterMinOVR(Number(e.target.value) || 0)}
+                  className="ovr-filter-input"
+                />
+                <span>～</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="最大"
+                  value={filterMaxOVR === 100 ? '' : filterMaxOVR}
+                  onChange={(e) => setFilterMaxOVR(Number(e.target.value) || 100)}
+                  className="ovr-filter-input"
+                />
+              </div>
+              {(filterMinOVR > 0 || filterMaxOVR < 100) && (
+                <button
+                  onClick={() => {
+                    setFilterMinOVR(0);
+                    setFilterMaxOVR(100);
+                  }}
+                  className="btn btn-sm filter-reset"
+                >
+                  リセット
+                </button>
+              )}
             </div>
             
             <div className="filter-group">
@@ -392,6 +397,33 @@ const PlayerManagement: React.FC = () => {
           )}
         </main>
       </div>
+      
+      {/* バックアップ管理モーダル */}
+      <BackupManager
+        isOpen={showBackupManager}
+        onClose={() => setShowBackupManager(false)}
+        onRestore={loadData}
+      />
+      
+      {/* インポートダイアログ */}
+      <ImportExportDialog
+        isOpen={showImportDialog}
+        mode="import"
+        players={players}
+        teams={loadTeams()}
+        onClose={() => setShowImportDialog(false)}
+        onImportComplete={loadData}
+      />
+      
+      {/* エクスポートダイアログ */}
+      <ImportExportDialog
+        isOpen={showExportDialog}
+        mode="export"
+        players={players}
+        teams={loadTeams()}
+        selectedPlayers={selectedPlayer ? [selectedPlayer.id] : []}
+        onClose={() => setShowExportDialog(false)}
+      />
     </div>
   );
 };

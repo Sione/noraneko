@@ -37,6 +37,7 @@ export interface GameResult {
     hits: number;
     errors: number;
     leftOnBase: number;
+    roster?: string[]; // 出場選手ID一覧
   };
   homeTeam: {
     teamName: string;
@@ -45,6 +46,7 @@ export interface GameResult {
     hits: number;
     errors: number;
     leftOnBase: number;
+    roster?: string[]; // 出場選手ID一覧
   };
   winner: 'away' | 'home' | 'draw';
   gameType: 'regular' | 'extra' | 'called' | 'walk_off';

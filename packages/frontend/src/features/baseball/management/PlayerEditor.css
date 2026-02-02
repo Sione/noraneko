@@ -35,6 +35,18 @@
   background-color: #f8f9fa;
 }
 
+.overall-large {
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid currentColor;
+}
+
+.overall-type {
+  font-size: 0.875rem;
+  color: #666;
+  font-style: italic;
+}
+
 .player-editor-form {
   display: flex;
   flex-direction: column;
@@ -171,6 +183,24 @@
 .ability-input-number:focus {
   outline: none;
   border-color: #2c5f2d;
+}
+
+.ability-diff {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+}
+
+.diff-positive {
+  color: #28a745;
+  background-color: #d4edda;
+}
+
+.diff-negative {
+  color: #dc3545;
+  background-color: #f8d7da;
 }
 
 .form-actions {

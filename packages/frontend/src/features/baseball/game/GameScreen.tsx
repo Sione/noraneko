@@ -1003,29 +1003,32 @@ export function GameScreen() {
 
   // 重要局面の判定
   const getSituationLabels = () => {
-    const labels: string[] = [];
+    const labels: Array<{ text: string; type: string }> = [];
     const scoreDiff = isPlayerAttacking 
       ? (gameState.isPlayerHome ? score.home - score.away : score.away - score.home)
       : (gameState.isPlayerHome ? score.away - score.home : score.home - score.away);
 
     // 得点圏判定
     if (runners.second || runners.third) {
-      labels.push(isPlayerAttacking ? 'チャンス！' : 'ピンチ！');
+      labels.push({
+        text: isPlayerAttacking ? 'チャンス！' : 'ピンチ！',
+        type: isPlayerAttacking ? 'chance' : 'pinch'
+      });
     }
 
     // 接戦判定（7回以降で2点差以内）
     if (currentInning >= 7 && Math.abs(scoreDiff) <= 2) {
-      labels.push('接戦！');
+      labels.push({ text: '接戦！', type: 'close-game' });
     }
 
     // サヨナラ判定
     if (currentInning >= 9 && !isTopHalf && score.home <= score.away && runners.third) {
-      labels.push('サヨナラのチャンス！');
+      labels.push({ text: 'サヨナラのチャンス！', type: 'sayonara' });
     }
 
     // ツーアウトでのラストチャンス
     if (outs === 2 && (runners.first || runners.second || runners.third)) {
-      labels.push('ラストチャンス！');
+      labels.push({ text: 'ラストチャンス！', type: 'last-chance' });
     }
 
     return labels;
@@ -1037,9 +1040,31 @@ export function GameScreen() {
   const getGuidanceMessage = () => {
     switch (phase) {
       case 'inning_start':
-        return 'イニング開始...';
+        return `${currentInning}回${isTopHalf ? '表' : '裏'} - ${attackingTeam.teamName}の攻撃が始まります`;
       case 'awaiting_instruction':
-        return isPlayerAttacking ? '攻撃指示を選択してください' : '守備指示を選択してください';
+        if (isPlayerAttacking) {
+          // 攻撃側の詳細ガイダンス
+          if (outs === 2) {
+            return 'ツーアウト！ 確実にランナーを進めましょう';
+          } else if (runners.third) {
+            return '三塁にランナー！ 得点のチャンスです';
+          } else if (runners.second) {
+            return '得点圏にランナー！ タイムリーを狙いましょう';
+          } else if (runners.first) {
+            return 'ランナー一塁。進塁を狙うか長打を狙うか戦略を決めましょう';
+          } else {
+            return '走者なし。出塁を目指しましょう';
+          }
+        } else {
+          // 守備側の詳細ガイダンス
+          if (runners.third && outs < 2) {
+            return '得点を防ぐため、投手交代や守備シフトを検討してください';
+          } else if (runners.second || runners.third) {
+            return '得点圏にランナー。慎重な配球が求められます';
+          } else {
+            return '守備指示を選択してください';
+          }
+        }
       case 'at_bat':
         return '打席開始...';
       case 'play_execution':
@@ -1047,7 +1072,7 @@ export function GameScreen() {
       case 'result_display':
         return '次の打者へ...';
       case 'half_inning_end':
-        return 'チェンジ！';
+        return `${currentInning}回${isTopHalf ? '表' : '裏'}終了 - チェンジ！`;
       default:
         return '';
     }
@@ -1058,6 +1083,7 @@ export function GameScreen() {
   // プレイログのフィルタリングとスタイリング
   const [logFilter, setLogFilter] = useState<number | 'all'>('all');
   const [showAllLogs, setShowAllLogs] = useState(false);
+  const [maxDisplayLogs, setMaxDisplayLogs] = useState(15);
 
   const getEventTypeClass = (type: PlayEvent['type']) => {
     switch (type) {
@@ -1095,7 +1121,7 @@ export function GameScreen() {
     return filtered.slice().reverse();
   }, [playLog, logFilter]);
 
-  const displayedPlayLog = showAllLogs ? filteredPlayLog : filteredPlayLog.slice(0, 10);
+  const displayedPlayLog = showAllLogs ? filteredPlayLog : filteredPlayLog.slice(0, maxDisplayLogs);
 
   // イニングフィルタのオプション生成
   const inningFilterOptions = useMemo(() => {
@@ -1127,9 +1153,9 @@ export function GameScreen() {
             <div className="team-name">{homeTeam.teamName}</div>
           </div>
           <div className="scoreboard-scores">
-            <div className="team-score">{score.away}</div>
+            <div className={`team-score ${score.away > score.home ? 'leading' : ''}`}>{score.away}</div>
             <div className="score-divider">-</div>
-            <div className="team-score">{score.home}</div>
+            <div className={`team-score ${score.home > score.away ? 'leading' : ''}`}>{score.home}</div>
           </div>
           
           {/* イニング別得点表 */}
@@ -1199,8 +1225,8 @@ export function GameScreen() {
           {situationLabels.length > 0 && (
             <div className="situation-labels">
               {situationLabels.map((label, index) => (
-                <span key={index} className="situation-label">
-                  {label}
+                <span key={index} className={`situation-label ${label.type}`}>
+                  {label.text}
                 </span>
               ))}
             </div>
@@ -1329,7 +1355,7 @@ export function GameScreen() {
                   </option>
                 ))}
               </select>
-              {filteredPlayLog.length > 10 && (
+              {filteredPlayLog.length > maxDisplayLogs && (
                 <button 
                   onClick={() => setShowAllLogs(!showAllLogs)}
                   className="log-toggle-button"

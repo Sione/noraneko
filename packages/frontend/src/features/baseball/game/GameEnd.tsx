@@ -87,6 +87,7 @@ export function GameEnd() {
             hits: awayTeam.hits,
             errors: awayTeam.errors,
             leftOnBase: awayTeam.leftOnBase,
+            roster: awayTeam.lineup.map(p => p.id), // AC 9.33: 出場選手IDを記録
           },
           homeTeam: {
             teamName: homeTeam.teamName,
@@ -95,6 +96,7 @@ export function GameEnd() {
             hits: homeTeam.hits,
             errors: homeTeam.errors,
             leftOnBase: homeTeam.leftOnBase,
+            roster: homeTeam.lineup.map(p => p.id), // AC 9.33: 出場選手IDを記録
           },
           winner:
             homeScore > awayScore
