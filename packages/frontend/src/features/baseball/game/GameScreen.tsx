@@ -8,6 +8,7 @@ import {
   endHalfInning, 
   checkGameEnd, 
   addScore, 
+  checkSayonara,
   addPlayEvent,
   updateRunners,
   updatePitchCount
@@ -116,21 +117,23 @@ export function GameScreen() {
       return () => clearTimeout(timer);
     }
 
-    // half_inning_endフェーズの場合、次の半イニングへ
+    // half_inning_endフェーズの場合、試合終了判定と攻守交代処理
     if (phase === 'half_inning_end') {
       const timer = setTimeout(() => {
         // 試合終了判定を実行
         dispatch(checkGameEnd());
-        
-        // game_endフェーズでなければ次の半イニングへ
-        const state = gameState;
-        if (state.phase !== 'game_end') {
-          dispatch(endHalfInning());
-        }
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [phase, dispatch, gameState]);
+
+    // half_inning_end_checkedフェーズの場合、攻守交代を実行
+    if (phase === 'half_inning_end_checked') {
+      const timer = setTimeout(() => {
+        dispatch(endHalfInning());
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, dispatch]);
 
   if (!homeTeam || !awayTeam) {
     return <div>試合データが見つかりません</div>;
@@ -229,12 +232,13 @@ export function GameScreen() {
       if (atBatResult.outcome === 'walk') {
         // 走者を進塁
         const newRunners = { ...runners };
+        let pushedHomeRun = false;
+        
         if (runners.first) {
           if (runners.second) {
             if (runners.third) {
               // 満塁押し出し
-              const scoringTeam = isTopHalf ? 'away' : 'home';
-              dispatch(addScore({ team: scoringTeam, points: 1 }));
+              pushedHomeRun = true;
             } else {
               newRunners.third = runners.second;
             }
@@ -243,6 +247,17 @@ export function GameScreen() {
           }
         }
         newRunners.first = { playerId: batter.id, playerName: batter.name };
+        
+        // 押し出しがあれば得点加算
+        if (pushedHomeRun) {
+          const scoringTeam = isTopHalf ? 'away' : 'home';
+          dispatch(addScore({ team: scoringTeam, points: 1 }));
+          // サヨナラ判定を非同期で実行
+          setTimeout(() => {
+            dispatch(checkSayonara());
+          }, 100);
+        }
+        
         dispatch(updateRunners(newRunners));
         
         setTimeout(() => {
@@ -301,6 +316,10 @@ export function GameScreen() {
             // 得点を加算（バッター含む）
             if (defensiveResult.runsScored > 0) {
               dispatch(addScore({ team: scoringTeam, points: defensiveResult.runsScored }));
+              // サヨナラ判定
+              setTimeout(() => {
+                dispatch(checkSayonara());
+              }, 100);
             }
             dispatch(updateRunners(newRunners));
           } else {
@@ -334,6 +353,10 @@ export function GameScreen() {
             // 得点を加算
             if (defensiveResult.runsScored > 0) {
               dispatch(addScore({ team: scoringTeam, points: defensiveResult.runsScored }));
+              // サヨナラ判定を非同期で実行
+              setTimeout(() => {
+                dispatch(checkSayonara());
+              }, 100);
             }
 
             // 走者を更新
@@ -495,11 +518,16 @@ export function GameScreen() {
       if (isSqueezePlay && 'runnerSafe' in buntResult && buntResult.runnerSafe) {
         const scoringTeam = isTopHalf ? 'away' : 'home';
         dispatch(addScore({ team: scoringTeam, points: 1 }));
+        // サヨナラ判定を非同期で実行
+        setTimeout(() => {
+          dispatch(checkSayonara());
+        }, 100);
       }
 
       // 走者の進塁を処理
       const newRunners: RunnerState = { first: null, second: null, third: null };
       const scoringTeam = isTopHalf ? 'away' : 'home';
+      let additionalRuns = 0;
 
       for (const advance of defensiveResult.runnersAdvanced) {
         if (advance.from === 'batter' && advance.to !== 'out' && advance.to !== 'home') {
@@ -518,7 +546,7 @@ export function GameScreen() {
             if (advance.to === 'home') {
               // 得点（スクイズ以外の得点）
               if (!isSqueezePlay || advance.from !== 'third') {
-                dispatch(addScore({ team: scoringTeam, points: 1 }));
+                additionalRuns++;
               }
             } else if (advance.to === 'first') {
               newRunners.first = existingRunner;
@@ -529,6 +557,15 @@ export function GameScreen() {
             }
           }
         }
+      }
+
+      // 追加得点がある場合、まとめて加算
+      if (additionalRuns > 0) {
+        dispatch(addScore({ team: scoringTeam, points: additionalRuns }));
+        // サヨナラ判定を非同期で実行
+        setTimeout(() => {
+          dispatch(checkSayonara());
+        }, 100);
       }
 
       // 走者を更新
@@ -625,6 +662,10 @@ export function GameScreen() {
       // 得点を加算
       if (runsScored > 0) {
         dispatch(addScore({ team: scoringTeam, points: runsScored }));
+        // サヨナラ判定を非同期で実行
+        setTimeout(() => {
+          dispatch(checkSayonara());
+        }, 100);
       }
 
       // 走者を更新
@@ -692,13 +733,14 @@ export function GameScreen() {
 
       // 走者を更新
       const newRunners: RunnerState = { ...runners };
+      let scoredRun = false;
       
       if (stealResult.success) {
         // 盗塁成功
         if (stealResult.targetBase === 'home') {
           // 本塁盗塁成功（得点）
           if (currentBase === 'third') newRunners.third = null;
-          dispatch(addScore({ team: scoringTeam, points: 1 }));
+          scoredRun = true;
         } else {
           // その他の塁への盗塁成功
           if (currentBase === 'first') {
@@ -714,6 +756,15 @@ export function GameScreen() {
         if (currentBase === 'first') newRunners.first = null;
         else if (currentBase === 'second') newRunners.second = null;
         else if (currentBase === 'third') newRunners.third = null;
+      }
+
+      // 得点があれば加算
+      if (scoredRun) {
+        dispatch(addScore({ team: scoringTeam, points: 1 }));
+        // サヨナラ判定を非同期で実行
+        setTimeout(() => {
+          dispatch(checkSayonara());
+        }, 100);
       }
 
       dispatch(updateRunners(newRunners));
@@ -792,6 +843,7 @@ export function GameScreen() {
       // 走者を更新（エンドランの結果に応じて）
       const newRunners: RunnerState = { ...runners };
       let outsRecorded = 0;
+      let scoredRun = false;
 
       if (battingOutcome === 'hit') {
         // ヒットの場合、走者は大きく進塁
@@ -809,7 +861,7 @@ export function GameScreen() {
           if (hitAndRunResult.stealAttempt.success) {
             // 走者は得点
             newRunners.second = null;
-            dispatch(addScore({ team: scoringTeam, points: 1 }));
+            scoredRun = true;
           } else {
             newRunners.third = runnerToSteal;
             newRunners.second = null;
@@ -848,6 +900,15 @@ export function GameScreen() {
           if (currentBase === 'first') newRunners.first = null;
           else if (currentBase === 'second') newRunners.second = null;
         }
+      }
+
+      // 得点があれば加算
+      if (scoredRun) {
+        dispatch(addScore({ team: scoringTeam, points: 1 }));
+        // サヨナラ判定を非同期で実行
+        setTimeout(() => {
+          dispatch(checkSayonara());
+        }, 100);
       }
 
       dispatch(updateRunners(newRunners));

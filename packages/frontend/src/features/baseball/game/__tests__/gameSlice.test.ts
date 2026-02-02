@@ -14,6 +14,7 @@ import gameReducer, {
   endHalfInning,
   checkGameEnd,
   addScore,
+  checkSayonara,
   setTeams,
   resetGame,
 } from '../gameSlice';
@@ -391,6 +392,9 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
 
       // 裏で得点を追加してリード
       state = gameReducer(state, addScore({ team: 'home', points: 2 }));
+      
+      // サヨナラ判定を実行
+      state = gameReducer(state, checkSayonara());
 
       expect(state.phase).toBe('game_end');
       const endEvent = state.playLog.find(e => e.type === 'game_end' && e.description.includes('サヨナラ'));

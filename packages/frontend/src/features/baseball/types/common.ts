@@ -13,6 +13,7 @@ export type GamePhase =
   | 'play_execution' // プレイ実行中
   | 'result_display' // 結果表示
   | 'half_inning_end' // 半イニング終了
+  | 'half_inning_end_checked' // 半イニング終了（試合終了判定済み）
   | 'inning_end' // イニング終了
   | 'game_end' // 試合終了
   | 'paused'; // 一時停止

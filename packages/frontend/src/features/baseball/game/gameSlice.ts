@@ -568,6 +568,9 @@ export const gameSlice = createSlice({
             source: 'player',
           };
           state.playLog.push(extendEvent);
+          
+          // 延長戦に進む（攻守交代を実行）
+          state.phase = 'half_inning_end_checked';
         }
         return;
       }
@@ -615,6 +618,9 @@ export const gameSlice = createSlice({
           
           // 引き分けの場合はMVPなし（selectMVP内で引き分け時はnullを返す）
           state.mvp = selectMVP(state);
+        } else {
+          // 延長戦継続（攻守交代を実行）
+          state.phase = 'half_inning_end_checked';
         }
         return;
       }
@@ -639,10 +645,14 @@ export const gameSlice = createSlice({
         
         // MVP選出 (タスク10.3)
         state.mvp = selectMVP(state);
+        return;
       }
+
+      // 上記の試合終了条件に該当しない場合、攻守交代を実行
+      state.phase = 'half_inning_end_checked';
     },
 
-    // 得点加算（試合終了判定付き）
+    // 得点加算
     addScore: (state, action: PayloadAction<{ team: 'home' | 'away'; points: number }>) => {
       if (action.payload.team === 'home') {
         state.score.home += action.payload.points;
@@ -662,8 +672,11 @@ export const gameSlice = createSlice({
         scoreChange: { home: state.score.home, away: state.score.away },
       };
       state.playLog.push(scoreEvent);
+    },
 
-      // サヨナラ勝ちの即座チェック（裏で後攻がリード）
+    // サヨナラ判定を独立したアクションとして追加
+    checkSayonara: (state) => {
+      // サヨナラ勝ちの判定（裏で後攻がリード）
       if (!state.isTopHalf && state.currentInning >= 9) {
         const homeScore = state.score.home;
         const awayScore = state.score.away;
@@ -861,6 +874,7 @@ export const {
   endHalfInning,
   checkGameEnd,
   addScore,
+  checkSayonara,
   endInning,
   endGame,
   updateOuts,
