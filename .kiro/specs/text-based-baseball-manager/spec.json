@@ -1,24 +1,24 @@
 {
   "feature_name": "text-based-baseball-manager",
   "created_at": "2026-01-31T00:00:00Z",
-  "updated_at": "2026-02-02T12:30:00Z",
+  "updated_at": "2026-02-02T13:00:00Z",
   "language": "ja",
   "phase": "tasks-generated",
   "approvals": {
     "requirements": {
       "generated": true,
-      "approved": false,
-      "note": "1球単位判定システム追加により要件変更 - レビュー待ち"
+      "approved": true,
+      "note": "auto-approved via /kiro/spec-tasks -y"
     },
     "design": {
       "generated": true,
-      "approved": false,
-      "note": "1球単位判定システム対応のため設計更新 - レビュー待ち"
+      "approved": true,
+      "note": "auto-approved via /kiro/spec-tasks -y"
     },
     "tasks": {
       "generated": true,
       "approved": false,
-      "note": "1球単位判定システム対応でタスク再生成完了 - レビュー待ち"
+      "note": "auto-regenerated via /kiro/spec-tasks -y"
     }
   },
   "ready_for_implementation": false,
