@@ -7,6 +7,7 @@ import {
   recordOut, 
   endHalfInning, 
   checkGameEnd, 
+  setPhase,
   addScore, 
   checkSayonara,
   addPlayEvent,
@@ -135,6 +136,18 @@ export function GameScreen() {
     }
   }, [phase, dispatch]);
 
+  // アウト数が3に到達しているのにフェーズが更新されていない場合の保険
+  useEffect(() => {
+    if (
+      outs >= 3 &&
+      phase !== 'half_inning_end' &&
+      phase !== 'half_inning_end_checked' &&
+      phase !== 'game_end'
+    ) {
+      dispatch(setPhase('half_inning_end'));
+    }
+  }, [outs, phase, dispatch]);
+
   if (!homeTeam || !awayTeam) {
     return <div>試合データが見つかりません</div>;
   }
@@ -224,7 +237,7 @@ export function GameScreen() {
 
       // 三振の場合
       if (atBatResult.outcome === 'strikeout') {
-        dispatch(recordOut({ description: `${batter.name}は三振しました。` }));
+        dispatch(recordOut({ description: `${batter.name}は三振しました。`, batterOut: true }));
         return;
       }
 
@@ -365,8 +378,15 @@ export function GameScreen() {
 
           // アウトを記録
           if (defensiveResult.outsRecorded > 0) {
+            const batterOut = defensiveResult.batterOut;
             setTimeout(() => {
-              dispatch(recordOut({ description: defensiveResult.description }));
+              dispatch(
+                recordOut({
+                  description: defensiveResult.description,
+                  outsRecorded: defensiveResult.outsRecorded,
+                  batterOut,
+                })
+              );
             }, 1500);
           } else {
             // アウトでなければ次の打者へ
@@ -458,12 +478,17 @@ export function GameScreen() {
       if (buntResult.isStrikeout) {
         // 三振アウト
         setTimeout(() => {
-          dispatch(recordOut({ description: `${batter.name}は三振しました。` }));
+          dispatch(recordOut({ description: `${batter.name}は三振しました。`, batterOut: true }));
         }, 1500);
       } else if (buntResult.isPopup) {
         // 打ち損じの小フライ（捕手または投手がキャッチ）
         setTimeout(() => {
-          dispatch(recordOut({ description: `${batter.name}の打ち損じを捕手が捕球。アウト！` }));
+          dispatch(
+            recordOut({
+              description: `${batter.name}の打ち損じを捕手が捕球。アウト！`,
+              batterOut: true,
+            })
+          );
         }, 1500);
       } else if (buntResult.isFoul) {
         // ファウル（カウント進行のみ）
@@ -571,10 +596,18 @@ export function GameScreen() {
       // 走者を更新
       dispatch(updateRunners(newRunners));
 
+      const outsRecorded = defensiveResult.runnersAdvanced.filter((advance) => advance.to === 'out').length;
+
       // アウトを記録
-      if (defensiveResult.batterOut || (isSqueezePlay && 'runnerSafe' in buntResult && !buntResult.runnerSafe)) {
+      if (outsRecorded > 0) {
         setTimeout(() => {
-          dispatch(recordOut({ description: defensiveResult.description }));
+          dispatch(
+            recordOut({
+              description: defensiveResult.description,
+              outsRecorded,
+              batterOut: defensiveResult.batterOut,
+            })
+          );
         }, 1500);
       } else {
         // アウトでなければ次の打者へ
@@ -674,7 +707,13 @@ export function GameScreen() {
       // アウトを記録
       if (outsRecorded > 0) {
         setTimeout(() => {
-          dispatch(recordOut({ description: doubleStealResult.commentary }));
+          dispatch(
+            recordOut({
+              description: doubleStealResult.commentary,
+              outsRecorded,
+              batterOut: false,
+            })
+          );
         }, 1500);
       } else {
         // アウトでなければ次の打者へ
@@ -772,7 +811,7 @@ export function GameScreen() {
       // アウトを記録
       if (stealResult.caughtStealing) {
         setTimeout(() => {
-          dispatch(recordOut({ description: stealResult.commentary }));
+          dispatch(recordOut({ description: stealResult.commentary, batterOut: false }));
         }, 1500);
       } else {
         // アウトでなければ次の打者へ
@@ -916,7 +955,13 @@ export function GameScreen() {
       // アウトを記録
       if (outsRecorded > 0) {
         setTimeout(() => {
-          dispatch(recordOut({ description: hitAndRunResult.commentary }));
+          dispatch(
+            recordOut({
+              description: hitAndRunResult.commentary,
+              outsRecorded,
+              batterOut: battingOutcome === 'out',
+            })
+          );
         }, 1500);
       } else {
         // アウトでなければ次の打者へ

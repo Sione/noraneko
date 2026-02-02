@@ -54,6 +54,7 @@ export interface DefensiveResult {
   assistBy?: PlayerInGame;
   errorType?: ErrorType;
   description: string;
+  batterOut: boolean;
   runnersAdvanced: {
     from: 'first' | 'second' | 'third' | 'batter';
     to: 'first' | 'second' | 'third' | 'home' | 'out';
@@ -718,6 +719,7 @@ function createDefensiveResult(
   let description = '';
   let runsScored = 0;
   let outsRecorded = 0;
+  let batterOut = false;
   const runnersAdvanced: DefensiveResult['runnersAdvanced'] = [];
 
   const fielderName = fielderInfo?.primary.name || '守備';
@@ -800,6 +802,7 @@ function createDefensiveResult(
       description = `${fielderName}${positionLabel}がアウトにしました。`;
       runnersAdvanced.push({ from: 'batter', to: 'out' });
       outsRecorded = 1;
+      batterOut = true;
       
       // 走者は進塁しない（タッチアップを除く）
       break;
@@ -814,6 +817,7 @@ function createDefensiveResult(
       // 打者アウト
       runnersAdvanced.push({ from: 'batter', to: 'out' });
       outsRecorded = 2;
+      batterOut = true;
       
       // 一塁走者もアウト
       if (runners.first) {
@@ -836,6 +840,7 @@ function createDefensiveResult(
       description = `${fielderName}${positionLabel}がキャッチ。犠牲フライ！`;
       runnersAdvanced.push({ from: 'batter', to: 'out' });
       outsRecorded = 1;
+      batterOut = true;
       
       // 三塁走者がタッチアップ
       if (runners.third) {
@@ -890,6 +895,7 @@ function createDefensiveResult(
     assistBy: fielderInfo?.assistBy,
     errorType,
     description,
+    batterOut,
     runnersAdvanced,
     runsScored,
     outsRecorded

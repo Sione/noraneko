@@ -160,6 +160,7 @@ stateDiagram-v2
 - `AtBat` → `ManagerInstruction`: プレイヤーまたはCPUの指示待ち
 - `ManagerInstruction`: タイムアウトなしで選択待ちを継続
 - `PlayExecution`: SimulationEngineによる確率判定
+- 打者がアウトになった場合は打順を進め、3アウト成立時も次の半イニングの先頭打者に反映する
 - `GameEnd`: 9回終了、サヨナラ、コールドゲーム等の条件判定
 - `Any` → `Paused`: 中断メニュー（再開/保存して終了/保存せず終了）
 

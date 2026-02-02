@@ -247,6 +247,43 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
       expect(state.phase).toBe('half_inning_end');
     });
 
+    it('アウトカウントが3の時に追加のrecordOutを呼んでも4アウト目は記録されない', () => {
+      let state = gameReducer(gameState, startInning());
+
+      // 3アウト記録
+      state = gameReducer(state, recordOut({ description: 'アウト1' }));
+      state = gameReducer(state, recordOut({ description: 'アウト2' }));
+      state = gameReducer(state, recordOut({ description: 'アウト3' }));
+      
+      expect(state.outs).toBe(3);
+      expect(state.phase).toBe('half_inning_end');
+
+      // 4アウト目を試みる（不正な呼び出し）
+      const logLengthBefore = state.playLog.length;
+      state = gameReducer(state, recordOut({ description: 'アウト4' }));
+      
+      // アウトカウントは3のまま（4にならない）
+      expect(state.outs).toBe(3);
+      // フェーズも変わらない
+      expect(state.phase).toBe('half_inning_end');
+      // ログにも追加されない（recordOut内でreturnされるため）
+      expect(state.playLog.length).toBe(logLengthBefore);
+    });
+
+    it('複数アウトが記録された場合でも3アウトで攻守交代になる', () => {
+      let state = gameReducer(gameState, startInning());
+
+      // 2アウトまで進める
+      state = gameReducer(state, recordOut({ description: 'アウト1' }));
+      state = gameReducer(state, recordOut({ description: 'アウト2' }));
+
+      // 2アウトを同時に記録（ダブルプレー想定）
+      state = gameReducer(state, recordOut({ description: '併殺', outsRecorded: 2 }));
+
+      expect(state.outs).toBe(3); // 4ではなく3にクランプ
+      expect(state.phase).toBe('half_inning_end');
+    });
+
     it('半イニング終了で表から裏へ交代する', () => {
       let state = gameReducer(gameState, startInning());
       expect(state.isTopHalf).toBe(true);
@@ -300,6 +337,49 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
 
       const secondBatterIndex = state.awayTeam?.currentBatterIndex || 0;
       expect(secondBatterIndex).toBe((firstBatterIndex + 1) % 9);
+    });
+
+    it('打者アウトの3アウト目で打順が進む', () => {
+      let state = gameReducer(gameState, startInning());
+      state = gameReducer(state, startAtBat());
+
+      // 2打席消化して打順を進める
+      state = gameReducer(state, endAtBat());
+      state = gameReducer(state, startAtBat());
+      state = gameReducer(state, endAtBat());
+      state = gameReducer(state, startAtBat());
+
+      // 3アウト目直前の状態を作る
+      state = { ...state, outs: 2 };
+
+      const batterIndexBefore = state.awayTeam?.currentBatterIndex || 0;
+
+      state = gameReducer(state, recordOut({ description: '三振アウト', batterOut: true }));
+
+      const batterIndexAfter = state.awayTeam?.currentBatterIndex || 0;
+      expect(batterIndexAfter).toBe((batterIndexBefore + 1) % 9);
+      expect(state.phase).toBe('half_inning_end');
+    });
+
+    it('走者アウトの3アウト目では打順が進まない', () => {
+      let state = gameReducer(gameState, startInning());
+      state = gameReducer(state, startAtBat());
+
+      // 2打席消化して打順を進める
+      state = gameReducer(state, endAtBat());
+      state = gameReducer(state, startAtBat());
+      state = gameReducer(state, endAtBat());
+      state = gameReducer(state, startAtBat());
+
+      state = { ...state, outs: 2 };
+
+      const batterIndexBefore = state.awayTeam?.currentBatterIndex || 0;
+
+      state = gameReducer(state, recordOut({ description: '盗塁死', batterOut: false }));
+
+      const batterIndexAfter = state.awayTeam?.currentBatterIndex || 0;
+      expect(batterIndexAfter).toBe(batterIndexBefore);
+      expect(state.phase).toBe('half_inning_end');
     });
   });
 

@@ -22,7 +22,7 @@
 
 **イニング進行管理**
 6. When 各イニングが開始される、the Game System shall 現在のイニング（回/表裏）、攻撃チーム、守備チームを明確に表示する
-7. When 表の攻撃が始まる、the Game System shall 攻撃側の打順トップから打席に入れる
+7. When 表の攻撃が始まる、the Game System shall 攻撃側の打順トップから打席に入れ、打者がアウトになった場合は打席を終えて次の打者を打席に立たせる（攻撃が継続している場合）
 8. When アウトカウントが3になる、the Game System shall 攻守交代を実行し次の半イニング（裏または次回表）に進む
 9. When 裏の攻撃が終了する、the Game System shall イニング終了を表示し次の回に進む
 10. The Game System shall イニング間で両チームの現在の得点を更新して表示する

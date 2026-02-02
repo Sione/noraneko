@@ -395,8 +395,14 @@ export const gameSlice = createSlice({
     // 打席終了（次の打者へ）
     endAtBat: (state) => {
       if (!state.homeTeam || !state.awayTeam) return;
+      if (!state.currentAtBat) return;
 
       const attackingTeam = state.isTopHalf ? state.awayTeam : state.homeTeam;
+      if (state.currentAtBat.batterIndex !== attackingTeam.currentBatterIndex) {
+        state.currentAtBat = null;
+        state.phase = 'at_bat';
+        return;
+      }
 
       // 打順を次へ進める
       attackingTeam.currentBatterIndex = (attackingTeam.currentBatterIndex + 1) % 9;
@@ -407,8 +413,13 @@ export const gameSlice = createSlice({
     },
 
     // アウトを記録して攻守交代チェック
-    recordOut: (state, action: PayloadAction<{ description: string }>) => {
-      state.outs += 1;
+    recordOut: (
+      state,
+      action: PayloadAction<{ description: string; outsRecorded?: number; batterOut?: boolean }>
+    ) => {
+      const outsRecorded = Math.max(1, action.payload.outsRecorded ?? 1);
+      const nextOuts = state.outs + outsRecorded;
+      const batterOut = action.payload.batterOut ?? false;
 
       // アウトイベントをログに追加
       const outEvent: PlayEvent = {
@@ -421,8 +432,15 @@ export const gameSlice = createSlice({
       };
       state.playLog.push(outEvent);
 
-      // 3アウトで攻守交代
-      if (state.outs >= 3) {
+      // アウト数を更新（3アウトを上限にクランプ）
+      state.outs = Math.min(3, nextOuts);
+
+      // 3アウトで攻守交代（打者アウトなら打順を進める）
+      if (nextOuts >= 3) {
+        if (batterOut && state.homeTeam && state.awayTeam) {
+          const attackingTeam = state.isTopHalf ? state.awayTeam : state.homeTeam;
+          attackingTeam.currentBatterIndex = (attackingTeam.currentBatterIndex + 1) % 9;
+        }
         state.phase = 'half_inning_end';
       } else {
         // まだアウトが3つ未満なら次の打者へ

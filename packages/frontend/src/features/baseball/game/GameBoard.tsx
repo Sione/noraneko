@@ -77,6 +77,7 @@ export function GameBoard() {
     case 'play_execution':
     case 'result_display':
     case 'half_inning_end':
+    case 'half_inning_end_checked':
     case 'inning_end':
       return <GameScreen />;
     case 'game_end':
