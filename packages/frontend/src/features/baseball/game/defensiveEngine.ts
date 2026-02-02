@@ -650,42 +650,6 @@ function processLineDrive(
 
   return { outcome: 'out' };
 }
-    'weak': 70,
-    'medium': 55,
-    'strong': 35,
-    'very_strong': 20
-  };
-
-  const baseCatchChance = catchDifficulty[strength];
-  const actualCatchChance = (baseCatchChance * fieldingRange) / 100;
-
-  const roll = Math.random() * 100;
-
-  // 捕球失敗
-  if (roll > actualCatchChance) {
-    // ライナーは長打になりやすい
-    if (extraBasePotential > 60 && strength !== 'weak') {
-      return { outcome: Math.random() > 0.5 ? 'triple' : 'double' };
-    } else if (extraBasePotential > 40) {
-      return { outcome: 'double' };
-    }
-    return { outcome: 'single' };
-  }
-
-  // 捕球成功 - エラー判定は低め
-  const errorChance = (100 - errorResistance) * 0.05;
-  if (Math.random() * 100 < errorChance) {
-    return { outcome: 'error', errorType: 'fielding' };
-  }
-
-  // ライナー捕球後の併殺の可能性（走者が飛び出していた場合）
-  // これは簡易実装（タスク4.3で詳細実装）
-  if (runners.first && outs < 2 && isInfield && Math.random() > 0.85) {
-    return { outcome: 'double_play' };
-  }
-
-  return { outcome: 'out' };
-}
 
 /**
  * 併殺の成功確率を計算
