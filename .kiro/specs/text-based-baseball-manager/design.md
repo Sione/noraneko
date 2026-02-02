@@ -10,6 +10,7 @@
 
 ### ゴール
 - プレイヤーが監督として各打席で戦術指示（通常打撃、バント、盗塁、守備シフト等）を出せる
+- **ゲーム進行の基本原則**: プレイヤーの指示入力を受けるまでゲームは進行しない（オートモード有効時を除く）
 - OOTP26準拠の85種類の選手能力値によるリアルな野球シミュレーション
 - CPU操作チームとの対戦機能（複数難易度のAI）
 - 試合履歴・戦績の永続化と分析機能
@@ -139,11 +140,23 @@ stateDiagram-v2
     HalfInningStart --> AtBat: 打席開始
     
     AtBat --> ManagerInstruction: 監督指示待ち
-    ManagerInstruction --> PlayExecution: プレイ実行
-    PlayExecution --> ResultDisplay: 結果表示
+    ManagerInstruction --> PitchLoop: 1球判定ループ開始
     
-    ResultDisplay --> AtBat: アウト数 < 3
-    ResultDisplay --> HalfInningEnd: アウト数 = 3
+    PitchLoop --> PitchResult: 1球判定
+    PitchResult --> CountUpdate: カウント更新
+    
+    CountUpdate --> PitchLoop: 打席継続
+    CountUpdate --> Strikeout: 3ストライク
+    CountUpdate --> Walk: 4ボール
+    CountUpdate --> InPlay: インプレー
+    
+    Strikeout --> AtBatEnd: 三振処理
+    Walk --> AtBatEnd: 四球処理
+    InPlay --> DefenseJudge: 守備判定
+    DefenseJudge --> AtBatEnd: 守備判定完了
+    
+    AtBatEnd --> AtBat: アウト数 < 3
+    AtBatEnd --> HalfInningEnd: アウト数 = 3
     
     HalfInningEnd --> HalfInningStart: 表裏交代
     HalfInningEnd --> InningEnd: 裏終了
@@ -156,22 +169,96 @@ stateDiagram-v2
 ```
 
 **主要な状態遷移**:
-- `GameInit` → `TeamSetup`: 対戦チーム選択
-- `AtBat` → `ManagerInstruction`: プレイヤーまたはCPUの指示待ち
-- `ManagerInstruction`: タイムアウトなしで選択待ちを継続
-- `PlayExecution`: SimulationEngineによる確率判定
-- 打者がアウトになった場合は打順を進め、3アウト成立時も次の半イニングの先頭打者に反映する
-- `GameEnd`: 9回終了、サヨナラ、コールドゲーム等の条件判定
-- `Any` → `Paused`: 中断メニュー（再開/保存して終了/保存せず終了）
+- `GameInit` → `TeamSetup`: 対戦チーム選択（意思決定ポイント）
+- `TeamSetup` → `LineupEdit`: 打順編集（意思決定ポイント）
+- `AtBat` → `ManagerInstruction`: プレイヤーまたはCPUの指示待ち（意思決定ポイント）
+- `ManagerInstruction`: タイムアウトなしで選択待ちを継続。指示は打席開始時に1回のみ
 
-### 打席判定フロー
+**ゲーム進行の基本原則（Req 2 AC 0a-0aa）**:
+
+*指示待機の必須化*:
+- プレイヤーからの指示入力を受けるまでゲームは進行しない
+- `awaiting_instruction`フェーズは無期限に維持され、プレイヤー入力を必須とする
+- 離席してもタイムアウトせず、試合状態を保持
+
+*意思決定ポイント*:
+- 打席開始時の攻撃指示、守備指示、選手交代、打順編集、チーム選択
+- 意思決定ポイント以外（1球判定、守備判定、進塁処理）は自動進行
+
+*指示待機中の許可操作*:
+- ヘルプ表示、選手詳細確認、設定変更、試合中断
+- 操作完了後は指示選択画面に戻り待機継続
+
+*オートモード例外*:
+- `aiDelegationMode: 'auto'` / `autoModeScope: 'inning' | 'game'` 時のみAI委譲で自動進行
+- 「オートモード中」インジケーター＋「手動操作に戻す」ボタンを常時表示
+- Escキー/中断ボタンで即座に解除可能
+
+*CPU vs プレイヤー*:
+- プレイヤーチーム: 意思決定ポイントで指示待機
+- CPUチーム: 0.5-1.5秒の思考時間後に自動進行
+
+- `PitchLoop` → `PitchResult`: 1球毎の判定を実行（ストライク/ボール/ファウル/インプレー）- 指示待機なしで自動進行
+- `CountUpdate`: カウント更新後、打席終了条件（3ストライク/4ボール/インプレー）をチェック
+- 打者がアウトになった場合は打順を進め、3アウト成立時も次の半イニングの先頭打者に反映する
+- 各チームの打順位置は独立管理し、イニング間で継続する
+- `GameEnd`: 9回終了、サヨナラ、コールドゲーム等の条件判定
+- `Any` → `Paused`: 中断メニュー（再開/保存して終了/保存せず終了）- 指示待機中も利用可能
+
+### 1球判定ループフロー
 
 ```mermaid
 flowchart TB
-    Start[打席開始] --> PitcherVsBatter[投手vs打者判定]
-    PitcherVsBatter --> |三振| Strikeout[三振アウト]
-    PitcherVsBatter --> |四球| Walk[四球出塁]
-    PitcherVsBatter --> |インプレー| BallType[打球種類判定]
+    Start[打席開始・指示確定] --> InitCount[カウント初期化 0-0]
+    InitCount --> PitchDecision[投球判定]
+    
+    PitchDecision --> StrikeZone{ストライクゾーン?}
+    StrikeZone --> |ゾーン内| BatterReactionS[打者反応判定]
+    StrikeZone --> |ゾーン外| BatterReactionB[打者反応判定]
+    
+    BatterReactionS --> |見逃し| StrikeCalled[見逃しストライク]
+    BatterReactionS --> |空振り| Swinging[空振りストライク]
+    BatterReactionS --> |ファウル| Foul[ファウル]
+    BatterReactionS --> |インプレー| InPlayResult[インプレー発生]
+    
+    BatterReactionB --> |見逃し| Ball[ボール]
+    BatterReactionB --> |空振り| SwingingB[空振りストライク]
+    BatterReactionB --> |ファウル| FoulB[ファウル]
+    BatterReactionB --> |インプレー| InPlayBad[インプレー発生]
+    
+    StrikeCalled --> UpdateS[S+1]
+    Swinging --> UpdateS
+    SwingingB --> UpdateS
+    Ball --> UpdateB[B+1]
+    Foul --> FoulCheck{S=2?}
+    FoulB --> FoulCheck
+    FoulCheck --> |Yes| NoChange[カウント維持]
+    FoulCheck --> |No| UpdateS
+    
+    UpdateS --> CheckStrikeout{S=3?}
+    UpdateB --> CheckWalk{B=4?}
+    NoChange --> DisplayPitch[投球結果表示]
+    
+    CheckStrikeout --> |Yes| Strikeout[三振]
+    CheckStrikeout --> |No| DisplayPitch
+    CheckWalk --> |Yes| Walk[四球]
+    CheckWalk --> |No| DisplayPitch
+    
+    DisplayPitch --> PitchDecision
+    
+    InPlayResult --> BallTypeJudge[打球種類判定]
+    InPlayBad --> BallTypeJudge
+    Strikeout --> AtBatEnd[打席終了処理]
+    Walk --> AtBatEnd
+    BallTypeJudge --> DefenseFlow[守備判定フロー]
+    DefenseFlow --> AtBatEnd
+```
+
+### 打席判定フロー（守備判定）
+
+```mermaid
+flowchart TB
+    Start[インプレー発生] --> BallType[打球種類判定]
     
     BallType --> |ゴロ| GroundBall[ゴロ処理]
     BallType --> |フライ| FlyBall[フライ処理]
@@ -194,11 +281,22 @@ flowchart TB
     Out --> RunnerAdvance
     Error --> RunnerAdvance
     
-    RunnerAdvance --> StateUpdate[状態更新]
-    StateUpdate --> End[打席終了]
+    RunnerAdvance --> ScoreCheck{得点発生?}
+    ScoreCheck --> |Yes| ScoreProcess[得点処理]
+    ScoreCheck --> |No| OutCheck
+    ScoreProcess --> SayonaraCheck{サヨナラ?}
+    SayonaraCheck --> |Yes| GameEnd[試合終了]
+    SayonaraCheck --> |No| OutCheck
     
-    Strikeout --> StateUpdate
-    Walk --> StateUpdate
+    OutCheck{アウトカウント判定} --> |3アウト| InningEnd[イニング終了]
+    OutCheck --> |3アウト未満| NextBatter[次打者準備]
+    
+    InningEnd --> RecordBattingOrder[打順位置記録]
+    RecordBattingOrder --> SideChange[攻守交代]
+    
+    NextBatter --> End[打席終了]
+    SideChange --> End
+    GameEnd --> End
 ```
 
 ### 勝敗・終了条件
@@ -219,6 +317,7 @@ flowchart TB
 | 要件 | サマリー | コンポーネント | インターフェース | フロー |
 |-----|---------|--------------|----------------|-------|
 | 1.1-1.18 | 試合開始とゲームフロー | GameSlice, GameSaga, GameBoard | GameState, GameActions | 試合進行フロー |
+| 2.0a-0aa | ゲーム進行の基本原則（指示待機、意思決定ポイント、オートモード、投球表示、CPU動作） | GameSaga, InstructionPanel, SettingsSlice, AutoModeIndicator | GamePhase, aiDelegationMode, autoModeScope, DecisionPoint | 試合進行フロー |
 | 2.1-2.23 | プレイ毎の監督指示 | InstructionPanel, GameSaga | ManagerInstruction, InstructionType | 打席フロー |
 | 3.1-3.156 | プレイ結果判定とシミュレーション | SimulationEngine, ProbabilityEngine | PlayResult, BattingResult | 打席判定フロー |
 | 4.1-4.85 | 選手とチーム情報管理 | PlayersSlice, PlayersSaga, PlayerEditor | Player, PlayerAbilities | - |
@@ -239,16 +338,66 @@ flowchart TB
 - **保存**: 試合途中は`noraneko:currentGame`に自動保存
 
 ### Requirement 2: プレイ毎の監督指示
-- **主要コンポーネント**: `InstructionPanel`, `GameSaga`
-- **主要データ**: `ManagerInstruction`, `InstructionType`
+- **主要コンポーネント**: `InstructionPanel`, `GameSaga`, `SettingsSlice`, `AutoModeIndicator`, `DecisionPointHandler`
+- **主要データ**: `ManagerInstruction`, `InstructionType`, `aiDelegationMode`, `autoModeScope`, `DecisionPoint`
 - **フロー**: 指示待ち→指示確定→プレイ実行→結果表示
-- **UI対応**: 攻撃/守備で指示メニュー切替、ツールチップで説明表示
+
+#### ゲーム進行の基本原則（AC 0a-0aa）
+
+**指示待機の必須化（AC 0a-0d）**
+- プレイヤーからの指示入力を受けるまでゲームは進行しない
+- 指示選択画面は無期限に表示され、タイムアウトなし
+- 離席時も試合状態を保持し続ける
+- `awaiting_instruction`フェーズは明示的操作があるまで遷移しない
+
+**意思決定ポイントの定義（AC 0e-0g）**
+- 意思決定ポイント一覧: 
+  - 打席開始時の攻撃指示
+  - 打席開始前の守備指示
+  - 選手交代の判断（代打/代走/守備固め）
+  - 試合開始前の打順編集
+  - チーム選択とホーム/ビジター選択
+- 意思決定ポイント以外（1球判定ループ、守備判定、走者進塁処理）は自動進行
+
+**指示待機中に許可される操作（AC 0h-0j）**
+- ヘルプ/ルール説明の表示
+- 選手詳細情報の確認
+- 試合状況（スコアボード、プレイログ）の確認
+- 設定画面へのアクセス
+- 試合の一時中断（Pauseメニュー）
+- 操作完了後は指示選択画面に戻り待機継続
+
+**オートモード例外条件（AC 0k-0o）**
+- `aiDelegationMode: 'auto'`時はAI委譲で自動進行
+- 「オートモード中」インジケーター常時表示
+- 「手動操作に戻す」ボタン常時表示
+- 解除時は次の意思決定ポイントから通常動作に復帰
+
+**オートモードの開始と終了（AC 0p-0s）**
+- 開始方法: 設定画面での有効化、指示画面での「AI委譲」ボタン、イニング/試合単位の委譲
+- 終了方法: 「手動操作に戻す」ボタン、Escキー/中断ボタン
+- イニング委譲時はイニング終了後に確認ダイアログ表示
+- 試合委譲時は重要場面のみハイライト表示オプション提供
+
+**投球表示設定との関係（AC 0t-0w）**
+- 詳細モード: 1球毎表示、打席開始時のみ指示待機
+- 簡易モード: 最終結果のみ表示、打席開始時のみ指示待機
+- 「クリックで続行」は結果確認であり指示選択ではない
+
+**CPU vs プレイヤーチームの動作差異（AC 0x-0aa）**
+- プレイヤーチーム: 意思決定ポイントで指示待機（オートモード無効時）
+- CPUチーム: AI判断で自動進行（0.5-1.5秒思考時間）
+- CPUターンはプレイヤーが観戦、結果のみ確認
+
+- **UI対応**: 攻撃/守備で指示メニュー切替、ツールチップで説明表示、オートモードインジケーター、意思決定ポイント明示
 
 ### Requirement 3: プレイ結果の判定とシミュレーション
 - **主要コンポーネント**: `SimulationEngine`, `ProbabilityEngine`
-- **主要データ**: `AtBatInput`, `AtBatResult`, `BallType/Direction/Strength`
-- **フロー**: 打席判定フロー（投手vs打者→打球種類→方向→守備→進塁）
-- **ルール**: 疲労/コンディション補正と守備シフト効果を適用
+- **主要データ**: `AtBatInput`, `AtBatResult`, `PitchResult`, `CountState`, `BallType/Direction/Strength`
+- **フロー**: 1球判定ループフロー → 打席判定フロー（カウント管理→1球判定→三振/四球/インプレー→守備判定→進塁）
+- **1球判定**: 各投球で見逃し/空振り/ボール/ファウル/インプレーを判定、カウント状況に応じた確率補正を適用
+- **打席終了条件**: 3ストライク（三振）、4ボール（四球）、インプレー（打球発生）
+- **ルール**: 疲労/コンディション補正、カウント別補正、守備シフト効果を適用
 
 ### Requirement 4: 選手とチーム情報の管理
 - **主要コンポーネント**: `PlayersSlice`, `PlayersSaga`, `TeamManager`
@@ -256,9 +405,11 @@ flowchart TB
 - **UI対応**: 能力値表示、打順編集、推奨打順
 
 ### Requirement 5: 試合状況の可視化
-- **主要コンポーネント**: `Scoreboard`, `RunnerDisplay`, `PlayLog`
-- **主要データ**: `PlayEvent`, `RunnerState`, `InningScore`
+- **主要コンポーネント**: `Scoreboard`, `RunnerDisplay`, `PlayLog`, `PitchDisplay`
+- **主要データ**: `PlayEvent`, `RunnerState`, `InningScore`, `CountState`, `PitchResult`
 - **UI対応**: 得点強調、重要局面ラベル、ログフィルタ/制限
+- **投球表示**: 詳細モード（1球毎表示）/簡易モード（最終結果のみ）を設定で切替
+- **カウント表示**: B-S形式でスコアボード上に常時表示、打者有利/投手有利で色分け（緑/赤/黄）
 
 ### Requirement 6: ゲームの勝敗判定
 - **主要コンポーネント**: `GameSaga`, `SimulationEngine`
@@ -343,6 +494,19 @@ flowchart TB
 - AI委譲統計（使用回数/得点率/勝率）はPlayLogの`source`集計で算出する
 - 守備シフトの使用回数/成功率/被長打率を試合後と戦績画面で表示する
 
+**ゲーム進行の基本原則対応（AC 0a-0aa）**:
+- **指示待機動作**: 意思決定ポイントで指示選択画面を表示し、プレイヤー入力があるまで無期限に待機（タイムアウトなし、離席対応）
+- **意思決定ポイント明示**: 現在の意思決定ポイント種別（攻撃指示/守備指示/選手交代等）をヘッダーに表示
+- **指示待機中の補助操作**: ヘルプ、選手詳細、設定、中断ボタンを指示選択画面に配置。操作後は指示選択に戻る
+- **オートモードインジケーター**: オートモード有効時は画面上部に「オートモード中」を常時表示
+- **手動操作復帰ボタン**: オートモード中は「手動操作に戻す」ボタンを常時表示
+- **オートモード開始UI**: 指示選択画面に「AI委譲」「このイニングをAIに委譲」「試合全体をAIに委譲」オプションを配置
+- **イニング委譲確認**: イニング委譲終了後に「手動操作に戻りますか？」ダイアログ表示
+- **ハイライトモード**: 試合委譲時は重要場面（得点、選手交代等）のみハイライト表示するオプション
+- **Esc/中断による解除**: オートモード中はEscキーまたは中断ボタンで即座に解除可能
+- **投球表示と指示待機の分離**: 詳細モード/簡易モードに関わらず、指示待機は打席開始時のみ。「クリックで続行」は結果確認であり指示選択ではないことを明示
+- **CPU操作チーム表示**: CPUターンでは「（CPU監督）○○の指示！」と表示し、0.5-1.5秒後に自動実行
+
 ### State Layer
 
 #### GameSlice
@@ -356,8 +520,18 @@ flowchart TB
 - 試合状態（スコア、イニング、アウト、ランナー）の保持
 - ゲームフェーズの遷移管理
 - 現在打席の状態管理
+- **ゲーム進行の基本原則（AC 0a-0aa）**:
+  - `awaiting_instruction`フェーズではプレイヤーの指示入力があるまで無期限に待機
+  - 意思決定ポイント（打席開始、守備指示、選手交代、打順編集、チーム選択）でのみ待機
+  - 意思決定ポイント以外（1球判定、守備判定、進塁処理）は自動進行
+  - オートモード有効時（`isAutoModeActive: true`）のみAI委譲で自動進行
+  - 指示待機中もヘルプ表示、設定変更、試合中断を許可
 - プレイログは`SettingsState.playLogMaxEntries`で制限し、超過分は`playLogArchive`へ圧縮
 - イニング終了時の自動保存と中断/再開状態の保持
+- **試合時間計測ポリシー**:
+  - `elapsedSeconds` は「実プレイ時間」を表す
+  - 指示待機中（`awaiting_instruction`）も計測を継続する（AC 0j）
+  - `paused` 中は計測を停止し、再開で続きから計測する
 
 **依存**
 - Inbound: GameBoard, Scoreboard, InstructionPanel — UI表示 (P0)
@@ -411,7 +585,28 @@ interface GameState {
   // 試合時間
   gameStartTime: number;
   elapsedSeconds: number;
+
+  // オートモード状態（AC 0k-0s）
+  isAutoModeActive: boolean;           // オートモード有効時はtrue
+  autoModeScope: AutoModeScope | null; // オートモードの範囲
+  autoModeInningEnd: number | null;    // イニング委譲時の終了イニング
+  showHighlightsOnly: boolean;         // 試合委譲時のハイライト表示モード
 }
+
+// オートモードの範囲（AC 0p-0r）
+type AutoModeScope = 
+  | 'at_bat'     // 打席単位（「AI委譲」ボタン押下時）
+  | 'inning'     // イニング単位（「このイニングをAIに委譲」）
+  | 'game'       // 試合単位（「試合全体をAIに委譲」）
+  | 'always';    // 常時（設定での「常にAI委譲」）
+
+// 意思決定ポイント種別（AC 0e）
+type DecisionPointType = 
+  | 'offensive_instruction'   // 打席開始時の攻撃指示
+  | 'defensive_instruction'   // 打席開始前の守備指示
+  | 'substitution'            // 選手交代（代打/代走/守備固め）
+  | 'lineup_edit'             // 試合開始前の打順編集
+  | 'team_selection';         // チーム選択とホーム/ビジター選択
 
 type GamePhase =
   | 'idle'
@@ -444,9 +639,42 @@ interface AtBatState {
   batterIndex: number;
   pitcherId: string;
   pitcherName: string;
-  balls: number;
-  strikes: number;
+  
+  // カウント状態
+  balls: number;       // 0-3
+  strikes: number;     // 0-2
+  
+  // 1球判定システム関連
+  instruction: InstructionType;        // 確定した監督指示
+  pitchHistory: PitchResult[];         // 投球履歴
+  atBatPhase: AtBatPhase;              // 打席フェーズ
+  
+  // カウント状況フラグ
+  isCountAdvantage: 'batter' | 'pitcher' | 'neutral' | 'full';
 }
+
+// 1球判定結果
+interface PitchResult {
+  pitchNumber: number;                 // 第何球目
+  result: PitchOutcome;                // 結果
+  countBefore: { balls: number; strikes: number };  // 投球前カウント
+  countAfter: { balls: number; strikes: number };   // 投球後カウント
+  isStrikeZone: boolean;               // ストライクゾーン内か
+  batterAction: 'take' | 'swing' | 'bunt';  // 打者の動作
+}
+
+type PitchOutcome = 
+  | 'called_strike'      // 見逃しストライク
+  | 'swinging_strike'    // 空振りストライク
+  | 'ball'               // ボール
+  | 'foul'               // ファウル
+  | 'in_play';           // インプレー
+
+type AtBatPhase = 
+  | 'awaiting_instruction'  // 監督指示待ち
+  | 'pitch_loop'            // 1球判定ループ中
+  | 'in_play_processing'    // インプレー処理中
+  | 'completed';            // 打席完了
 
 interface PlayEvent {
   timestamp: number;
@@ -688,7 +916,7 @@ type AbilityDefinitions = AbilityDefinition[];
 | フィールド | 詳細 |
 |-----------|------|
 | 目的 | 表示・操作・難易度などユーザー設定を管理 |
-| 要件 | 7.16-7.30, 10.73-10.103, 11.15, 6.8 |
+| 要件 | 2.0a-0aa（ゲーム進行の基本原則）, 7.16-7.30, 10.73-10.103, 11.15, 6.8 |
 
 **コントラクト**: State [ ✓ ]
 
@@ -706,12 +934,34 @@ interface SettingsState {
   textSpeedMs: number;
   clickToContinue: boolean;
 
-  // 難易度とAI委譲
+  // 投球表示設定（1球単位判定システム対応）
+  pitchDisplayMode: 'detailed' | 'simple';  // 詳細モード/簡易モード
+  pitchDisplaySpeed: 'instant' | 'normal' | 'slow';  // 表示速度
+  pitchDisplayDelayMs: number;  // 各投球間の待機時間（ms）: instant=0, normal=500, slow=1500
+  showCountHighlight: boolean;  // カウント状況に応じた色分け表示
+  showPitchByPitchLog: boolean;  // 1球毎のログを詳細表示
+
+  // 難易度とAI委譲（AC 0k-0s, AC 0p-0r）
   cpuDifficulty: 'easy' | 'normal' | 'hard';
+  
+  // aiDelegationMode（ゲーム進行の基本原則との関係）:
+  //   'off' - プレイヤー指示必須（AC 0a-0d: 全意思決定ポイントで待機）
+  //   'confirm' - AI推奨を表示し、プレイヤーが確認後に実行（AC 0h: 指示待機中の補助操作）
+  //   'auto' - オートモード: AI委譲で自動進行（AC 0k-0o: 基本原則の例外条件）
   aiDelegationMode: 'off' | 'confirm' | 'auto';
+  
+  // defaultAutoModeScope（AC 0p: オートモード開始方法）:
+  //   'at_bat' - 打席単位で委譲
+  //   'inning' - イニング単位で委譲（AC 0q: イニング終了後に確認ダイアログ）
+  //   'game' - 試合単位で委譲（AC 0r: 重要場面のみハイライト表示オプション）
+  defaultAutoModeScope: 'at_bat' | 'inning' | 'game';
+  
   aiDelegationAggression: 'conservative' | 'normal' | 'aggressive';
   showAiRecommendations: boolean;
+  
+  // highlightOnlyMode（AC 0r: 試合委譲時のハイライト表示）
   highlightOnlyMode: boolean;
+  
   randomnessLevel: 'low' | 'normal' | 'high';
 
   // ルールと進行
@@ -752,7 +1002,17 @@ interface SettingsState {
 
 ```typescript
 interface SimulationEngine {
-  // 打席シミュレーション
+  // ========== 1球判定システム ==========
+  
+  // 1球判定を実行（1球の結果を返す）
+  simulateSinglePitch(input: PitchInput): PitchResult;
+  
+  // 打席全体をシミュレーション（1球判定ループを実行）
+  simulateAtBatWithPitchLoop(input: AtBatInput): AtBatWithPitchResult;
+  
+  // ========== 打席シミュレーション ==========
+  
+  // 打席シミュレーション（インプレー後の守備判定）
   simulateAtBat(input: AtBatInput): AtBatResult;
   
   // 盗塁シミュレーション
@@ -771,6 +1031,27 @@ interface SimulationEngine {
   calculateRunnerAdvancement(input: AdvancementInput): AdvancementResult;
 }
 
+// 1球判定入力
+interface PitchInput {
+  batter: Player;
+  pitcher: Player;
+  pitcherPitchCount: number;
+  currentCount: CountState;
+  instruction: InstructionType;
+  runners: RunnerState;
+}
+
+// 打席結果（1球判定ループ込み）
+interface AtBatWithPitchResult {
+  pitchHistory: PitchResult[];      // 全投球履歴
+  finalCount: CountState;           // 最終カウント
+  outcome: AtBatPitchOutcome;       // 1球判定ループの中間結果
+  atBatResult?: AtBatResult;        // インプレー時のみ守備判定結果
+}
+
+// 1球判定ループの中間結果
+type AtBatPitchOutcome = 'strikeout' | 'walk' | 'in_play';
+
 interface AtBatInput {
   batter: Player;
   pitcher: Player;
@@ -784,7 +1065,7 @@ interface AtBatInput {
 }
 
 interface AtBatResult {
-  outcome: AtBatOutcome;
+  outcome: AtBatResolvedOutcome;
   ballType?: BallType;
   ballDirection?: BallDirection;
   ballStrength?: BallStrength;
@@ -795,7 +1076,8 @@ interface AtBatResult {
   description: string;
 }
 
-type AtBatOutcome = 
+// インプレー後の最終結果
+type AtBatResolvedOutcome = 
   | 'strikeout'
   | 'walk'
   | 'hit_by_pitch'
@@ -873,11 +1155,37 @@ type DefensiveShift =
 
 ```typescript
 interface ProbabilityEngine {
-  // 三振確率計算
-  calculateStrikeoutProbability(pitcher: PitchingAbilities, batter: BattingAbilities): number;
+  // ========== 1球判定システム ==========
   
-  // 四球確率計算
-  calculateWalkProbability(pitcher: PitchingAbilities, batter: BattingAbilities): number;
+  // ストライクゾーン判定
+  calculateStrikeZoneProbability(pitcher: PitchingAbilities, count: CountState): number;
+  
+  // 1球判定（ストライクゾーン内）
+  calculatePitchResultInZone(
+    pitcher: PitchingAbilities, 
+    batter: BattingAbilities, 
+    count: CountState,
+    instruction: InstructionType
+  ): PitchOutcomeProbabilities;
+  
+  // 1球判定（ストライクゾーン外）
+  calculatePitchResultOutZone(
+    pitcher: PitchingAbilities, 
+    batter: BattingAbilities, 
+    count: CountState,
+    instruction: InstructionType
+  ): PitchOutcomeProbabilities;
+  
+  // カウント状況補正を適用
+  applyCountModifier(
+    baseProbabilities: PitchOutcomeProbabilities, 
+    count: CountState
+  ): PitchOutcomeProbabilities;
+  
+  // カウント有利度判定
+  determineCountAdvantage(count: CountState): 'batter' | 'pitcher' | 'neutral' | 'full';
+  
+  // ========== 打席結果判定（1球判定後） ==========
   
   // 打球種類確率計算
   calculateBallTypeProbabilities(pitcher: PitchingAbilities, batter: BattingAbilities): BallTypeProbabilities;
@@ -888,17 +1196,36 @@ interface ProbabilityEngine {
   // 守備成功確率計算
   calculateFieldingSuccess(fielder: FieldingAbilities, ballType: BallType, ballStrength: BallStrength): number;
   
+  // ========== 走塁・盗塁判定 ==========
+  
   // 盗塁成功確率計算
   calculateStealSuccess(runner: RunningAbilities, pitcher: PitchingAbilities, catcher: FieldingAbilities): number;
   
   // 進塁成功確率計算
   calculateAdvancementSuccess(runner: RunningAbilities, fielder: FieldingAbilities, distance: 'short' | 'long'): number;
   
+  // ========== 補正適用 ==========
+  
   // 投手疲労補正
   applyPitcherFatigue(abilities: PitchingAbilities, pitchCount: number): PitchingAbilities;
   
   // コンディション補正
   applyConditionModifier(abilities: BattingAbilities, condition: Condition): BattingAbilities;
+}
+
+// 1球判定用の確率分布
+interface PitchOutcomeProbabilities {
+  calledStrike: number;     // 見逃しストライク確率
+  swingingStrike: number;   // 空振りストライク確率
+  ball: number;             // ボール確率
+  foul: number;             // ファウル確率
+  inPlay: number;           // インプレー確率
+}
+
+// カウント状態
+interface CountState {
+  balls: number;
+  strikes: number;
 }
 
 interface BallTypeProbabilities {
@@ -930,8 +1257,8 @@ interface DirectionProbabilities {
 
 | フィールド | 詳細 |
 |-----------|------|
-| 目的 | CPU操作チームの戦術判断を行う |
-| 要件 | 10.1-10.106 |
+| 目的 | CPU操作チームの戦術判断およびプレイヤーのAI委譲を行う |
+| 要件 | 2.0k-0aa（オートモード）, 10.1-10.106 |
 
 **コントラクト**: Service [ ✓ ]
 
@@ -989,8 +1316,17 @@ interface AIDefensiveInput {
 **実装ノート**
 - 難易度別の判断精度: 初級30-40%ミス、中級15-20%ミス、上級5%未満ミス
 - 状況別確率はAC 10.6-10.72に準拠
-- CPU指示は0.5-1.5秒の思考遅延をGameSaga側で挿入
+- CPU指示は0.5-1.5秒の思考遅延をGameSaga側で挿入（AC 0y）
 - 指示選択画面で5秒無操作の場合はAI推奨を表示する
+
+**ゲーム進行の基本原則対応（AC 0k-0aa）**:
+- **オートモード自動進行（AC 0k）**: `isAutoModeActive: true` の場合、プレイヤーチームの指示もAIEngineが自動決定し、`awaiting_instruction`フェーズでの待機をスキップ
+- **オートモード範囲（AC 0p-0r）**: `autoModeScope`に応じて委譲範囲を制御
+  - `'at_bat'`: 打席単位で委譲、打席終了後に手動に戻る
+  - `'inning'`: イニング終了後に確認ダイアログを表示
+  - `'game'`: 試合終了まで自動進行、`highlightOnlyMode`で重要場面のみ表示
+- **手動復帰（AC 0n, 0s）**: `isAutoModeActive`をfalseに設定し、次の意思決定ポイントから通常動作に復帰
+- **CPU操作チーム（AC 0y-0aa）**: CPUチームは常にAIEngineで判断し、プレイヤーの指示待機なしで自動進行
 
 ### Persistence Layer
 

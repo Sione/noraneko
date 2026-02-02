@@ -44,38 +44,95 @@
 
 #### Acceptance Criteria
 
-**攻撃側の基本指示**
+**ゲーム進行の基本原則：指示待機の必須化**
+0a. The Game System shall プレイヤーからの指示入力を受けるまでゲームを進行させてはならない（すべての意思決定ポイントにおいて適用）
+0b. When プレイヤーが指示を選択していない状態である、the Game System shall 指示選択画面を表示し続け、無期限にプレイヤーの入力を待機する
+0c. The Game System shall プレイヤーの明示的な操作なしに自動的に次のプレイに進んではならない
+0d. The Game System shall 指示待機中にタイムアウトを設けず、プレイヤーが離席しても試合状態を保持し続ける
+
+**ゲーム進行の基本原則：意思決定ポイントの定義**
+0e. The Game System shall 以下の場面を「意思決定ポイント」として定義し、各ポイントでプレイヤーの指示入力を必須とする：
+    - 打席開始時の攻撃指示（通常打撃、バント、盗塁、エンドラン、スクイズ、待て）
+    - 打席開始前の守備指示（投手交代、守備シフト、敬遠）
+    - 選手交代の判断（代打、代走、守備固め）
+    - 試合開始前の打順編集
+    - 試合開始前のチーム選択とホーム/ビジター選択
+0f. When 意思決定ポイントに到達する、the Game System shall 現在の状況と利用可能な選択肢を明確に表示し、プレイヤーの入力を待機する
+0g. The Game System shall 意思決定ポイント以外の処理（1球判定ループ内の投球結果表示、守備判定、走者進塁処理など）は指示入力なしで自動的に進行する
+
+**ゲーム進行の基本原則：指示待機中に許可される操作**
+0h. When 指示待機中である、the Game System shall 以下の操作をプレイヤーに許可する：
+    - ヘルプ/ルール説明の表示
+    - 選手詳細情報の確認
+    - 試合状況（スコアボード、プレイログ）の確認
+    - 設定画面へのアクセス（投球表示モード等の変更）
+    - 試合の一時中断（Pauseメニュー）
+0i. When 指示待機中にプレイヤーが上記の補助操作を行う、the Game System shall 操作完了後に指示選択画面に戻り、引き続き入力を待機する
+0j. The Game System shall 指示待機中であっても試合時間のカウントを継続する（実プレイ時間として記録）
+
+**ゲーム進行の基本原則：オートモード（例外条件）**
+0k. **例外条件の定義**: When プレイヤーが「オートモード」を有効にしている、the Game System shall AI委譲ロジック（Requirement 10 AC 73-103参照）に基づいて自動的に指示を決定し試合を進行させることができる
+0l. When オートモードが有効である、the Game System shall 画面上部に「オートモード中」インジケーターを常時表示する
+0m. When オートモードが有効である、the Game System shall 「手動操作に戻す」ボタンを常時表示し、プレイヤーがいつでもオートモードを解除できるようにする
+0n. When プレイヤーが「手動操作に戻す」を選択する、the Game System shall 次の意思決定ポイントから通常の指示待機動作に戻る
+0o. When オートモードが無効である、the Game System shall 全ての意思決定ポイントでプレイヤーの指示入力を必須とする
+
+**ゲーム進行の基本原則：オートモードの開始と終了**
+0p. The Game System shall オートモードの開始方法として以下を提供する：
+    - 設定画面での「常にAI委譲」モードの有効化
+    - 指示選択画面での「AI委譲」ボタンの選択
+    - 「このイニングをAIに委譲」オプションの選択
+    - 「試合全体をAIに委譲」オプションの選択
+0q. When 「このイニングをAIに委譲」が選択される、the Game System shall そのイニング終了後に「手動操作に戻りますか？」と確認ダイアログを表示する
+0r. When 「試合全体をAIに委譲」が選択される、the Game System shall 試合終了まで自動進行を継続し、重要場面（得点、選手交代等）のみハイライト表示するオプションを提供する
+0s. When オートモード中にプレイヤーがEscキーまたは中断ボタンを押す、the Game System shall 即座にオートモードを解除し、次の意思決定ポイントで指示待機に戻る
+
+**ゲーム進行の基本原則：投球表示設定との関係**
+0t. When 投球表示モードが「詳細モード」である、the Game System shall 1球毎の結果表示後に自動的に次の投球に進む（指示待機は打席開始時のみ）
+0u. When 投球表示モードが「簡易モード」である、the Game System shall 打席の最終結果のみを表示し、途中のカウント経過は省略する
+0v. The Game System shall 投球表示速度設定（即座/通常/ゆっくり）に関わらず、打席開始時の指示待機動作は変更しない
+0w. When 「ゆっくり」表示で「クリックで続行」が表示される、the Game System shall これは結果表示の確認であり、指示選択ではないことを明示する
+
+**ゲーム進行の基本原則：CPUチームとプレイヤーチームの動作差異**
+0x. When プレイヤーチームの攻撃/守備ターンである、the Game System shall 意思決定ポイントで指示待機を行う（オートモード無効時）
+0y. When CPU操作チームの攻撃/守備ターンである、the Game System shall AI戦術判断ロジック（Requirement 10参照）に基づいて自動的に指示を決定し、0.5-1.5秒の思考時間後に実行する
+0z. The Game System shall CPU操作チームのターンでは指示待機を行わず、プレイヤーは観戦者として結果を確認する
+0aa. When CPU操作チームが指示を決定する、the Game System shall 「（CPU監督）○○の指示！」と表示し、決定内容をプレイヤーに通知する
+
+**攻撃側の基本指示（1球単位判定対応）**
 1. When 打席が開始される、the Game System shall 利用可能な指示オプション（通常打撃、バント、ヒットエンドラン、盗塁、待て）をメニュー形式で表示する
-2. When プレイヤーが「通常打撃」を選択する、the Game System shall 打者の通常能力で打席を実行する
-3. When プレイヤーが指示を選択する、the Game System shall 選択された指示を確定しプレイを実行する
-4. The Game System shall 各指示オプションに簡潔な説明文（成功率の目安、リスクなど）を付ける
-5. When プレイヤーが指示選択に時間をかけすぎる、the Game System shall タイムアウトせず待機し続ける
+2. When プレイヤーが指示を選択する、the Game System shall 選択された指示を確定し、1球単位の判定ループを開始する（Requirement 3 AC 13-17参照）
+3. The Game System shall 監督指示は打席開始時に1回のみ行い、打席中の指示変更は不可とする
+4. When プレイヤーが「通常打撃」を選択する、the Game System shall 打者の通常能力で1球毎の判定を実行し、インプレーまたは打席終了まで継続する
+5. When プレイヤーが「待て」を選択する、the Game System shall 打者の見逃し率を+25%上昇させ、有利カウント（2-0、3-0、3-1）になるまで積極的に待つ効果を適用する
+6. The Game System shall 各指示オプションに簡潔な説明文（成功率の目安、リスク、1球単位判定への影響）を付ける
+7. When プレイヤーが指示選択に時間をかけすぎる、the Game System shall タイムアウトせず待機し続ける
 
 **ランナーがいる場合の追加指示**
-6. While ランナーが塁上にいる、the Game System shall 走者関連の指示（盗塁、エンドラン、スクイズ）を選択肢に追加する
-7. When ランナーが一塁のみにいる、the Game System shall 盗塁とエンドランを有効化する
-8. When ランナーが三塁にいる、the Game System shall スクイズバントを選択肢に追加する
-9. When 複数のランナーがいる、the Game System shall ダブルスチール（二重盗塁）を選択肢に追加する
-10. If ランナーがいない状態で走者関連指示が選ばれる、then the Game System shall 無効な指示として警告を表示する
+8. While ランナーが塁上にいる、the Game System shall 走者関連の指示（盗塁、エンドラン、スクイズ）を選択肢に追加する
+9. When ランナーが一塁のみにいる、the Game System shall 盗塁とエンドランを有効化する
+10. When ランナーが三塁にいる、the Game System shall スクイズバントを選択肢に追加する
+11. When 複数のランナーがいる、the Game System shall ダブルスチール（二重盗塁）を選択肢に追加する
+12. If ランナーがいない状態で走者関連指示が選ばれる、then the Game System shall 無効な指示として警告を表示する
 
 **守備側の指示**
-11. When 守備側の監督のターンである、the Game System shall 守備指示メニュー（投手交代、守備シフト、敬遠）を表示する
-12. When プレイヤーが「投手交代」を選択する、the Game System shall ブルペンの投手一覧と各投手の疲労度を表示する
-13. When プレイヤーが「敬遠」を選択する、the Game System shall 打者に四球を与えランナーを一塁に進める
-14. When プレイヤーが「守備シフト」を選択する、the Game System shall 利用可能なシフト（右打ちシフト、極端シフトなど）を表示する
-15. The Game System shall 守備指示が実行された後に攻撃側の打席を再開する
+13. When 守備側の監督のターンである、the Game System shall 守備指示メニュー（投手交代、守備シフト、敬遠）を表示する
+14. When プレイヤーが「投手交代」を選択する、the Game System shall ブルペンの投手一覧と各投手の疲労度を表示する
+15. When プレイヤーが「敬遠」を選択する、the Game System shall 打者に四球を与えランナーを一塁に進める（1球単位判定をスキップし即座に四球処理）
+16. When プレイヤーが「守備シフト」を選択する、the Game System shall 利用可能なシフト（右打ちシフト、極端シフトなど）を表示する
+17. The Game System shall 守備指示が実行された後に攻撃側の打席を再開する
 
-**特殊な状況での指示制限**
-16. When カウントが2ストライクである、the Game System shall バント系の指示の成功率を低下させる
-17. When ツーアウトである、the Game System shall 盗塁の推奨度を下げる警告を表示する（実行は可能）
-18. When 走者の走力が低い、the Game System shall 盗塁指示に対してリスク警告を表示する
-19. If 試合が大差で負けている、then the Game System shall 敬遠指示を推奨しない警告を表示する
+**特殊な状況での指示制限（1球単位判定対応）**
+18. When バント指示が出されている状態で2ストライクになる、the Game System shall バントファウルで三振となるリスクを警告として表示する（判定はRequirement 3 AC 12で処理）
+19. When ツーアウトである、the Game System shall 盗塁の推奨度を下げる警告を表示する（実行は可能）
+20. When 走者の走力が低い、the Game System shall 盗塁指示に対してリスク警告を表示する
+21. If 試合が大差で負けている、then the Game System shall 敬遠指示を推奨しない警告を表示する
 
 **指示実行のフィードバック**
-20. When 指示が実行される、the Game System shall 指示内容（例：「バント指示！」）を表示する
-21. When プレイ結果が出る、the Game System shall 指示の成否と結果（成功/失敗、得点への影響）をテキストで説明する
-22. When 指示が失敗する、the Game System shall 失敗の理由（選手能力不足、運が悪かったなど）を簡潔に説明する
-23. The Game System shall 各プレイの実行結果を試合ログに記録する
+22. When 指示が実行される、the Game System shall 指示内容（例：「バント指示！」）を表示し、1球単位判定を開始する
+23. When 打席が終了する（三振/四球/インプレー）、the Game System shall 指示の成否と結果（成功/失敗、得点への影響）をテキストで説明する
+24. When 指示が失敗する、the Game System shall 失敗の理由（選手能力不足、運が悪かったなど）を簡潔に説明する
+25. The Game System shall 各プレイの実行結果（1球毎の詳細含む）を試合ログに記録する
 
 ### Requirement 3: プレイ結果の判定とシミュレーション
 **Objective:** システムとして、監督の指示に基づいてリアルな野球プレイを再現したい、ゲームの没入感を高めるため
@@ -89,175 +146,311 @@
 4. The Game System shall 各結果の発生確率を選手能力に応じて動的に計算する
 5. When 結果が決定される、the Game System shall 試合状態（スコア、アウトカウント、ランナー）を更新する
 
-**打撃結果の詳細判定：打席結果の第一段階**
-6. When 通常打撃が実行される、the Game System shall まず投手と打者の対決結果を判定する：「三振」「四球」「インプレー（打球発生）」のいずれかを選択する
-7. When 投手と打者の対決を判定する、the Game System shall 投手のStuffとControl、打者のContactとEye/Discipline、Avoid K'sを総合評価する
-8. When 三振の発生率を判定する、the Game System shall 投手のStuff値と打者のAvoid K's値の差分に応じて漸進的に補正する：（Stuff - Avoid K's）× 0.4%の補正を適用する
-9. When 四球の発生率を判定する、the Game System shall 打者のEye/Discipline値と投手のControl値の差分に応じて漸進的に補正する：（Eye/Discipline - Control）× 0.5%の補正を適用する
-10. When 三振が選択される、the Game System shall 打者をアウトとして処理し、守備判定をスキップする
-11. When 四球が選択される、the Game System shall 打者を一塁に出塁させ、守備判定をスキップする
-12. When インプレーが選択される、the Game System shall 打球種類と打球方向の判定に進む
+**投球カウントシステム：カウント管理**
+6. When 打席が開始される、the Game System shall ボールカウント（0-3）とストライクカウント（0-2）を0-0に初期化する
+7. The Game System shall 各投球結果に応じてカウントを更新する：ストライク（見逃し/空振り）でS+1、ボールでB+1、ファウルでS+1（ただしS=2の場合は増加しない、バントファウルを除く）
+8. When ストライクカウントが3になる、the Game System shall 打者を三振アウトとして処理し、打席を終了する
+9. When ボールカウントが4になる、the Game System shall 打者に四球を与え一塁に出塁させ、打席を終了する
+10. When インプレー（打球発生）が発生する、the Game System shall 打球種類と打球方向の判定に進み、打席を終了する
+11. The Game System shall カウント状況（B-S形式、例：2-1）を常に表示し、各投球後にリアルタイムで更新する
+12. When 2ストライク時にバントがファウルになる、the Game System shall 三振として処理する（通常のファウルとは異なる特別ルール）
+
+**投球カウントシステム：1球毎の判定ループ**
+13. When 打席が開始され監督指示が確定する、the Game System shall 1球毎の判定ループを開始する
+14. The Game System shall 各投球で以下の結果のいずれかを判定する：「ストライク（見逃し）」「ストライク（空振り）」「ボール」「ファウル」「インプレー（打球発生）」
+15. When 1球の結果が判定される、the Game System shall カウントを更新し、打席終了条件（三振/四球/インプレー）をチェックする
+16. When 打席終了条件を満たさない、the Game System shall 次の1球の判定に進む
+17. The Game System shall 1球毎の判定結果を表示設定（詳細モード/簡易モード）に応じて表示する
+
+**投球カウントシステム：1球判定の確率計算**
+18. When ストライクゾーンへの投球を判定する、the Game System shall 投手のControl値を基準として確率を計算する：基本ストライク率 = 55% + （Control - 50）× 0.4%
+19. When 打者のスイング判断を判定する、the Game System shall 打者のEye/Discipline値と監督指示に基づいて判定する：ボール球スイング率 = 30% - （Eye/Discipline - 50）× 0.3%
+20. When ストライクゾーン内への投球に対する打者の反応を判定する、the Game System shall 以下の確率で結果を決定する：
+    - 見逃し率 = 15% + 「待て」指示時 +25%
+    - 空振り率 = 投手のStuff値に基づき計算：12% + （Stuff - 50）× 0.25% - （打者Avoid K's - 50）× 0.2%
+    - ファウル率 = 打者のContact値に基づき計算：25% + （Contact - 50）× 0.2%
+    - インプレー率 = 残りの確率（上記以外）
+21. When ボールゾーンへの投球に対する打者の反応を判定する、the Game System shall 以下の確率で結果を決定する：
+    - 見逃し率 = 70% + （Eye/Discipline - 50）× 0.3%（見極め成功）
+    - 空振り率 = 15% - （Eye/Discipline - 50）× 0.2% + （投手Movement - 50）× 0.15%
+    - ファウル率 = 10%
+    - インプレー率 = 5%（ボール球を打ってしまう）
+
+**投球カウントシステム：カウント別補正**
+22. The Game System shall カウント状況に応じて投球・打撃判定に以下の補正を適用する：
+    - 打者有利カウント（2-0, 3-0, 3-1）：投手のストライク率+10%（ストライクを投げざるを得ない）、打者のインプレー率+15%（狙い打ち）
+    - 投手有利カウント（0-2, 1-2）：投手のボール率+15%（決め球で釣る）、打者の空振り率+10%、ファウル率+10%（粘り）
+    - フルカウント（3-2）：投手のストライク率+5%、打者のインプレー率+10%
+    - 初球（0-0）：打者の見逃し率+10%（様子見傾向）
+23. When 打者有利カウント（2-0, 3-0, 3-1）である、the Game System shall 打者のGap PowerとHR Powerによる長打確率を+20%上昇させる
+24. When 投手有利カウント（0-2, 1-2）である、the Game System shall 投手のMovement値による空振り誘発効果を+15%上昇させる
+
+**投球カウントシステム：能力値の影響**
+25. When 投手のStuff値が1球判定に影響する、the Game System shall 空振りストライク発生率に対して（Stuff - 50）× 0.25%の補正を適用する
+26. When 投手のControl値が1球判定に影響する、the Game System shall ストライクゾーン投球率に対して（Control - 50）× 0.4%の補正を適用する
+27. When 投手のMovement値が1球判定に影響する、the Game System shall ファウル誘発率に対して（Movement - 50）× 0.2%、ボール球空振り率に対して（Movement - 50）× 0.15%の補正を適用する
+28. When 打者のEye/Discipline値が1球判定に影響する、the Game System shall ボール見極め率に対して（Eye/Discipline - 50）× 0.3%の補正を適用する
+29. When 打者のAvoid K's値が1球判定に影響する、the Game System shall 空振り回避率に対して（Avoid K's - 50）× 0.2%の補正を適用する
+30. When 打者のContact値が1球判定に影響する、the Game System shall インプレー発生率に対して（Contact - 50）× 0.3%、ファウル粘り率に対して（Contact - 50）× 0.2%の補正を適用する
+
+**打席終了時の処理：三振・四球の場合**
+30a. When 三振で打席が終了する、the Game System shall 以下の処理を順次実行する：
+    - アウトカウントを1増加させる
+    - 投手の奪三振数を1増加させる
+    - 打者の三振数を1増加させる
+    - 「○○選手、三振！」と実況表示する
+    - アウトカウント判定（AC 30e）に進む
+30b. When 四球で打席が終了する、the Game System shall 以下の処理を順次実行する：
+    - 打者を一塁に出塁させる
+    - 一塁にランナーがいた場合は押し出し進塁処理を実行する（満塁時は得点処理含む）
+    - 投手の与四球数を1増加させる
+    - 打者の四球数を1増加させる
+    - 「○○選手、フォアボールで出塁！」と実況表示する
+    - 次打者準備処理（AC 30f）に進む
+30c. When 四球で押し出し得点が発生する、the Game System shall 三塁ランナーを得点させ、「押し出しで1点！」と実況表示する
+30d. When 敬遠四球で打席が終了する、the Game System shall 1球単位判定をスキップし、即座に四球処理（AC 30b）を実行する
+
+**打席終了時の処理：アウトカウント判定と次打者準備**
+30e. When アウトカウントが3になる、the Game System shall 以下の処理を順次実行する：
+    - 「スリーアウト、チェンジ！」と実況表示する
+    - 現在の打順位置を記録する（次回攻撃時の開始打順として保持）
+    - 攻守交代処理を実行する（Requirement 1 AC 8参照）
+    - アウトカウントを0にリセットする
+    - ランナー状態をクリアする
+    - 次イニングの準備を行う
+30f. When アウトカウントが3未満で打席が終了する、the Game System shall 以下の処理を順次実行する：
+    - 打順を1つ進める（9番の次は1番に戻る）
+    - 次の打者を打席に入れる
+    - カウントを0-0に初期化する
+    - 新しい打席の監督指示選択画面を表示する
+30g. When イニングが終了する、the Game System shall 両チームのイニング得点をスコアボードに確定表示し、次のイニングに進む
+
+**イニング間の打順継続ルール**
+30g-1. The Game System shall 各チームの現在の打順位置を独立して管理する（ホームチーム打順、ビジターチーム打順）
+30g-2. When チームの攻撃イニングが開始される、the Game System shall 前回の攻撃イニングで最後にアウトになった打者の次の打順から開始する
+30g-3. When チームの攻撃イニングで3アウト時に打席途中だった打者がいる、the Game System shall その打者は打席完了とみなさず、次回攻撃時はその打者から開始する（打席途中でイニング終了の場合）
+30g-4. When チームの初回攻撃が開始される、the Game System shall 1番打者から開始する
+30g-5. The Game System shall 打順は9番まで進んだ後、1番に戻る循環構造とする
+30g-6. When 代打が起用された、the Game System shall 代打選手が交代した打順位置を引き継ぎ、以降その打順位置は代打選手（または守備交代後の選手）が担当する
+
+**打席終了時の処理：インプレーの場合**
+30h. When インプレーで打席が終了する、the Game System shall 打球種類と打球方向の判定に進み、守備判定を実行する（AC 31以降参照）
+30i. When インプレー後の守備判定が完了する、the Game System shall インプレー完了時の処理（AC 30j以降）に進む
+
+**インプレー完了時の処理：アウトの場合**
+30j. When 守備判定の結果がアウト（ゴロアウト、フライアウト、ライナーアウト）である、the Game System shall 以下の処理を順次実行する：
+    - アウトカウントを1増加させる
+    - 打者の打数を1増加させる
+    - 守備選手の刺殺・補殺を記録する
+    - 「○○選手、△△でアウト！」と実況表示する（例：「遊撃ゴロでアウト」「センターフライでアウト」）
+    - アウトカウント判定（AC 30e）に進む
+30k. When ダブルプレーが成立する、the Game System shall 以下の処理を順次実行する：
+    - アウトカウントを2増加させる
+    - 関与したランナーと打者をアウトにする
+    - 「ダブルプレー成立！」と実況表示する
+    - アウトカウント判定（AC 30e）に進む
+
+**インプレー完了時の処理：ヒットの場合**
+30l. When 守備判定の結果がヒット（単打、二塁打、三塁打、本塁打）である、the Game System shall 以下の処理を順次実行する：
+    - 打者の安打数を1増加させる（長打の場合は二塁打/三塁打/本塁打も記録）
+    - 打者を該当する塁に出塁させる
+    - ランナー進塁処理を実行する
+    - 「○○選手、△△ヒット！」と実況表示する（例：「センター前ヒット」「左中間を破る二塁打」）
+    - 得点処理（AC 30n）が必要な場合は実行する
+    - 次打者準備処理（AC 30f）に進む
+30m. When 本塁打が発生する、the Game System shall 以下の処理を順次実行する：
+    - 打者と全ランナーを得点させる
+    - 打者の本塁打数を1増加させる
+    - 「○○選手、ホームラン！」と実況表示する（満塁時は「満塁ホームラン！」）
+    - 得点処理（AC 30n）を実行する
+    - ランナー状態をクリアする
+    - 次打者準備処理（AC 30f）に進む
+
+**インプレー完了時の処理：得点処理**
+30n. When ランナーが本塁に到達する、the Game System shall 以下の処理を順次実行する：
+    - 攻撃チームの得点を1加算する
+    - 得点したランナーの得点数を1増加させる
+    - 打点が発生した場合は打者の打点を加算する
+    - スコアボードを即座に更新する
+    - 「○○選手、ホームイン！」と実況表示する
+30o. When タイムリーヒットで得点が発生する、the Game System shall 「○○選手のタイムリーヒット！△△選手が生還！」と実況表示する
+30p. When 複数得点が発生する、the Game System shall 各ランナーの得点を順次表示し、合計得点を明示する
+
+**インプレー完了時の処理：エラーの場合**
+30q. When 守備エラーが発生する、the Game System shall 以下の処理を順次実行する：
+    - エラーを犯した守備選手のエラー数を1増加させる
+    - 打者を出塁させる（エラーの種類に応じて到達塁を決定）
+    - ランナーに追加進塁を与える（エラーの重大度に応じて）
+    - 「○○選手がエラー！」と実況表示する
+    - 次打者準備処理（AC 30f）に進む
+
+**インプレー完了時の処理：特殊状況**
+30r. When サヨナラ得点が発生する、the Game System shall 得点処理後に即座に試合終了処理を実行する（Requirement 6 AC 11-14参照）
+30s. When コールドゲーム条件を満たす得点が発生する、the Game System shall イニング終了後にコールドゲーム判定を実行する（Requirement 6 AC 15-16参照）
+
+**打撃結果の詳細判定：インプレー発生後の処理**
+31. When インプレーが発生する、the Game System shall 打球種類と打球方向の判定に進む（以下のACに継続）
 
 **打撃結果の詳細判定：打球種類の決定**
-13. When インプレーが発生する、the Game System shall 打球種類を「ゴロ」「フライ」「ライナー」のいずれかに決定する
-14. When 打球種類を判定する、the Game System shall 投手のGround Ball %、打者のContact能力、Gap/HR Powerを総合評価する
-15. When ゴロの発生率を判定する、the Game System shall 投手のGround Ball %値に応じて漸進的に補正する：（Ground Ball % - 50）× 0.35%の補正を適用する
-16. When フライの発生率を判定する、the Game System shall 打者のHR Power値に応じて漸進的に補正する：（HR Power - 50）× 0.25%の補正を適用する
-17. When ライナーの発生率を判定する、the Game System shall 打者のContact値とGap Power値の平均に応じて漸進的に補正する：（（Contact + Gap Power）/ 2 - 60）× 0.2%の補正を適用する
-18. The Game System shall デフォルト打球種類分布を以下に設定する：ゴロ45%、フライ35%、ライナー20%
+32. When インプレーが発生する、the Game System shall 打球種類を「ゴロ」「フライ」「ライナー」のいずれかに決定する
+33. When 打球種類を判定する、the Game System shall 投手のGround Ball %、打者のContact能力、Gap/HR Powerを総合評価する
+34. When ゴロの発生率を判定する、the Game System shall 投手のGround Ball %値に応じて漸進的に補正する：（Ground Ball % - 50）× 0.35%の補正を適用する
+35. When フライの発生率を判定する、the Game System shall 打者のHR Power値に応じて漸進的に補正する：（HR Power - 50）× 0.25%の補正を適用する
+36. When ライナーの発生率を判定する、the Game System shall 打者のContact値とGap Power値の平均に応じて漸進的に補正する：（（Contact + Gap Power）/ 2 - 60）× 0.2%の補正を適用する
+37. The Game System shall デフォルト打球種類分布を以下に設定する：ゴロ45%、フライ35%、ライナー20%
 
 **打撃結果の詳細判定：打球方向と強さの決定**
-19. When 打球種類が決定される、the Game System shall 打球の飛んだ方向を9つのゾーン（「三塁線」「三遊間」「遊撃正面」「二遊間」「一二塁間」「一塁線」「左翼方向」「中堅方向」「右翼方向」）から確率的に決定する（詳細な守備位置特定はAcceptance Criteria 284-304を参照）
-20. When 打球方向を決定する、the Game System shall 打者の利き手（左/右）、打者の打球傾向、投手の投球に基づいて各方向の発生確率を調整する
-21. When 打者が左打者である、the Game System shall 引っ張り方向（右翼/一二塁間/一塁線）の合計確率を45%、中央方向（中堅/遊撃正面/二遊間）を35%、流し打ち方向（左翼/三遊間/三塁線）を20%に設定する
-22. When 打者が右打者である、the Game System shall 引っ張り方向（左翼/三遊間/三塁線）の合計確率を45%、中央方向（中堅/遊撃正面/二遊間）を35%、流し打ち方向（右翼/一二塁間/一塁線）を20%に設定する
-23. When 打球の強さを判定する、the Game System shall 打者のContact、Gap Power、HR Power、投手のStuffとMovementを評価し、「弱い」「中程度」「強い」の3段階に分類する
-24. When 打球が「強い」と判定される、the Game System shall 打者の総合パワー値（（Gap Power + HR Power）/ 2）に応じて守備処理の難易度と長打の発生確率を漸進的に上昇させる：（総合パワー - 50）× 0.3%の補正を適用する
-25. When 打球が「弱い」と判定される、the Game System shall 打者の総合パワー値の逆数に応じて内野安打の発生確率を漸進的に上昇させ長打の発生確率を低下させる：（50 - 総合パワー）× 0.25%の補正を適用する
+38. When 打球種類が決定される、the Game System shall 打球の飛んだ方向を9つのゾーン（「三塁線」「三遊間」「遊撃正面」「二遊間」「一二塁間」「一塁線」「左翼方向」「中堅方向」「右翼方向」）から確率的に決定する（詳細な守備位置特定はAcceptance Criteria 54-63を参照）
+39. When 打球方向を決定する、the Game System shall 打者の利き手（左/右）、打者の打球傾向、投手の投球に基づいて各方向の発生確率を調整する
+40. When 打者が左打者である、the Game System shall 引っ張り方向（右翼/一二塁間/一塁線）の合計確率を45%、中央方向（中堅/遊撃正面/二遊間）を35%、流し打ち方向（左翼/三遊間/三塁線）を20%に設定する
+41. When 打者が右打者である、the Game System shall 引っ張り方向（左翼/三遊間/三塁線）の合計確率を45%、中央方向（中堅/遊撃正面/二遊間）を35%、流し打ち方向（右翼/一二塁間/一塁線）を20%に設定する
+42. When 打球の強さを判定する、the Game System shall 打者のContact、Gap Power、HR Power、投手のStuffとMovementを評価し、「弱い」「中程度」「強い」の3段階に分類する
+43. When 打球が「強い」と判定される、the Game System shall 打者の総合パワー値（（Gap Power + HR Power）/ 2）に応じて守備処理の難易度と長打の発生確率を漸進的に上昇させる：（総合パワー - 50）× 0.3%の補正を適用する
+44. When 打球が「弱い」と判定される、the Game System shall 打者の総合パワー値の逆数に応じて内野安打の発生確率を漸進的に上昇させ長打の発生確率を低下させる：（50 - 総合パワー）× 0.25%の補正を適用する
 
 **打撃結果の詳細判定：守備判定への接続**
-26. When 打球種類、方向、強さが決定される、the Game System shall 守備プレイとアウトの判定（Acceptance Criteria 28以降）に処理を引き継ぐ
-27. When 守備判定が完了しヒットが確定する、the Game System shall ヒットの種類（単打/二塁打/三塁打/本塁打）を判定する
-28. When ヒットの種類を判定する、the Game System shall 打球の種類、方向、強さ、打者のGap PowerとHR Power、守備選手の追跡結果を総合評価する
-29. When 外野フライが外野手の守備範囲を大きく超える、the Game System shall 本塁打として処理する
-30. When 外野ライナーまたは強いフライが外野の深い位置に落ちる、the Game System shall 二塁打または三塁打として処理する
-31. When 三塁打を判定する、the Game System shall 打者のSpeed（走力）値に応じて三塁打確率を漸進的に上昇させる：（Speed - 60）× 0.5%の補正を適用する
-32. When 打球が弱く内野を抜ける、the Game System shall 単打として処理する
-33. When 打者のSpeed（走力）が高く弱いゴロを打つ、the Game System shall Speed値に応じて内野安打の確率を漸進的に上昇させる：（Speed - 60）× 0.4%の補正を適用する
+45. When 打球種類、方向、強さが決定される、the Game System shall 守備プレイとアウトの判定（Acceptance Criteria 47以降）に処理を引き継ぐ
+46. When 守備判定が完了しヒットが確定する、the Game System shall ヒットの種類（単打/二塁打/三塁打/本塁打）を判定する
+47. When ヒットの種類を判定する、the Game System shall 打球の種類、方向、強さ、打者のGap PowerとHR Power、守備選手の追跡結果を総合評価する
+48. When 外野フライが外野手の守備範囲を大きく超える、the Game System shall 本塁打として処理する
+49. When 外野ライナーまたは強いフライが外野の深い位置に落ちる、the Game System shall 二塁打または三塁打として処理する
+50. When 三塁打を判定する、the Game System shall 打者のSpeed（走力）値に応じて三塁打確率を漸進的に上昇させる：（Speed - 60）× 0.5%の補正を適用する
+51. When 打球が弱く内野を抜ける、the Game System shall 単打として処理する
+52. When 打者のSpeed（走力）が高く弱いゴロを打つ、the Game System shall Speed値に応じて内野安打の確率を漸進的に上昇させる：（Speed - 60）× 0.4%の補正を適用する
 
 **打撃結果の詳細判定：投手・打者状態による補正**
-34. When 投手の疲労度が高い、the Game System shall 以下の累積的な減衰を適用する：
+53. When 投手の疲労度が高い、the Game System shall 以下の累積的な減衰を適用する：
     - 基本減衰：投球数に応じた漸進的減衰として、Stuff減衰率 = （投球数 - 50）× 0.15%、Control減衰率 = （投球数 - 50）× 0.2%を計算
     - 疲労段階補正：投球数が76-100球（疲労状態）の場合は追加でStuff -5～10%、Control -10～15%を適用
     - 限界段階補正：投球数が101球以上（限界状態）の場合は追加でStuff -15～20%、Control -20～25%を適用
     - 最終能力値 = 基本能力値 × (1 - 基本減衰率) × (1 - 疲労段階補正率) × (1 - 限界段階補正率)
-35. When 打者のコンディションが好調である、the Game System shall コンディションレベルに応じて打撃能力値を漸進的に上昇させる：好調度1段階につき全打撃能力値を2.5%上昇させる
-36. When 打者のコンディションが不調である、the Game System shall コンディションレベルに応じて打撃能力値を漸進的に低下させる：不調度1段階につき全打撃能力値を3%低下させる
-37. When 投手と打者の左右の組み合わせが同じ（右投手vs右打者、左投手vs左打者）、the Game System shall 打者の打撃能力値に対左右能力補正を適用する
+54. When 打者のコンディションが好調である、the Game System shall コンディションレベルに応じて打撃能力値を漸進的に上昇させる：好調度1段階につき全打撃能力値を2.5%上昇させる
+55. When 打者のコンディションが不調である、the Game System shall コンディションレベルに応じて打撃能力値を漸進的に低下させる：不調度1段階につき全打撃能力値を3%低下させる
+56. When 投手と打者の左右の組み合わせが同じ（右投手vs右打者、左投手vs左打者）、the Game System shall 打者の打撃能力値に対左右能力補正を適用する
 
 **バント系プレイの判定：バント打球の方向決定**
-38. When バント指示が出される、the Game System shall 打者のSacrifice Bunt（犠打バント能力）を基準として成功率を計算する
-39. When セーフティバントが試みられる、the Game System shall 打者のBunt for Hit（セーフティバント能力）とSpeed（走力）を組み合わせて成功率を計算する
-40. When バント打球が発生する、the Game System shall バント打球の方向を「三塁線沿い」「投手正面」「一塁線沿い」のいずれかに決定する
-41. When 左打者がバントする、the Game System shall 一塁線沿いの確率を50%、投手正面を30%、三塁線沿いを20%に設定する（一塁に近いため）
-42. When 右打者がバントする、the Game System shall 三塁線沿いの確率を40%、投手正面を35%、一塁線沿いを25%に設定する
-43. When セーフティバントが試みられる、the Game System shall 打者のBunt for Hit値に応じて逆方向（左打者は三塁線、右打者は一塁線）の確率を漸進的に上昇させる：（Bunt for Hit - 50）× 0.2%の補正を適用する
+57. When バント指示が出される、the Game System shall 打者のSacrifice Bunt（犠打バント能力）を基準として成功率を計算する
+58. When セーフティバントが試みられる、the Game System shall 打者のBunt for Hit（セーフティバント能力）とSpeed（走力）を組み合わせて成功率を計算する
+59. When バント打球が発生する、the Game System shall バント打球の方向を「三塁線沿い」「投手正面」「一塁線沿い」のいずれかに決定する
+60. When 左打者がバントする、the Game System shall 一塁線沿いの確率を50%、投手正面を30%、三塁線沿いを20%に設定する（一塁に近いため）
+61. When 右打者がバントする、the Game System shall 三塁線沿いの確率を40%、投手正面を35%、一塁線沿いを25%に設定する
+62. When セーフティバントが試みられる、the Game System shall 打者のBunt for Hit値に応じて逆方向（左打者は三塁線、右打者は一塁線）の確率を漸進的に上昇させる：（Bunt for Hit - 50）× 0.2%の補正を適用する
 
 **バント系プレイの判定：守備選手の特定と処理**
-44. When バント打球が「三塁線沿い」に転がる、the Game System shall 三塁手（3B）を主担当守備選手、投手（P）を補助担当守備選手として特定する
-45. When バント打球が「投手正面」に転がる、the Game System shall 投手（P）を主担当守備選手、捕手（C）を補助担当守備選手として特定する
-46. When バント打球が「一塁線沿い」に転がる、the Game System shall 一塁手（1B）を主担当守備選手、投手（P）を補助担当守備選手として特定する
-47. When バント打球の強さが「弱い」である、the Game System shall 捕手（C）も守備処理に参加可能とし、捕手のInfield Rangeで判定する
-48. When バント打球が処理される、the Game System shall 主担当守備選手のInfield Range（内野守備範囲）で打球に追いつけるかを判定する
-49. When 主担当守備選手が追いつけない、the Game System shall 補助担当守備選手のInfield Rangeで判定する
-50. When どの守備選手も追いつけない、the Game System shall セーフティバント成功として打者を出塁させる
-51. When 守備選手が打球に追いつく、the Game System shall その守備選手のInfield Armと一塁手のInfield Error、打者のSpeed（走力）を総合評価してセーフ/アウトを判定する
-52. When 捕球した守備選手の送球時間を判定する、the Game System shall Infield Arm値に応じて漸進的に補正する：送球時間補正 = （60 - Infield Arm）× 0.006秒、セーフ確率補正 = （60 - Infield Arm）× 0.5%を適用する
-53. When 打者のバント成功率を判定する、the Game System shall Speed値に応じて漸進的に上昇させる：（Speed - 60）× 0.3%の補正を適用する
-54. When 左打者がバントする、the Game System shall AC 31で定義された補正として、一塁到達時間を-0.2秒短縮し、この時間短縮効果によりセーフ確率が+10%上昇する（5-10%範囲の明確化として10%に統一）
+63. When バント打球が「三塁線沿い」に転がる、the Game System shall 三塁手（3B）を主担当守備選手、投手（P）を補助担当守備選手として特定する
+64. When バント打球が「投手正面」に転がる、the Game System shall 投手（P）を主担当守備選手、捕手（C）を補助担当守備選手として特定する
+65. When バント打球が「一塁線沿い」に転がる、the Game System shall 一塁手（1B）を主担当守備選手、投手（P）を補助担当守備選手として特定する
+66. When バント打球の強さが「弱い」である、the Game System shall 捕手（C）も守備処理に参加可能とし、捕手のInfield Rangeで判定する
+67. When バント打球が処理される、the Game System shall 主担当守備選手のInfield Range（内野守備範囲）で打球に追いつけるかを判定する
+68. When 主担当守備選手が追いつけない、the Game System shall 補助担当守備選手のInfield Rangeで判定する
+69. When どの守備選手も追いつけない、the Game System shall セーフティバント成功として打者を出塁させる
+70. When 守備選手が打球に追いつく、the Game System shall その守備選手のInfield Armと一塁手のInfield Error、打者のSpeed（走力）を総合評価してセーフ/アウトを判定する
+71. When 捕球した守備選手の送球時間を判定する、the Game System shall Infield Arm値に応じて漸進的に補正する：送球時間補正 = （60 - Infield Arm）× 0.006秒、セーフ確率補正 = （60 - Infield Arm）× 0.5%を適用する
+72. When 打者のバント成功率を判定する、the Game System shall Speed値に応じて漸進的に上昇させる：（Speed - 60）× 0.3%の補正を適用する
+73. When 左打者がバントする、the Game System shall 一塁到達時間を-0.2秒短縮し、この時間短縮効果によりセーフ確率が+10%上昇する
 
 **バント系プレイの判定：犠打バントとランナー進塁**
-55. When 犠打バントが成功する、the Game System shall 打者をアウトにし、全ランナーを1塁分進塁させる
-56. When 犠打バントで守備選手がランナーをアウトにしようとする、the Game System shall 守備選手の判断（一塁を狙う/進塁ランナーを狙う）を試合状況に応じて決定する
-57. When ノーアウトまたはワンアウトでランナーが二塁にいる、the Game System shall 守備選手が確実に一塁アウトを狙う確率を80%に設定する
-58. When ランナーが一塁のみでツーアウトである、the Game System shall 守備選手が二塁封殺を狙う確率を40%に設定する
-59. When 守備選手が二塁封殺を狙う、the Game System shall 捕球した守備選手のInfield Armと二塁ベースカバー選手のInfield Error、ランナーのSpeedを評価して封殺成否を判定する
-60. When 二塁封殺が失敗する、the Game System shall 全走者セーフ（打者含む）として処理する
+74. When 犠打バントが成功する、the Game System shall 打者をアウトにし、全ランナーを1塁分進塁させる
+75. When 犠打バントで守備選手がランナーをアウトにしようとする、the Game System shall 守備選手の判断（一塁を狙う/進塁ランナーを狙う）を試合状況に応じて決定する
+76. When ノーアウトまたはワンアウトでランナーが二塁にいる、the Game System shall 守備選手が確実に一塁アウトを狙う確率を80%に設定する
+77. When ランナーが一塁のみでツーアウトである、the Game System shall 守備選手が二塁封殺を狙う確率を40%に設定する
+78. When 守備選手が二塁封殺を狙う、the Game System shall 捕球した守備選手のInfield Armと二塁ベースカバー選手のInfield Error、ランナーのSpeedを評価して封殺成否を判定する
+79. When 二塁封殺が失敗する、the Game System shall 全走者セーフ（打者含む）として処理する
 
 **バント系プレイの判定：スクイズプレイ**
-61. When スクイズが試みられる、the Game System shall 打者のSacrifice Bunt能力、三塁ランナーのSpeed（走力）とBaserunning（走塁技術）を評価する
-62. When スクイズでバント打球が発生する、the Game System shall バント打球の処理を通常バントと同様に実行する
-63. When スクイズでバント打球が処理される、the Game System shall 守備選手が本塁送球を試みるかを判定する
-64. When 守備選手が本塁送球を試みる、the Game System shall 捕球した守備選手のInfield Armと捕手のCatcher Ability、三塁ランナーのSpeedを評価して本塁アウトの可否を判定する
-65. When 本塁アウト確率を判定する、the Game System shall 守備選手のInfield Armと捕手のCatcher Abilityの平均値に応じて漸進的に補正する：（（Infield Arm + Catcher Ability）/ 2 - 60）× 0.4%の補正を適用する
-66. When スクイズ成功率を判定する、the Game System shall 三塁ランナーのSpeed値に応じて漸進的に上昇させる：（Speed - 60）× 0.35%の補正を適用する
-67. When スクイズが成功する、the Game System shall 三塁ランナーを得点させ、打者をアウトまたはセーフにする（バント処理の結果に応じて）
-68. If スクイズが失敗しバントミスが発生する、then the Game System shall 三塁ランナーを本塁でアウトにするリスクを適用する（失敗確率30-50%）
+80. When スクイズが試みられる、the Game System shall 打者のSacrifice Bunt能力、三塁ランナーのSpeed（走力）とBaserunning（走塁技術）を評価する
+81. When スクイズでバント打球が発生する、the Game System shall バント打球の処理を通常バントと同様に実行する
+82. When スクイズでバント打球が処理される、the Game System shall 守備選手が本塁送球を試みるかを判定する
+83. When 守備選手が本塁送球を試みる、the Game System shall 捕球した守備選手のInfield Armと捕手のCatcher Ability、三塁ランナーのSpeedを評価して本塁アウトの可否を判定する
+84. When 本塁アウト確率を判定する、the Game System shall 守備選手のInfield Armと捕手のCatcher Abilityの平均値に応じて漸進的に補正する：（（Infield Arm + Catcher Ability）/ 2 - 60）× 0.4%の補正を適用する
+85. When スクイズ成功率を判定する、the Game System shall 三塁ランナーのSpeed値に応じて漸進的に上昇させる：（Speed - 60）× 0.35%の補正を適用する
+86. When スクイズが成功する、the Game System shall 三塁ランナーを得点させ、打者をアウトまたはセーフにする（バント処理の結果に応じて）
+87. If スクイズが失敗しバントミスが発生する、then the Game System shall 三塁ランナーを本塁でアウトにするリスクを適用する（失敗確率30-50%）
 
 **バント系プレイの判定：バント失敗**
-69. When バント指示が出されバント動作に失敗する、the Game System shall 打者のSacrifice BuntまたはBunt for Hit能力に基づいて失敗確率を計算する
-70. When バントが失敗する、the Game System shall ファウル、空振り、または打ち損じによる凡フライとして処理する
-71. When カウントが2ストライクでバントがファウルになる、the Game System shall 打者を三振アウトとして処理する
-72. When バントの打ち損じで凡フライが上がる、the Game System shall 捕手（C）または投手（P）を守備選手として特定し、通常のフライ処理を実行する
+88. When バント指示が出されバント動作に失敗する、the Game System shall 打者のSacrifice BuntまたはBunt for Hit能力に基づいて失敗確率を計算する
+89. When バントが失敗する、the Game System shall ファウル、空振り、または打ち損じによる凡フライとして処理する
+90. When カウントが2ストライクでバントがファウルになる、the Game System shall 打者を三振アウトとして処理する（AC 12と同様）
+91. When バントの打ち損じで凡フライが上がる、the Game System shall 捕手（C）または投手（P）を守備選手として特定し、通常のフライ処理を実行する
 
 **走塁プレイの判定：盗塁の試行**
-118. When 盗塁が試みられる、the Game System shall ランナーのSpeed（走力）とStealing Ability（盗塁能力）を基本成功率として評価する
-119. When 投手が投球動作に入る、the Game System shall 投手のHold Runners（牽制能力）を使用してランナーのスタート遅延確率を判定する
-120. When 投手のHold Runnersによる盗塁阻止を判定する、the Game System shall Hold Runners値に応じて漸進的に補正する：（Hold Runners - 60）× 0.4%のスタート遅延確率上昇と（Hold Runners - 60）× 0.35%の盗塁成功率低下を適用する
-121. When ランナーのStealing Abilityによる盗塁成功率を判定する、the Game System shall Stealing Ability値に応じて漸進的に上昇させる：（Stealing Ability - 60）× 0.45%の補正を適用する
+92. When 盗塁が試みられる、the Game System shall ランナーのSpeed（走力）とStealing Ability（盗塁能力）を基本成功率として評価する
+93. When 投手が投球動作に入る、the Game System shall 投手のHold Runners（牽制能力）を使用してランナーのスタート遅延確率を判定する
+94. When 投手のHold Runnersによる盗塁阻止を判定する、the Game System shall Hold Runners値に応じて漸進的に補正する：（Hold Runners - 60）× 0.4%のスタート遅延確率上昇と（Hold Runners - 60）× 0.35%の盗塁成功率低下を適用する
+95. When ランナーのStealing Abilityによる盗塁成功率を判定する、the Game System shall Stealing Ability値に応じて漸進的に上昇させる：（Stealing Ability - 60）× 0.45%の補正を適用する
 
 **走塁プレイの判定：捕手の送球と塁上での処理**
-123. When ランナーがスタートを切る、the Game System shall 捕手が盗塁を察知し送球を試みる
-124. When 捕手が送球する、the Game System shall 捕手のCatcher Arm（捕手肩力）を使用して送球時間と精度を評価する
-125. When 捕手の送球時間と盗塁阻止確率を判定する、the Game System shall Catcher Arm値に応じて漸進的に補正する：送球時間補正 = （70 - Catcher Arm）× 0.004秒、盗塁阻止確率補正 = （Catcher Arm - 60）× 0.45%を適用する
-126. When 二塁盗塁が試みられる、the Game System shall 二塁ベースカバー選手（二塁手または遊撃手）を特定する
-127. When 三塁盗塁が試みられる、the Game System shall 三塁手を塁上の守備選手として特定する
-128. When 塁上の守備選手が送球を受ける、the Game System shall その守備選手のInfield Errorを使用して捕球とタッチプレイの成否を判定する
-129. When タッチプレイ成功率を判定する、the Game System shall 塁上守備選手のInfield Error値に応じて漸進的に補正する：（Infield Error - 75）× 0.25%の補正を適用する
+96. When ランナーがスタートを切る、the Game System shall 捕手が盗塁を察知し送球を試みる
+97. When 捕手が送球する、the Game System shall 捕手のCatcher Arm（捕手肩力）を使用して送球時間と精度を評価する
+98. When 捕手の送球時間と盗塁阻止確率を判定する、the Game System shall Catcher Arm値に応じて漸進的に補正する：送球時間補正 = （70 - Catcher Arm）× 0.004秒、盗塁阻止確率補正 = （Catcher Arm - 60）× 0.45%を適用する
+99. When 二塁盗塁が試みられる、the Game System shall 二塁ベースカバー選手（二塁手または遊撃手）を特定する
+100. When 三塁盗塁が試みられる、the Game System shall 三塁手を塁上の守備選手として特定する
+101. When 塁上の守備選手が送球を受ける、the Game System shall その守備選手のInfield Errorを使用して捕球とタッチプレイの成否を判定する
+102. When タッチプレイ成功率を判定する、the Game System shall 塁上守備選手のInfield Error値に応じて漸進的に補正する：（Infield Error - 75）× 0.25%の補正を適用する
 
 **走塁プレイの判定：盗塁の最終判定**
-132. When 盗塁の最終判定を行う、the Game System shall ランナーのSpeed、Stealing Ability、投手のHold Runners、捕手のCatcher Arm、塁上守備選手のInfield Errorを総合評価する
-133. When 盗塁が成功する、the Game System shall ランナーを次の塁に進め、「○○選手、盗塁成功！」と実況表示する
-134. When 盗塁が失敗する、the Game System shall ランナーをアウトにしアウトカウントを増加させ、「△△選手、盗塁失敗！タッチアウト！」と実況表示する
-135. When 捕手の送球が悪送球となる、the Game System shall ランナーを確実にセーフとし、追加進塁のチャンスを与える
+103. When 盗塁の最終判定を行う、the Game System shall ランナーのSpeed、Stealing Ability、投手のHold Runners、捕手のCatcher Arm、塁上守備選手のInfield Errorを総合評価する
+104. When 盗塁が成功する、the Game System shall ランナーを次の塁に進め、「○○選手、盗塁成功！」と実況表示する
+105. When 盗塁が失敗する、the Game System shall ランナーをアウトにしアウトカウントを増加させ、「△△選手、盗塁失敗！タッチアウト！」と実況表示する
+106. When 捕手の送球が悪送球となる、the Game System shall ランナーを確実にセーフとし、追加進塁のチャンスを与える
 
 **走塁プレイの判定：ダブルスチール（二重盗塁）**
-136. When ダブルスチール（一塁と三塁、または一塁と二塁）が試みられる、the Game System shall 両ランナーのSpeed平均とStealing Ability平均を基本成功率として評価する
-137. When 捕手が送球先を選択する、the Game System shall 試合状況（アウトカウント、点差）に応じて前の塁（三塁）または後ろの塁（二塁）を選択する
-138. When 接戦（2点差以内）で三塁ランナーがいる、the Game System shall 捕手が三塁送球を優先する確率を70%に設定する
-139. When 点差が大きい（5点差以上）、the Game System shall 捕手が二塁送球を優先する確率を70%に設定する
-140. When 捕手が三塁送球を選択する、the Game System shall 三塁手のInfield Errorを使用してタッチプレイを判定し、二塁ランナーは確実にセーフとする
-141. When 捕手が二塁送球を選択する、the Game System shall 二塁ベースカバー選手のInfield Errorを使用してタッチプレイを判定し、三塁ランナーは確実にセーフとする
-142. When ダブルスチールが成功する、the Game System shall 「ダブルスチール成功！」と実況表示する
+107. When ダブルスチール（一塁と三塁、または一塁と二塁）が試みられる、the Game System shall 両ランナーのSpeed平均とStealing Ability平均を基本成功率として評価する
+108. When 捕手が送球先を選択する、the Game System shall 試合状況（アウトカウント、点差）に応じて前の塁（三塁）または後ろの塁（二塁）を選択する
+109. When 接戦（2点差以内）で三塁ランナーがいる、the Game System shall 捕手が三塁送球を優先する確率を70%に設定する
+110. When 点差が大きい（5点差以上）、the Game System shall 捕手が二塁送球を優先する確率を70%に設定する
+111. When 捕手が三塁送球を選択する、the Game System shall 三塁手のInfield Errorを使用してタッチプレイを判定し、二塁ランナーは確実にセーフとする
+112. When 捕手が二塁送球を選択する、the Game System shall 二塁ベースカバー選手のInfield Errorを使用してタッチプレイを判定し、三塁ランナーは確実にセーフとする
+113. When ダブルスチールが成功する、the Game System shall 「ダブルスチール成功！」と実況表示する
 
 **走塁プレイの判定：エンドラン**
-143. When エンドランが実行される、the Game System shall ランナーが打撃と同時にスタートを切る
-144. When エンドランで打者が空振りまたは見逃す、the Game System shall 通常の盗塁判定を実行する（捕手の送球判定を含む）
-145. When エンドランで打者がゴロを打つ、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）の平均値に応じて進塁成功率を漸進的に上昇させる：（（Speed + Baserunning）/ 2 - 50）× 0.4%の補正を適用する
-146. When エンドランでゴロが内野に転がる、the Game System shall ランナーのBaserunning値に応じてダブルプレー回避確率を漸進的に上昇させる：（Baserunning - 50）× 0.5%の補正を適用する
-147. When エンドランで打者がフライを打つ、the Game System shall ランナーが途中で止まり塁に戻る必要があり、追加進塁の機会を失う
-148. When エンドランで打者がヒットを打つ、the Game System shall ランナーの進塁を通常より1塁分多く進める（一塁→三塁、二塁→本塁）
-149. When エンドランでヒットが出る、the Game System shall 「エンドラン成功！○○選手が大きく進塁！」と実況表示する
+114. When エンドランが実行される、the Game System shall ランナーが打撃と同時にスタートを切る
+115. When エンドランで打者が空振りまたは見逃す、the Game System shall 通常の盗塁判定を実行する（捕手の送球判定を含む）
+116. When エンドランで打者がゴロを打つ、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）の平均値に応じて進塁成功率を漸進的に上昇させる：（（Speed + Baserunning）/ 2 - 50）× 0.4%の補正を適用する
+117. When エンドランでゴロが内野に転がる、the Game System shall ランナーのBaserunning値に応じてダブルプレー回避確率を漸進的に上昇させる：（Baserunning - 50）× 0.5%の補正を適用する
+118. When エンドランで打者がフライを打つ、the Game System shall ランナーが途中で止まり塁に戻る必要があり、追加進塁の機会を失う
+119. When エンドランで打者がヒットを打つ、the Game System shall ランナーの進塁を通常より1塁分多く進める（一塁→三塁、二塁→本塁）
+120. When エンドランでヒットが出る、the Game System shall 「エンドラン成功！○○選手が大きく進塁！」と実況表示する
 
 **走塁プレイの判定：牽制プレイ**
-150. When ランナーが塁上にいる、the Game System shall 投手が牽制を試みる確率を投手のHold Runnersに基づいて決定する：（Hold Runners - 50）× 0.4%の牽制試行確率を適用する
-151. When 投手が牽制を試みる、the Game System shall ランナーのBaserunning（走塁技術）とSpeed（走力）を使用してリード幅を評価する
-152. When 牽制アウト確率を判定する、the Game System shall ランナーのBaserunning値に応じて漸進的に補正する：（70 - Baserunning）× 0.4%の補正を適用する
-154. When 投手が牽制球を投げる、the Game System shall 投手のHold Runnersと塁上守備選手のInfield Error、ランナーのSpeedを総合評価する
-155. When 牽制が成功する、the Game System shall ランナーをアウトとし、「牽制アウト！」と実況表示する
-156. When 牽制球が悪送球となる、the Game System shall ランナーに追加進塁のチャンスを与える
+121. When ランナーが塁上にいる、the Game System shall 投手が牽制を試みる確率を投手のHold Runnersに基づいて決定する：（Hold Runners - 50）× 0.4%の牽制試行確率を適用する
+122. When 投手が牽制を試みる、the Game System shall ランナーのBaserunning（走塁技術）とSpeed（走力）を使用してリード幅を評価する
+123. When 牽制アウト確率を判定する、the Game System shall ランナーのBaserunning値に応じて漸進的に補正する：（70 - Baserunning）× 0.4%の補正を適用する
+124. When 投手が牽制球を投げる、the Game System shall 投手のHold Runnersと塁上守備選手のInfield Error、ランナーのSpeedを総合評価する
+125. When 牽制が成功する、the Game System shall ランナーをアウトとし、「牽制アウト！」と実況表示する
+126. When 牽制球が悪送球となる、the Game System shall ランナーに追加進塁のチャンスを与える
 
 **ランナー進塁の判定：基本進塁ルール**
-73. When ヒットが出る、the Game System shall 打球の種類（単打/二塁打/三塁打/本塁打）、打球方向、塁上のランナー位置を評価する
-74. When 本塁打が出る、the Game System shall 打者と全ランナーを得点させ、進塁判定をスキップする
-75. When 単打が出る、the Game System shall 一塁ランナーは二塁へ、二塁ランナーは三塁へ確実に進塁させる
-76. When 二塁打が出る、the Game System shall 一塁ランナーは三塁へ、二塁ランナーは本塁へ確実に進塁させる
-77. When 三塁打が出る、the Game System shall 全ランナーを得点させる
+127. When ヒットが出る、the Game System shall 打球の種類（単打/二塁打/三塁打/本塁打）、打球方向、塁上のランナー位置を評価する
+128. When 本塁打が出る、the Game System shall 打者と全ランナーを得点させ、進塁判定をスキップする
+129. When 単打が出る、the Game System shall 一塁ランナーは二塁へ、二塁ランナーは三塁へ確実に進塁させる
+130. When 二塁打が出る、the Game System shall 一塁ランナーは三塁へ、二塁ランナーは本塁へ確実に進塁させる
+131. When 三塁打が出る、the Game System shall 全ランナーを得点させる
 
 **ランナー進塁の判定：単打での三塁ランナー本塁到達**
-78. When 単打で三塁ランナーが本塁を狙う、the Game System shall 打球方向に応じた外野手を特定し、その外野手のOutfield Armを評価する
-79. When 単打が浅い外野に落ちる、the Game System shall 外野手の捕球位置から本塁までの距離を「近い」と判定し、本塁送球の脅威を+30%上昇させる
-80. When 単打が深い外野に落ちる、the Game System shall 外野手の捕球位置から本塁までの距離を「遠い」と判定し、三塁ランナーの本塁到達確率を+40%上昇させる
-81. When 外野手のOutfield Armによる送球阻止を判定する、the Game System shall Outfield Arm値に応じて本塁到達成功率を漸進的に補正する：（60 - Outfield Arm）× 0.4%の補正を適用する
-82. When 三塁ランナーのSpeed（走力）による本塁到達を判定する、the Game System shall Speed値に応じて成功率を漸進的に上昇させる：（Speed - 60）× 0.35%の補正を適用する
-83. When 三塁ランナーのBaserunning（走塁技術）による本塁到達を判定する、the Game System shall Baserunning値に応じて成功率を漸進的に上昇させる：（Baserunning - 60）× 0.25%の補正を適用する
-84. When 外野手が本塁に送球する、the Game System shall 捕手のCatcher Abilityを使用してタッチプレイの成否を判定する
-85. When 捕手のタッチアウト成功率を判定する、the Game System shall Catcher Ability値に応じて漸進的に補正する：（Catcher Ability - 60）× 0.3%の補正を適用する
+132. When 単打で三塁ランナーが本塁を狙う、the Game System shall 打球方向に応じた外野手を特定し、その外野手のOutfield Armを評価する
+133. When 単打が浅い外野に落ちる、the Game System shall 外野手の捕球位置から本塁までの距離を「近い」と判定し、本塁送球の脅威を+30%上昇させる
+134. When 単打が深い外野に落ちる、the Game System shall 外野手の捕球位置から本塁までの距離を「遠い」と判定し、三塁ランナーの本塁到達確率を+40%上昇させる
+135. When 外野手のOutfield Armによる送球阻止を判定する、the Game System shall Outfield Arm値に応じて本塁到達成功率を漸進的に補正する：（60 - Outfield Arm）× 0.4%の補正を適用する
+136. When 三塁ランナーのSpeed（走力）による本塁到達を判定する、the Game System shall Speed値に応じて成功率を漸進的に上昇させる：（Speed - 60）× 0.35%の補正を適用する
+137. When 三塁ランナーのBaserunning（走塁技術）による本塁到達を判定する、the Game System shall Baserunning値に応じて成功率を漸進的に上昇させる：（Baserunning - 60）× 0.25%の補正を適用する
+138. When 外野手が本塁に送球する、the Game System shall 捕手のCatcher Abilityを使用してタッチプレイの成否を判定する
+139. When 捕手のタッチアウト成功率を判定する、the Game System shall Catcher Ability値に応じて漸進的に補正する：（Catcher Ability - 60）× 0.3%の補正を適用する
 
 **ランナー進塁の判定：単打での追加進塁（一塁→三塁、二塁→本塁）**
-87. When 単打で一塁ランナーが三塁への追加進塁を試みる、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）の平均値に応じて試行判定する：（（Speed + Baserunning）/ 2 - 65）× 1.5%の試行確率を適用する
-88. When 追加進塁を試みる条件を満たさない、the Game System shall 追加進塁を試みず二塁で止まる
-89. When 追加進塁を試みる、the Game System shall 打球を処理した外野手のOutfield Armと中継内野手（通常は遊撃手または二塁手）のInfield Arm、三塁手のInfield Errorを総合評価する
-90. When 追加進塁阻止確率を判定する、the Game System shall 外野手のOutfield Armと中継内野手のInfield Armの平均値に応じて漸進的に補正する：（（Outfield Arm + Infield Arm）/ 2 - 60）× 0.5%の補正を適用する
-91. When ランナーの追加進塁成功率を判定する、the Game System shall Speed値に応じて漸進的に上昇させる：（Speed - 70）× 0.4%の補正を適用する
-92. When 単打で二塁ランナーが本塁への追加進塁を試みる、the Game System shall 外野手のOutfield Armと中継内野手のInfield Arm、捕手のCatcher Abilityを総合評価する
-93. When 外野手の捕球位置が浅い、the Game System shall 追加進塁を試みる確率を-50%低下させる（リスクが高いため）
+140. When 単打で一塁ランナーが三塁への追加進塁を試みる、the Game System shall ランナーのSpeed（走力）とBaserunning（走塁技術）の平均値に応じて試行判定する：（（Speed + Baserunning）/ 2 - 65）× 1.5%の試行確率を適用する
+141. When 追加進塁を試みる条件を満たさない、the Game System shall 追加進塁を試みず二塁で止まる
+142. When 追加進塁を試みる、the Game System shall 打球を処理した外野手のOutfield Armと中継内野手（通常は遊撃手または二塁手）のInfield Arm、三塁手のInfield Errorを総合評価する
+143. When 追加進塁阻止確率を判定する、the Game System shall 外野手のOutfield Armと中継内野手のInfield Armの平均値に応じて漸進的に補正する：（（Outfield Arm + Infield Arm）/ 2 - 60）× 0.5%の補正を適用する
+144. When ランナーの追加進塁成功率を判定する、the Game System shall Speed値に応じて漸進的に上昇させる：（Speed - 70）× 0.4%の補正を適用する
+145. When 単打で二塁ランナーが本塁への追加進塁を試みる、the Game System shall 外野手のOutfield Armと中継内野手のInfield Arm、捕手のCatcher Abilityを総合評価する
+146. When 外野手の捕球位置が浅い、the Game System shall 追加進塁を試みる確率を-50%低下させる（リスクが高いため）
 
 **ランナー進塁の判定：二塁打での一塁ランナー本塁到達**
-94. When 二塁打で一塁ランナーが本塁を狙う、the Game System shall ランナーのSpeed（走力75+）とBaserunning（走塁技術70+）を評価する
-95. When 二塁打が外野フェンス際まで飛ぶ、the Game System shall 外野手の捕球位置が遠いため、ランナーの本塁到達確率を+50%上昇させる
-96. When 二塁打が浅い位置に落ちる、the Game System shall ランナーの本塁到達を試みない（リスクが高すぎるため）
-97. When 外野手が中継プレイを実行する、the Game System shall 外野手のOutfield Arm、中継内野手のInfield ArmとInfield Error、捕手のCatcher Abilityを段階的に評価する
+147. When 二塁打で一塁ランナーが本塁を狙う、the Game System shall ランナーのSpeed（走力75+）とBaserunning（走塁技術70+）を評価する
+148. When 二塁打が外野フェンス際まで飛ぶ、the Game System shall 外野手の捕球位置が遠いため、ランナーの本塁到達確率を+50%上昇させる
+149. When 二塁打が浅い位置に落ちる、the Game System shall ランナーの本塁到達を試みない（リスクが高すぎるため）
+150. When 外野手が中継プレイを実行する、the Game System shall 外野手のOutfield Arm、中継内野手のInfield ArmとInfield Error、捕手のCatcher Abilityを段階的に評価する
 98. When 中継プレイの第一送球（外野→内野）が失敗する、the Game System shall ランナーを確実に本塁到達させる
 99. When 中継プレイの第二送球（内野→本塁）が失敗する、the Game System shall ランナーを確実に本塁到達させる
 100. When 両方の送球が成功する、the Game System shall ランナーのSpeed、Baserunning、捕手のCatcher Abilityでタッチプレイの成否を最終判定する
@@ -677,6 +870,24 @@
 29. The Game System shall CSSスタイルを使って情報の重要度を視覚的に表現する
 30. The Game System shall 常に次に何をすべきか（指示選択、確認など）をガイドメッセージとしてDOM要素に表示する
 
+**投球表示設定（1球単位判定対応）**
+31. The Game System shall 投球表示モードとして「詳細モード」と「簡易モード」の2種類を提供する
+32. When 詳細モードが選択されている、the Game System shall 1球毎に投球結果（「第1球、ストライク！」「2-1からボール」など）を順次表示する
+33. When 詳細モードで投球結果を表示する、the Game System shall 各投球後にカウント表示を更新し、投球種類（見逃し/空振り/ファウル/ボール）を明示する
+34. When 簡易モードが選択されている、the Game System shall 打席の最終結果（三振/四球/インプレー）のみを表示し、途中のカウント経過は省略する
+35. When 簡易モードで打席が終了する、the Game System shall 最終カウントと結果を「フルカウントから三振！」「2-0から痛烈なライナー！」などの形式で表示する
+36. The Game System shall 設定画面から投球表示モードを切り替えられるUIを提供する
+37. The Game System shall 投球表示モードの設定をlocalStorageに保存し、次回起動時に適用する
+38. When 詳細モードで1球毎の結果を表示する、the Game System shall 表示速度（即座/通常/ゆっくり）を設定可能とする
+39. When 即座表示が選択されている、the Game System shall 待機時間なしで次の投球に進む
+40. When 通常表示が選択されている、the Game System shall 各投球後に0.5秒の待機時間を設ける
+41. When ゆっくり表示が選択されている、the Game System shall 各投球後に1.5秒の待機時間を設け、「クリックで続行」ボタンを表示する
+42. The Game System shall カウント表示をスコアボード上に常時表示し、B-S形式（例：2-1）で表現する
+43. When カウントが更新される、the Game System shall スコアボード上のカウント表示をリアルタイムで更新する
+44. When 打者有利カウント（2-0、3-0、3-1）になる、the Game System shall カウント表示を緑色で強調する
+45. When 投手有利カウント（0-2、1-2）になる、the Game System shall カウント表示を赤色で強調する
+46. When フルカウント（3-2）になる、the Game System shall カウント表示を黄色で強調し「フルカウント！」と表示する
+
 ### Requirement 6: ゲームの勝敗判定
 **Objective:** システムとして、試合の勝敗を正しく判定したい、野球のルールに従った結果を提供するため
 
@@ -939,6 +1150,17 @@
 3. When CPU操作チームが指示を決定する、the Game System shall 0.5-1.5秒の思考時間を設けてから実行する
 4. The Game System shall CPU操作チームの指示内容を「（CPU監督）○○の指示！」と表示する
 5. The Game System shall CPU操作チームの難易度設定（初級/中級/上級）に応じて判断精度を調整する
+
+**カウント状況を考慮した戦術判断（1球単位判定対応）**
+5a. When CPU操作チームが打席開始時に戦術指示を決定する、the Game System shall 1球単位判定システムに基づき、指示は打席終了まで変更されないことを考慮する
+5b. When CPU操作チームが盗塁指示を検討する、the Game System shall 打者有利カウント（2-0、3-0、3-1）での盗塁成功率上昇を考慮し、基本確率に+20%の補正を適用する
+5c. When CPU操作チームがエンドラン指示を検討する、the Game System shall 打者有利カウントでのインプレー率上昇を考慮し、エンドラン選択確率を1.5倍に上昇させる
+5d. When CPU操作チームが守備側で敬遠を検討する、the Game System shall 投手有利カウント（0-2、1-2）では敬遠選択確率を50%低下させる（三振を狙える状況のため）
+5e. When CPU操作チームが守備側で投手交代を検討する、the Game System shall 現在のカウントが投手有利の場合は交代を遅らせ、打者有利の場合は交代を早める傾向を適用する
+5f. The Game System shall CPU AIの盗塁判断において、投手のControl値が低い（60未満）場合は盗塁成功率が高いと判断し、盗塁選択確率を+15%上昇させる
+5g. When CPU操作チームが「待て」指示を検討する、the Game System shall 投手のControl値が低い（55未満）場合に「待て」指示を15-25%の確率で選択する
+5h. When CPU難易度が「上級」である、the Game System shall カウント状況を最適に活用し、打者有利カウントでの積極的戦術と投手有利カウントでの慎重な戦術を使い分ける
+5i. When CPU難易度が「初級」である、the Game System shall カウント状況をほとんど考慮せず、基本的な戦術選択のみを行う
 
 **攻撃時の基本戦術判断**
 6. When CPU操作チームの打席である、the Game System shall デフォルトとして「通常打撃」を80-90%の確率で選択する

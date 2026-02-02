@@ -1,21 +1,24 @@
 {
   "feature_name": "text-based-baseball-manager",
   "created_at": "2026-01-31T00:00:00Z",
-  "updated_at": "2026-02-01T13:00:00Z",
+  "updated_at": "2026-02-02T12:30:00Z",
   "language": "ja",
   "phase": "tasks-generated",
   "approvals": {
     "requirements": {
       "generated": true,
-      "approved": true
+      "approved": false,
+      "note": "1球単位判定システム追加により要件変更 - レビュー待ち"
     },
     "design": {
       "generated": true,
-      "approved": true
+      "approved": false,
+      "note": "1球単位判定システム対応のため設計更新 - レビュー待ち"
     },
     "tasks": {
       "generated": true,
-      "approved": false
+      "approved": false,
+      "note": "1球単位判定システム対応でタスク再生成完了 - レビュー待ち"
     }
   },
   "ready_for_implementation": false,
@@ -24,6 +27,14 @@
   "architecture_pattern": "redux-saga-feature-first",
   "technology_stack": "React-Vite-Redux-Dexie",
   "total_requirements": 11,
-  "total_components": 17
+  "total_components": 18,
+  "total_major_tasks": 17,
+  "major_changes": [
+    "1球単位判定システム（投球カウントシステム）追加",
+    "打席フローを1球判定ループに変更",
+    "表示モード設定（詳細/簡易）追加",
+    "カウント状況に応じた確率補正追加",
+    "CPU AI がカウント状況を考慮した戦術判断を行う"
+  ]
 }
 
