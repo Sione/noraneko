@@ -653,27 +653,23 @@ export class CPUAIEngine {
     context: TacticalContext,
     probabilities: Map<OffensiveInstruction, number>
   ): OffensiveInstruction {
+    const viableInstructions = Array.from(probabilities.entries())
+      .filter(([, prob]) => prob > 0)
+      .map(([key]) => key);
+
     if (this.config.difficulty === 'beginner') {
       // AC 63: 初級は最適でない指示を30-40%の確率で選択
       if (Math.random() < 0.35) {
-        // ランダムに別の指示を選択
-        const instructions: OffensiveInstruction[] = [
-          'normal_swing',
-          'bunt',
-          'steal',
-          'hit_and_run',
-        ];
-        return instructions[Math.floor(Math.random() * instructions.length)];
+        if (viableInstructions.length > 0) {
+          return viableInstructions[Math.floor(Math.random() * viableInstructions.length)];
+        }
       }
     } else if (this.config.difficulty === 'intermediate') {
       // AC 65: 中級は最適でない指示を15-20%の確率で選択
       if (Math.random() < 0.175) {
-        const instructions: OffensiveInstruction[] = [
-          'normal_swing',
-          'bunt',
-          'steal',
-        ];
-        return instructions[Math.floor(Math.random() * instructions.length)];
+        if (viableInstructions.length > 0) {
+          return viableInstructions[Math.floor(Math.random() * viableInstructions.length)];
+        }
       }
     }
     // AC 66: 上級はほぼ最適な指示を選択（ミス5%未満）

@@ -1,9 +1,9 @@
 {
   "feature_name": "text-based-baseball-manager",
   "created_at": "2026-01-31T00:00:00Z",
-  "updated_at": "2026-02-02T13:00:00Z",
+  "updated_at": "2026-02-02T12:00:00Z",
   "language": "ja",
-  "phase": "tasks-generated",
+  "phase": "design-generated",
   "approvals": {
     "requirements": {
       "generated": true,
@@ -12,16 +12,16 @@
     },
     "design": {
       "generated": true,
-      "approved": true,
-      "note": "auto-approved via /kiro/spec-tasks -y"
+      "approved": false,
+      "note": "generated via /kiro/spec-design"
     },
     "tasks": {
       "generated": true,
-      "approved": false,
-      "note": "auto-regenerated via /kiro/spec-tasks -y"
+      "approved": true,
+      "note": "approved via /kiro/spec-tasks -y"
     }
   },
-  "ready_for_implementation": false,
+  "ready_for_implementation": true,
   "requirements_detail_level": "comprehensive",
   "player_ability_system": "OOTP26-inspired",
   "architecture_pattern": "redux-saga-feature-first",

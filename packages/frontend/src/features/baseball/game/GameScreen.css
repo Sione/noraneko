@@ -307,6 +307,13 @@
   gap: 18px;
 }
 
+.base-compact-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .base-compact {
   width: 16px;
   height: 16px;
@@ -320,6 +327,17 @@
   background: #667eea;
   border-color: #667eea;
   box-shadow: 0 0 8px rgba(102, 126, 234, 0.5);
+}
+
+.base-runner-name {
+  max-width: 70px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* カウント表示（ドット形式） */
@@ -480,6 +498,111 @@
   font-size: 14px;
 }
 
+.guidance-message.pitch-continue {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.pitch-continue-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pitch-continue-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+/* 次の操作ガイド */
+.next-action-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border: 1px solid #e6e9f2;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #333;
+}
+
+.next-action-label {
+  font-weight: 700;
+  color: #667eea;
+}
+
+.next-action-text {
+  font-weight: 600;
+}
+
+/* 実況パネル */
+.commentary-panel {
+  background: #ffffff;
+  border: 1px solid #e6e9f2;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.commentary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.commentary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.commentary-empty {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}
+
+.commentary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: #f8f9fa;
+  border-left: 3px solid #bdc3c7;
+  border-radius: 6px;
+}
+
+.commentary-item.highlight {
+  border-left-color: #3498db;
+  background: rgba(52, 152, 219, 0.08);
+}
+
+.commentary-item.important {
+  border-left-color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.commentary-inning {
+  font-size: 10px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.commentary-text {
+  font-size: 12px;
+  color: #333;
+  line-height: 1.4;
+}
+
 /* 走者表示（非表示 - コンパクト版を使用） */
 .bases {
   display: none;
@@ -572,6 +695,31 @@
   top: 80px;
 }
 
+.play-log.hidden {
+  display: none;
+}
+
+.sidebar-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.sidebar-toggle-button {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sidebar-toggle-button:hover {
+  background: #5568d3;
+}
+
 .play-log-header {
   display: flex;
   justify-content: space-between;
@@ -588,6 +736,19 @@
   display: flex;
   gap: 6px;
   align-items: center;
+}
+
+.log-pitch-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #333;
+  cursor: pointer;
+}
+
+.log-pitch-toggle input {
+  accent-color: #667eea;
 }
 
 .log-filter-select {

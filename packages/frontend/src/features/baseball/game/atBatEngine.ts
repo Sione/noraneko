@@ -6,6 +6,7 @@ import {
   RunnerState 
 } from '../types';
 import { OffensiveInstruction } from '../types/common';
+import { PitchOutcome } from '../types/common';
 import {
   getAdjustedBattingAbilities,
   getAdjustedPitchingAbilities,
@@ -57,6 +58,15 @@ export interface AtBatJudgementResult {
   outcome: AtBatOutcome;
   batBallInfo?: BatBallInfo;
   description: string;
+}
+
+export interface PitchSimulationResult {
+  pitchNumber: number;
+  balls: number;
+  strikes: number;
+  outcome: PitchOutcome;
+  description: string;
+  batBallInfo?: BatBallInfo;
 }
 
 /**
@@ -135,13 +145,189 @@ export function judgeAtBatOutcome(
 }
 
 /**
+ * 3.1/3.2/3.4 1球ごとの判定
+ */
+export function simulatePitch(
+  batter: PlayerInGame,
+  pitcher: PlayerInGame,
+  balls: number,
+  strikes: number,
+  pitchCount: number,
+  instruction: OffensiveInstruction = 'normal_swing'
+): { outcome: PitchOutcome; description: string; batBallInfo?: BatBallInfo } {
+  const adjustedBatting = getAdjustedBattingAbilities(
+    batter,
+    pitcher.pitcherHand || 'right',
+    pitchCount
+  );
+  const adjustedPitching = getAdjustedPitchingAbilities(pitcher, pitchCount);
+
+  const pitcherControl = adjustedPitching?.control || 50;
+  const pitcherStuff = adjustedPitching?.stuff || 50;
+  const pitcherMovement = adjustedPitching?.movement || 50;
+
+  const batterEye = adjustedBatting.eye;
+  const batterAvoidKs = adjustedBatting.avoidKs;
+  const batterContact = adjustedBatting.contact;
+
+  const countAdjust = getCountAdjustments(balls, strikes);
+
+  // ストライクゾーンに投げる確率（Controlに依存）
+  let zoneChance = 45 + (pitcherControl - 50) * 0.6;
+  zoneChance += countAdjust.zoneDelta;
+  zoneChance = clamp(zoneChance, 20, 85);
+
+  const inZone = Math.random() * 100 < zoneChance;
+
+  // 見逃し確率（Eyeが高いほど見逃しが増える）
+  let baseTake = 25 + (batterEye - 50) * 0.3;
+  if (!inZone) {
+    baseTake += 15;
+  }
+
+  // 初球は見逃しやすい
+  baseTake += countAdjust.takeDelta;
+
+  // 「待て」指示は見逃し率+25%
+  if (instruction === 'wait') {
+    baseTake += 25;
+  }
+
+  const takeChance = clamp(baseTake, 5, 90);
+  const isTaking = Math.random() * 100 < takeChance;
+
+  if (isTaking) {
+    return {
+      outcome: inZone ? 'called_strike' : 'ball',
+      description: inZone ? '見逃しストライク' : 'ボール',
+    };
+  }
+
+  // スイング時のコンタクト確率
+  let contactChance = 55 + (batterContact - 50) * 0.4 - (pitcherStuff - 50) * 0.25 - (pitcherMovement - 50) * 0.2;
+  if (!inZone) {
+    contactChance -= 15;
+  }
+  contactChance -= countAdjust.swingMissDelta;
+  contactChance = clamp(contactChance, 10, 90);
+
+  const makesContact = Math.random() * 100 < contactChance;
+
+  if (!makesContact) {
+    return {
+      outcome: 'swinging_strike',
+      description: '空振り',
+    };
+  }
+
+  // コンタクト時のインプレー確率
+  let inPlayChance = 55 + (batterAvoidKs - 50) * 0.2 + (batterContact - 50) * 0.2;
+  if (!inZone) {
+    inPlayChance -= 10;
+  }
+  inPlayChance += countAdjust.inPlayDelta;
+  inPlayChance -= countAdjust.foulDelta;
+  inPlayChance = clamp(inPlayChance, 10, 85);
+
+  const isInPlay = Math.random() * 100 < inPlayChance;
+  if (isInPlay) {
+    const batBallInfo = determineBatBall(
+      batter,
+      pitcher,
+      adjustedBatting,
+      adjustedPitching,
+      countAdjust.extraBaseBonus
+    );
+    return {
+      outcome: 'in_play',
+      description: `${batter.name}が打ちました！`,
+      batBallInfo,
+    };
+  }
+
+  return {
+    outcome: 'foul',
+    description: 'ファウル',
+  };
+}
+
+/**
+ * 3.2 1球判定ループ
+ */
+export function simulateAtBatWithPitchLoop(
+  batter: PlayerInGame,
+  pitcher: PlayerInGame,
+  runners: RunnerState,
+  pitchCount: number,
+  instruction: OffensiveInstruction = 'normal_swing'
+): { outcome: AtBatOutcome; batBallInfo?: BatBallInfo; pitches: PitchSimulationResult[] } {
+  const pitches: PitchSimulationResult[] = [];
+  let balls = 0;
+  let strikes = 0;
+  let pitchNumber = 0;
+
+  while (pitchNumber < 15) {
+    pitchNumber += 1;
+    const result = simulatePitch(
+      batter,
+      pitcher,
+      balls,
+      strikes,
+      pitchCount + pitchNumber - 1,
+      instruction
+    );
+
+    if (result.outcome === 'ball') {
+      balls = Math.min(4, balls + 1);
+    } else if (result.outcome === 'called_strike' || result.outcome === 'swinging_strike') {
+      strikes = Math.min(3, strikes + 1);
+    } else if (result.outcome === 'foul') {
+      if (strikes < 2) {
+        strikes += 1;
+      }
+    }
+
+    pitches.push({
+      pitchNumber,
+      balls,
+      strikes,
+      outcome: result.outcome,
+      description: result.description,
+      batBallInfo: result.batBallInfo,
+    });
+
+    if (result.outcome === 'in_play') {
+      return { outcome: 'in_play', batBallInfo: result.batBallInfo, pitches };
+    }
+
+    if (strikes >= 3) {
+      return { outcome: 'strikeout', pitches };
+    }
+
+    if (balls >= 4) {
+      return { outcome: 'walk', pitches };
+    }
+  }
+
+  // セーフティ：長すぎる打席はインプレー扱い
+  const fallbackBatBall = determineBatBall(
+    batter,
+    pitcher,
+    getAdjustedBattingAbilities(batter, pitcher.pitcherHand || 'right', pitchCount),
+    getAdjustedPitchingAbilities(pitcher, pitchCount)
+  );
+  return { outcome: 'in_play', batBallInfo: fallbackBatBall, pitches };
+}
+
+/**
  * 3.2 打球種類/方向/強さの決定
  */
 function determineBatBall(
   batter: PlayerInGame,
   pitcher: PlayerInGame,
   adjustedBatting: any,
-  adjustedPitching: any
+  adjustedPitching: any,
+  extraBaseBonus: number = 0
 ): BatBallInfo {
   // 打球の種類を決定
   const batType = determineBatType(batter, pitcher, adjustedPitching);
@@ -167,7 +353,7 @@ function determineBatBall(
     type: batType,
     direction,
     strength,
-    extraBasePotential
+    extraBasePotential: Math.min(100, extraBasePotential + extraBaseBonus)
   };
 }
 
@@ -325,6 +511,34 @@ function calculateWalkChance(
   const differential = (controlFactor + eyeFactor) / 2 - 50;
 
   return Math.min(20, Math.max(2, baseWalkRate + differential * 0.1));
+}
+
+function getCountAdjustments(balls: number, strikes: number): {
+  zoneDelta: number;
+  inPlayDelta: number;
+  takeDelta: number;
+  swingMissDelta: number;
+  foulDelta: number;
+  extraBaseBonus: number;
+} {
+  const key = `${balls}-${strikes}`;
+  const isBatterFavorable = key === '2-0' || key === '3-0' || key === '3-1';
+  const isPitcherFavorable = key === '0-2' || key === '1-2';
+  const isFullCount = key === '3-2';
+  const isFirstPitch = key === '0-0';
+
+  return {
+    zoneDelta: isBatterFavorable ? 10 : isPitcherFavorable ? -15 : isFullCount ? 5 : 0,
+    inPlayDelta: isBatterFavorable ? 15 : isFullCount ? 10 : 0,
+    takeDelta: isFirstPitch ? 10 : 0,
+    swingMissDelta: isPitcherFavorable ? 10 : 0,
+    foulDelta: isPitcherFavorable ? 10 : 0,
+    extraBaseBonus: isBatterFavorable ? 20 : 0,
+  };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }
 
 /**

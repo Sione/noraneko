@@ -9,6 +9,12 @@ export interface ValidationError {
   suggestion?: string;
 }
 
+export interface OffensiveInstructionContext {
+  strikes?: number;
+  runnerSpeed?: number;
+  runnerName?: string;
+}
+
 /**
  * 攻撃指示の検証
  * タスク11.1: 入力エラー対応
@@ -20,10 +26,18 @@ export interface ValidationError {
 export function validateOffensiveInstruction(
   instruction: OffensiveInstruction,
   runners: RunnerState,
-  outs: number
+  outs: number,
+  context?: OffensiveInstructionContext
 ): ValidationError | null {
   // バントの検証
   if (instruction === 'bunt') {
+    if ((context?.strikes ?? 0) >= 2) {
+      return {
+        code: 'BUNT_TWO_STRIKES',
+        message: '2ストライクでのバントはファウル三振のリスクがあります',
+        suggestion: '通常打撃へ切り替えることも検討してください',
+      };
+    }
     if (outs === 2) {
       return {
         code: 'BUNT_TWO_OUTS',
@@ -40,6 +54,14 @@ export function validateOffensiveInstruction(
         code: 'STEAL_NO_RUNNERS',
         message: '盗塁を試みる走者がいません',
         suggestion: 'ランナーが塁上にいる時のみ盗塁できます',
+      };
+    }
+    if (context?.runnerSpeed !== undefined && context.runnerSpeed < 40) {
+      const runnerName = context.runnerName ?? '走者';
+      return {
+        code: 'STEAL_LOW_SPEED',
+        message: `${runnerName}は走力が低く盗塁のリスクが高いです`,
+        suggestion: '失敗の可能性を考慮して判断してください',
       };
     }
     if (outs === 2) {

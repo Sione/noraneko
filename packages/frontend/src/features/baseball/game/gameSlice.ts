@@ -375,6 +375,7 @@ export const gameSlice = createSlice({
           pitcherName: pitcher.name,
           balls: 0,
           strikes: 0,
+          pitchNumber: 0,
         };
 
         state.phase = 'awaiting_instruction';
@@ -410,6 +411,11 @@ export const gameSlice = createSlice({
       // 打席状態をクリア
       state.currentAtBat = null;
       state.phase = 'at_bat';
+
+      // 守備シフトのロックカウントを減らす
+      if (state.shiftLockRemaining > 0) {
+        state.shiftLockRemaining = Math.max(0, state.shiftLockRemaining - 1);
+      }
     },
 
     // アウトを記録して攻守交代チェック
@@ -417,6 +423,7 @@ export const gameSlice = createSlice({
       state,
       action: PayloadAction<{ description: string; outsRecorded?: number; batterOut?: boolean }>
     ) => {
+      if (state.outs >= 3) return;
       const outsRecorded = Math.max(1, action.payload.outsRecorded ?? 1);
       const nextOuts = state.outs + outsRecorded;
       const batterOut = action.payload.batterOut ?? false;
@@ -692,6 +699,96 @@ export const gameSlice = createSlice({
       state.playLog.push(scoreEvent);
     },
 
+    // 敬遠による四球処理
+    applyIntentionalWalk: (state) => {
+      if (!state.homeTeam || !state.awayTeam || !state.currentAtBat) return;
+
+      const attackingTeam = state.isTopHalf ? state.awayTeam : state.homeTeam;
+      const batter = attackingTeam.lineup.find((player) => player.id === state.currentAtBat?.batterId);
+      if (!batter) return;
+
+      const newRunners: RunnerState = { ...state.runners };
+      let runsScored = 0;
+
+      if (state.runners.first) {
+        newRunners.first = null;
+        if (state.runners.second) {
+          newRunners.second = state.runners.first;
+          if (state.runners.third) {
+            runsScored += 1;
+            newRunners.third = state.runners.second;
+          } else {
+            newRunners.third = state.runners.second;
+          }
+        } else {
+          newRunners.second = state.runners.first;
+        }
+      }
+
+      newRunners.first = { playerId: batter.id, playerName: batter.name };
+
+      if (runsScored > 0) {
+        if (state.isTopHalf) {
+          state.score.away += runsScored;
+        } else {
+          state.score.home += runsScored;
+        }
+      }
+
+      state.runners = newRunners;
+
+      const walkEvent: PlayEvent = {
+        timestamp: Date.now(),
+        inning: state.currentInning,
+        isTopHalf: state.isTopHalf,
+        description: `${batter.name}は敬遠で出塁しました。`,
+        type: 'walk',
+        source: 'player',
+        scoreChange: runsScored > 0 ? { home: state.score.home, away: state.score.away } : undefined,
+      };
+      state.playLog.push(walkEvent);
+    },
+
+    // 守備シフトの更新
+    setDefensiveShift: (state, action: PayloadAction<DefensiveShift>) => {
+      const nextShift = action.payload;
+      if (state.defensiveShift === nextShift) return;
+
+      state.defensiveShift = nextShift;
+      state.shiftLockRemaining = nextShift === 'normal' ? 0 : 3;
+    },
+
+    // 投手交代
+    changePitcher: (state, action: PayloadAction<{ pitcherId: string }>) => {
+      if (!state.homeTeam || !state.awayTeam) return;
+
+      const defendingTeam = state.isTopHalf ? state.homeTeam : state.awayTeam;
+      const nextPitcher =
+        defendingTeam.lineup.find((player) => player.id === action.payload.pitcherId) ||
+        defendingTeam.bench.find((player) => player.id === action.payload.pitcherId);
+
+      if (!nextPitcher) return;
+
+      state.currentPitcher = {
+        playerId: nextPitcher.id,
+        playerName: nextPitcher.name,
+        pitchCount: 0,
+        currentPitcher: nextPitcher,
+      };
+
+      // 打席情報の投手情報を更新
+      if (state.currentAtBat) {
+        state.currentAtBat.pitcherId = nextPitcher.id;
+        state.currentAtBat.pitcherName = nextPitcher.name;
+      }
+
+      // ベンチ投手の場合はラインナップの投手と入れ替える
+      const lineupPitcherIndex = defendingTeam.lineup.findIndex((player) => player.position === 'P');
+      if (lineupPitcherIndex !== -1 && nextPitcher.position === 'P') {
+        defendingTeam.lineup[lineupPitcherIndex] = nextPitcher;
+      }
+    },
+
     // サヨナラ判定を独立したアクションとして追加
     checkSayonara: (state) => {
       // サヨナラ勝ちの判定（裏で後攻がリード）
@@ -777,6 +874,17 @@ export const gameSlice = createSlice({
     // アウトカウント更新
     updateOuts: (state, action: PayloadAction<number>) => {
       state.outs = action.payload;
+    },
+
+    // カウント更新
+    updateAtBatCount: (
+      state,
+      action: PayloadAction<{ balls: number; strikes: number; pitchNumber: number }>
+    ) => {
+      if (!state.currentAtBat) return;
+      state.currentAtBat.balls = action.payload.balls;
+      state.currentAtBat.strikes = action.payload.strikes;
+      state.currentAtBat.pitchNumber = action.payload.pitchNumber;
     },
 
     // 得点更新
@@ -876,6 +984,11 @@ export const gameSlice = createSlice({
   resetGame: (state) => {
     return initialState;
   },
+
+    // 保存データから復元
+    restoreGameState: (state, action: PayloadAction<GameState>) => {
+      return action.payload;
+    },
   },
 });
 
@@ -896,12 +1009,17 @@ export const {
   endInning,
   endGame,
   updateOuts,
+  updateAtBatCount,
   updateScore,
   addPlayEvent,
   updateRunners,
   updatePitchCount,
   makeSubstitution,
+  applyIntentionalWalk,
+  setDefensiveShift,
+  changePitcher,
   resetGame,
+  restoreGameState,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

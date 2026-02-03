@@ -41,6 +41,12 @@ export interface UserSettings {
   
   /** AI推奨表示までの待機時間（ミリ秒） */
   aiRecommendationDelay: number;
+
+  /** 投球表示モード */
+  pitchDisplayMode: 'detail' | 'summary';
+
+  /** 投球表示速度 */
+  pitchDisplaySpeed: 'instant' | 'normal' | 'slow';
 }
 
 /**
@@ -60,6 +66,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   showTutorial: true,
   showAIRecommendation: true,
   aiRecommendationDelay: 5000,
+  pitchDisplayMode: 'detail',
+  pitchDisplaySpeed: 'normal',
 };
 
 /**
@@ -129,6 +137,21 @@ export function calculateTextDelay(textSpeed: number): number {
   // 50: 標準速度（50ms）
   // 100: 最も遅い（100ms）
   return textSpeed;
+}
+
+/**
+ * 投球表示速度の待機時間を取得
+ */
+export function getPitchDisplayDelay(speed: UserSettings['pitchDisplaySpeed']): number {
+  switch (speed) {
+    case 'instant':
+      return 0;
+    case 'slow':
+      return 1500;
+    case 'normal':
+    default:
+      return 500;
+  }
 }
 
 /**

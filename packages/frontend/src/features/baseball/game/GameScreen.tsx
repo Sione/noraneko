@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { 
   startInning, 
@@ -12,13 +12,18 @@ import {
   checkSayonara,
   addPlayEvent,
   updateRunners,
-  updatePitchCount
+  updatePitchCount,
+  updateAtBatCount,
+  restoreGameState,
+  applyIntentionalWalk,
+  setDefensiveShift,
+  changePitcher
 } from '../game/gameSlice';
 import { OffensiveInstructionMenu } from './OffensiveInstructionMenu';
 import { DefensiveInstructionMenu } from './DefensiveInstructionMenu';
 import { OffensiveInstruction, DefensiveInstruction, DefensiveShift, PlayEvent, Runner, RunnerState } from '../types';
 import { 
-  judgeAtBatOutcome, 
+  simulateAtBatWithPitchLoop,
   describeBatBall, 
   DefensivePlayInput 
 } from './atBatEngine';
@@ -43,9 +48,9 @@ import { SettingsModal } from './SettingsModal';
 import { HelpModal } from './HelpModal';
 import { PauseMenu } from './PauseMenu';
 import { ResumeGameDialog } from './ResumeGameDialog';
-import { validateOffensiveInstruction, formatValidationError, getErrorSeverity } from './validation';
-import { loadSettings, applyTheme, mapDifficultyToCPU } from './settings';
-import { autoSaveGame, startAutoSaveInterval, saveOnInningEnd } from './autoSave';
+import { validateOffensiveInstruction, validateDefensiveInstruction, formatValidationError, getErrorSeverity } from './validation';
+import { loadSettings, applyTheme, mapDifficultyToCPU, getPitchDisplayDelay } from './settings';
+import { autoSaveGame, startAutoSaveInterval, saveOnInningEnd, hasSavedGame, isSavedGameStale, loadSavedGame, clearSavedGame } from './autoSave';
 // タスク14: CPU戦術AIの実装
 import { useCPUAI } from './useCPUAI';
 import './GameScreen.css';
@@ -57,12 +62,15 @@ export function GameScreen() {
   const dispatch = useAppDispatch();
   const gameState = useAppSelector((state) => state.game);
   const { phase, currentInning, isTopHalf, outs, score, homeTeam, awayTeam, playLog, currentAtBat, runners } = gameState;
+  const pitchContinueResolver = useRef<null | (() => void)>(null);
+  const pitchContinueTimerRef = useRef<number | null>(null);
 
   // タスク11: UI状態管理
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showPause, setShowPause] = useState(false);
   const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [showPitchContinue, setShowPitchContinue] = useState(false);
   
   // タスク11: Toast通知
   const { messages, removeToast, error, warning, success, info } = useToast();
@@ -76,6 +84,13 @@ export function GameScreen() {
     applyTheme(settings.theme);
     // タスク14: 難易度をCPU AIに適用
     setCpuDifficulty(mapDifficultyToCPU(settings.difficulty));
+
+    if (hasSavedGame()) {
+      setShowResumeDialog(true);
+      if (isSavedGameStale()) {
+        warning('保存データが古くなっています。必要に応じて新規開始してください。');
+      }
+    }
   }, []);
 
   // タスク11: 自動保存（30秒ごと）
@@ -148,6 +163,36 @@ export function GameScreen() {
     }
   }, [outs, phase, dispatch]);
 
+  const waitForPitchContinue = (autoProgress: boolean, autoDelay: number) =>
+    new Promise<void>((resolve) => {
+      let resolved = false;
+      const finalize = () => {
+        if (resolved) return;
+        resolved = true;
+        setShowPitchContinue(false);
+        if (pitchContinueTimerRef.current !== null) {
+          window.clearTimeout(pitchContinueTimerRef.current);
+          pitchContinueTimerRef.current = null;
+        }
+        resolve();
+      };
+
+      pitchContinueResolver.current = finalize;
+      setShowPitchContinue(true);
+
+      if (autoProgress) {
+        pitchContinueTimerRef.current = window.setTimeout(() => {
+          finalize();
+        }, autoDelay);
+      }
+    });
+
+  const handlePitchContinue = () => {
+    const resolve = pitchContinueResolver.current;
+    pitchContinueResolver.current = null;
+    if (resolve) resolve();
+  };
+
   if (!homeTeam || !awayTeam) {
     return <div>試合データが見つかりません</div>;
   }
@@ -162,8 +207,29 @@ export function GameScreen() {
   const handleOffensiveInstruction = (instruction: OffensiveInstruction) => {
     if (!currentAtBat || !homeTeam || !awayTeam) return;
 
+    const findRunnerSpeed = (): { runnerSpeed?: number; runnerName?: string } => {
+      const targetRunner =
+        runners.first ??
+        runners.second ??
+        runners.third ??
+        null;
+
+      if (!targetRunner) return {};
+
+      const runnerPlayer = gameState.allPlayers.find((player) => player.id === targetRunner.playerId);
+      return {
+        runnerSpeed: runnerPlayer?.running.speed,
+        runnerName: targetRunner.playerName,
+      };
+    };
+
     // タスク11.1: 入力検証
-    const validationError = validateOffensiveInstruction(instruction, runners, outs);
+    const { runnerSpeed, runnerName } = findRunnerSpeed();
+    const validationError = validateOffensiveInstruction(instruction, runners, outs, {
+      strikes: currentAtBat.strikes,
+      runnerSpeed,
+      runnerName,
+    });
     if (validationError) {
       const severity = getErrorSeverity(validationError);
       const message = formatValidationError(validationError);
@@ -198,9 +264,11 @@ export function GameScreen() {
     };
     dispatch(addPlayEvent(instructionEvent));
 
-    // 投球数を更新
+    // 現在の投球数
     const pitchCount = gameState.currentPitcher?.pitchCount || 0;
-    dispatch(updatePitchCount(pitchCount + 1));
+    const userSettings = loadSettings();
+    const pitchDelay = getPitchDisplayDelay(userSettings.pitchDisplaySpeed);
+    const showPitchDetail = userSettings.pitchDisplayMode === 'detail';
 
     // タスク5: バント/スクイズの処理
     if (instruction === 'bunt' || instruction === 'squeeze') {
@@ -218,184 +286,224 @@ export function GameScreen() {
       return;
     }
 
-    // タスク3: 打席判定エンジンを使用
+    // タスク3: 1球単位判定ループ
     setTimeout(() => {
-      // 3.1 投手対打者の一次判定
-      const atBatResult = judgeAtBatOutcome(batter, pitcher, runners, pitchCount, instruction);
+      const runPitchLoop = async () => {
+        const atBatResult = simulateAtBatWithPitchLoop(
+          batter,
+          pitcher,
+          runners,
+          pitchCount,
+          instruction
+        );
 
-      // 結果イベントを追加
-      const resultEvent: PlayEvent = {
-        timestamp: Date.now(),
-        inning: currentInning,
-        isTopHalf,
-        description: atBatResult.description,
-        type: atBatResult.outcome === 'strikeout' ? 'strikeout' : 
-              atBatResult.outcome === 'walk' ? 'walk' : 'at_bat_start',
-        source: 'player',
-      };
-      dispatch(addPlayEvent(resultEvent));
+        const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-      // 三振の場合
-      if (atBatResult.outcome === 'strikeout') {
-        dispatch(recordOut({ description: `${batter.name}は三振しました。`, batterOut: true }));
-        return;
-      }
+        if (showPitchDetail) {
+          for (const pitch of atBatResult.pitches) {
+            await wait(pitchDelay);
+            dispatch(
+              updateAtBatCount({
+                balls: pitch.balls,
+                strikes: pitch.strikes,
+                pitchNumber: pitch.pitchNumber,
+              })
+            );
+            dispatch(updatePitchCount(pitchCount + pitch.pitchNumber));
+            const pitchEvent: PlayEvent = {
+              timestamp: Date.now(),
+              inning: currentInning,
+              isTopHalf,
+              description: `${pitch.description}（${pitch.balls}-${pitch.strikes}）`,
+              type: 'pitch',
+              source: 'player',
+            };
+            dispatch(addPlayEvent(pitchEvent));
 
-      // 四球の場合
-      if (atBatResult.outcome === 'walk') {
-        // 走者を進塁
-        const newRunners = { ...runners };
-        let pushedHomeRun = false;
-        
-        if (runners.first) {
-          if (runners.second) {
-            if (runners.third) {
-              // 満塁押し出し
-              pushedHomeRun = true;
-            } else {
-              newRunners.third = runners.second;
+            if (userSettings.pitchDisplaySpeed === 'slow') {
+              await waitForPitchContinue(userSettings.autoProgress, userSettings.autoProgressDelay);
             }
-          } else {
-            newRunners.second = runners.first;
+          }
+        } else {
+          const lastPitch = atBatResult.pitches[atBatResult.pitches.length - 1];
+          dispatch(
+            updateAtBatCount({
+              balls: lastPitch.balls,
+              strikes: lastPitch.strikes,
+              pitchNumber: lastPitch.pitchNumber,
+            })
+          );
+          dispatch(updatePitchCount(pitchCount + lastPitch.pitchNumber));
+
+          if (userSettings.pitchDisplaySpeed === 'slow') {
+            await wait(pitchDelay);
+            await waitForPitchContinue(userSettings.autoProgress, userSettings.autoProgressDelay);
           }
         }
-        newRunners.first = { playerId: batter.id, playerName: batter.name };
-        
-        // 押し出しがあれば得点加算
-        if (pushedHomeRun) {
-          const scoringTeam = isTopHalf ? 'away' : 'home';
-          dispatch(addScore({ team: scoringTeam, points: 1 }));
-          // サヨナラ判定を非同期で実行
-          setTimeout(() => {
-            dispatch(checkSayonara());
-          }, 100);
-        }
-        
-        dispatch(updateRunners(newRunners));
-        
-        setTimeout(() => {
-          dispatch(endAtBat());
-        }, 1500);
-        return;
-      }
 
-      // インプレーの場合（3.2 打球判定）
-      if (atBatResult.outcome === 'in_play' && atBatResult.batBallInfo) {
-        const batBallDescription = describeBatBall(atBatResult.batBallInfo);
-        const batBallEvent: PlayEvent = {
+        const resultEvent: PlayEvent = {
           timestamp: Date.now(),
           inning: currentInning,
           isTopHalf,
-          description: batBallDescription,
-          type: 'at_bat_start',
+          description:
+            atBatResult.outcome === 'strikeout'
+              ? `${batter.name}は三振しました。`
+              : atBatResult.outcome === 'walk'
+                ? `${batter.name}はフォアボールで出塁しました。`
+                : `${batter.name}が打ちました！`,
+          type:
+            atBatResult.outcome === 'strikeout'
+              ? 'strikeout'
+              : atBatResult.outcome === 'walk'
+                ? 'walk'
+                : 'at_bat_start',
           source: 'player',
         };
-        dispatch(addPlayEvent(batBallEvent));
+        dispatch(addPlayEvent(resultEvent));
 
-        // 3.3 守備判定への接続
-        setTimeout(() => {
-          const defensiveInput: DefensivePlayInput = {
-            batBallInfo: atBatResult.batBallInfo!,
-            batter,
-            runners,
-            outs
-          };
+        if (atBatResult.outcome === 'strikeout') {
+          dispatch(recordOut({ description: `${batter.name}は三振しました。`, batterOut: true }));
+          return;
+        }
 
-          const defensiveResult = processDefensivePlay(
-            defensiveInput, 
-            defendingTeam.lineup, 
-            gameState.defensiveShift
-          );
+        if (atBatResult.outcome === 'walk') {
+          const newRunners = { ...runners };
+          let pushedHomeRun = false;
+          
+          if (runners.first) {
+            if (runners.second) {
+              if (runners.third) {
+                pushedHomeRun = true;
+              } else {
+                newRunners.third = runners.second;
+              }
+            } else {
+              newRunners.second = runners.first;
+            }
+          }
+          newRunners.first = { playerId: batter.id, playerName: batter.name };
+          
+          if (pushedHomeRun) {
+            const scoringTeam = isTopHalf ? 'away' : 'home';
+            dispatch(addScore({ team: scoringTeam, points: 1 }));
+            setTimeout(() => {
+              dispatch(checkSayonara());
+            }, 100);
+          }
+          
+          dispatch(updateRunners(newRunners));
+          
+          setTimeout(() => {
+            dispatch(endAtBat());
+          }, 1500);
+          return;
+        }
 
-          // 守備結果イベントを追加
-          const defensiveEvent: PlayEvent = {
+        if (atBatResult.outcome === 'in_play' && atBatResult.batBallInfo) {
+          const batBallDescription = describeBatBall(atBatResult.batBallInfo);
+          const batBallEvent: PlayEvent = {
             timestamp: Date.now(),
             inning: currentInning,
             isTopHalf,
-            description: defensiveResult.description,
-            type: defensiveResult.outcome === 'home_run' ? 'home_run' : 
-                  defensiveResult.outcome === 'error' ? 'error' :
-                  defensiveResult.outsRecorded > 0 ? 'out' : 'hit',
+            description: batBallDescription,
+            type: 'at_bat_start',
             source: 'player',
           };
-          dispatch(addPlayEvent(defensiveEvent));
+          dispatch(addPlayEvent(batBallEvent));
 
-          // 走者の進塁を処理
-          const newRunners: RunnerState = { first: null, second: null, third: null };
-          const scoringTeam = isTopHalf ? 'away' : 'home';
+          setTimeout(() => {
+            const defensiveInput: DefensivePlayInput = {
+              batBallInfo: atBatResult.batBallInfo!,
+              batter,
+              runners,
+              outs
+            };
 
-          // 本塁打の場合は全走者クリア
-          if (defensiveResult.outcome === 'home_run') {
-            // 得点を加算（バッター含む）
-            if (defensiveResult.runsScored > 0) {
-              dispatch(addScore({ team: scoringTeam, points: defensiveResult.runsScored }));
-              // サヨナラ判定
-              setTimeout(() => {
-                dispatch(checkSayonara());
-              }, 100);
-            }
-            dispatch(updateRunners(newRunners));
-          } else {
-            // その他の結果の場合、進塁を適用
-            for (const advance of defensiveResult.runnersAdvanced) {
-              if (advance.from === 'batter' && advance.to !== 'out' && advance.to !== 'home') {
-                const runnerData: Runner = { playerId: batter.id, playerName: batter.name };
-                if (advance.to === 'first') {
-                  newRunners.first = runnerData;
-                } else if (advance.to === 'second') {
-                  newRunners.second = runnerData;
-                } else if (advance.to === 'third') {
-                  newRunners.third = runnerData;
-                }
-              } else if (advance.from !== 'batter' && advance.to !== 'out') {
-                // 既存走者の進塁
-                const existingRunner = runners[advance.from];
-                if (existingRunner) {
+            const defensiveResult = processDefensivePlay(
+              defensiveInput, 
+              defendingTeam.lineup, 
+              gameState.defensiveShift
+            );
+
+            const defensiveEvent: PlayEvent = {
+              timestamp: Date.now(),
+              inning: currentInning,
+              isTopHalf,
+              description: defensiveResult.description,
+              type: defensiveResult.outcome === 'home_run' ? 'home_run' : 
+                    defensiveResult.outcome === 'error' ? 'error' :
+                    defensiveResult.outsRecorded > 0 ? 'out' : 'hit',
+              source: 'player',
+            };
+            dispatch(addPlayEvent(defensiveEvent));
+
+            const newRunners: RunnerState = { first: null, second: null, third: null };
+            const scoringTeam = isTopHalf ? 'away' : 'home';
+
+            if (defensiveResult.outcome === 'home_run') {
+              if (defensiveResult.runsScored > 0) {
+                dispatch(addScore({ team: scoringTeam, points: defensiveResult.runsScored }));
+                setTimeout(() => {
+                  dispatch(checkSayonara());
+                }, 100);
+              }
+              dispatch(updateRunners(newRunners));
+            } else {
+              for (const advance of defensiveResult.runnersAdvanced) {
+                if (advance.from === 'batter' && advance.to !== 'out' && advance.to !== 'home') {
+                  const runnerData: Runner = { playerId: batter.id, playerName: batter.name };
                   if (advance.to === 'first') {
-                    newRunners.first = existingRunner;
+                    newRunners.first = runnerData;
                   } else if (advance.to === 'second') {
-                    newRunners.second = existingRunner;
+                    newRunners.second = runnerData;
                   } else if (advance.to === 'third') {
-                    newRunners.third = existingRunner;
+                    newRunners.third = runnerData;
                   }
-                  // advance.to === 'home' の場合は得点処理済み
+                } else if (advance.from !== 'batter' && advance.to !== 'out') {
+                  const existingRunner = runners[advance.from];
+                  if (existingRunner) {
+                    if (advance.to === 'first') {
+                      newRunners.first = existingRunner;
+                    } else if (advance.to === 'second') {
+                      newRunners.second = existingRunner;
+                    } else if (advance.to === 'third') {
+                      newRunners.third = existingRunner;
+                    }
+                  }
                 }
               }
+
+              if (defensiveResult.runsScored > 0) {
+                dispatch(addScore({ team: scoringTeam, points: defensiveResult.runsScored }));
+                setTimeout(() => {
+                  dispatch(checkSayonara());
+                }, 100);
+              }
+
+              dispatch(updateRunners(newRunners));
             }
 
-            // 得点を加算
-            if (defensiveResult.runsScored > 0) {
-              dispatch(addScore({ team: scoringTeam, points: defensiveResult.runsScored }));
-              // サヨナラ判定を非同期で実行
+            if (defensiveResult.outsRecorded > 0) {
+              const batterOut = defensiveResult.batterOut;
               setTimeout(() => {
-                dispatch(checkSayonara());
-              }, 100);
+                dispatch(
+                  recordOut({
+                    description: defensiveResult.description,
+                    outsRecorded: defensiveResult.outsRecorded,
+                    batterOut,
+                  })
+                );
+              }, 1500);
+            } else {
+              setTimeout(() => {
+                dispatch(endAtBat());
+              }, 1500);
             }
+          }, 1000);
+        }
+      };
 
-            // 走者を更新
-            dispatch(updateRunners(newRunners));
-          }
-
-          // アウトを記録
-          if (defensiveResult.outsRecorded > 0) {
-            const batterOut = defensiveResult.batterOut;
-            setTimeout(() => {
-              dispatch(
-                recordOut({
-                  description: defensiveResult.description,
-                  outsRecorded: defensiveResult.outsRecorded,
-                  batterOut,
-                })
-              );
-            }, 1500);
-          } else {
-            // アウトでなければ次の打者へ
-            setTimeout(() => {
-              dispatch(endAtBat());
-            }, 1500);
-          }
-        }, 1000);
-      }
+      void runPitchLoop();
     }, 1500);
   };
 
@@ -403,6 +511,30 @@ export function GameScreen() {
   const handleDefensiveInstruction = (instruction: DefensiveInstruction | null) => {
     // nullの場合は通常守備として扱う
     const actualInstruction = instruction || 'normal';
+
+    const defendingTeam = isTopHalf ? homeTeam : awayTeam;
+    const availablePitchers = defendingTeam
+      ? [
+          ...defendingTeam.lineup.filter((p) => p.position === 'P' && p.id !== gameState.currentPitcher?.playerId),
+          ...defendingTeam.bench.filter((p) => p.position === 'P'),
+        ].length
+      : 0;
+    const currentPitchCount = gameState.currentPitcher?.pitchCount || 0;
+    const defensiveValidation = validateDefensiveInstruction(
+      actualInstruction,
+      availablePitchers,
+      currentPitchCount
+    );
+    if (defensiveValidation) {
+      const severity = getErrorSeverity(defensiveValidation);
+      const message = formatValidationError(defensiveValidation);
+      if (severity === 'error') {
+        error(message);
+        return;
+      } else {
+        warning(message);
+      }
+    }
     
     const instructionEvent: PlayEvent = {
       timestamp: Date.now(),
@@ -414,10 +546,19 @@ export function GameScreen() {
     };
     dispatch(addPlayEvent(instructionEvent));
 
-    // 守備指示の処理（次のタスクで実装予定）
+    if (actualInstruction === 'intentional_walk') {
+      dispatch(applyIntentionalWalk());
+      setTimeout(() => {
+        dispatch(checkSayonara());
+      }, 100);
+      setTimeout(() => {
+        dispatch(endAtBat());
+      }, 1500);
+      return;
+    }
+
     // 通常守備の場合は何もせず次に進む
     if (actualInstruction === 'normal') {
-      // 打席へ進む
       dispatch(startAtBat());
     }
   };
@@ -985,8 +1126,7 @@ export function GameScreen() {
     };
     dispatch(addPlayEvent(shiftEvent));
     
-    // シフト変更をgameSliceに反映（次のタスクで実装）
-    // 今は通常守備へ進む
+    dispatch(setDefensiveShift(shift));
     dispatch(startAtBat());
   };
 
@@ -1005,9 +1145,8 @@ export function GameScreen() {
         source: 'player',
       };
       dispatch(addPlayEvent(changeEvent));
-      
-      // 投手交代をgameSliceに反映（次のタスクで実装）
-      // 今は打席へ進む
+
+      dispatch(changePitcher({ pitcherId: newPitcher.id }));
       dispatch(startAtBat());
     }
   };
@@ -1142,6 +1281,45 @@ export function GameScreen() {
 
   const situationLabels = getSituationLabels();
 
+  const getNextActionLabel = () => {
+    switch (phase) {
+      case 'awaiting_instruction':
+        return isPlayerAttacking ? '攻撃指示を選択してください' : '守備指示を選択してください';
+      case 'inning_start':
+        return 'イニング開始を待機中';
+      case 'at_bat':
+      case 'play_execution':
+        return 'プレイ進行中';
+      case 'result_display':
+        return '次の打者へ進行中';
+      case 'half_inning_end':
+        return '攻守交代の処理中';
+      case 'half_inning_end_checked':
+        return 'イニング更新中';
+      case 'game_end':
+        return '試合終了';
+      default:
+        return '';
+    }
+  };
+
+  const nextActionLabel = getNextActionLabel();
+
+  const commentarySettings = loadSettings();
+  const showPitchInCommentary = commentarySettings.pitchDisplayMode === 'detail';
+  const recentCommentary = useMemo(() => {
+    const events = showPitchInCommentary
+      ? playLog
+      : playLog.filter((event) => event.type !== 'pitch');
+    return events.slice(-5).reverse();
+  }, [playLog, showPitchInCommentary]);
+
+  const getCommentaryClass = (type: PlayEvent['type']) => {
+    if (['home_run', 'error', 'double_play', 'game_end'].includes(type)) return 'commentary-item important';
+    if (['strikeout', 'walk', 'inning_end'].includes(type)) return 'commentary-item highlight';
+    return 'commentary-item';
+  };
+
   // ガイダンスメッセージ
   const getGuidanceMessage = () => {
     switch (phase) {
@@ -1190,6 +1368,10 @@ export function GameScreen() {
   const [logFilter, setLogFilter] = useState<number | 'all'>('all');
   const [showAllLogs, setShowAllLogs] = useState(false);
   const [maxDisplayLogs, setMaxDisplayLogs] = useState(15);
+  const [showPitchLogInSidebar, setShowPitchLogInSidebar] = useState(
+    loadSettings().pitchDisplayMode === 'detail'
+  );
+  const [showCompactSidebar, setShowCompactSidebar] = useState(false);
 
   const getEventTypeClass = (type: PlayEvent['type']) => {
     switch (type) {
@@ -1220,12 +1402,12 @@ export function GameScreen() {
   };
 
   const filteredPlayLog = useMemo(() => {
-    let filtered = playLog;
+    let filtered = showPitchLogInSidebar ? playLog : playLog.filter(event => event.type !== 'pitch');
     if (logFilter !== 'all') {
-      filtered = playLog.filter(event => event.inning === logFilter);
+      filtered = filtered.filter(event => event.inning === logFilter);
     }
     return filtered.slice().reverse();
-  }, [playLog, logFilter]);
+  }, [playLog, logFilter, showPitchLogInSidebar]);
 
   const displayedPlayLog = showAllLogs ? filteredPlayLog : filteredPlayLog.slice(0, maxDisplayLogs);
 
@@ -1352,11 +1534,32 @@ export function GameScreen() {
                   {/* コンパクト塁ベース */}
                   <div className="bases-compact">
                     <div className="bases-compact-row">
-                      <div className={`base-compact ${runners.second ? 'occupied' : ''}`} title="二塁" />
+                      <div className="base-compact-slot">
+                        <div className={`base-compact ${runners.second ? 'occupied' : ''}`} title="二塁" />
+                        {runners.second && (
+                          <span className="base-runner-name" title={runners.second.playerName}>
+                            {runners.second.playerName}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="bases-compact-row">
-                      <div className={`base-compact ${runners.third ? 'occupied' : ''}`} title="三塁" />
-                      <div className={`base-compact ${runners.first ? 'occupied' : ''}`} title="一塁" />
+                      <div className="base-compact-slot">
+                        <div className={`base-compact ${runners.third ? 'occupied' : ''}`} title="三塁" />
+                        {runners.third && (
+                          <span className="base-runner-name" title={runners.third.playerName}>
+                            {runners.third.playerName}
+                          </span>
+                        )}
+                      </div>
+                      <div className="base-compact-slot">
+                        <div className={`base-compact ${runners.first ? 'occupied' : ''}`} title="一塁" />
+                        {runners.first && (
+                          <span className="base-runner-name" title={runners.first.playerName}>
+                            {runners.first.playerName}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
@@ -1432,6 +1635,40 @@ export function GameScreen() {
                 </div>
               )}
 
+              {nextActionLabel && (
+                <div className="next-action-message">
+                  <span className="next-action-label">次の操作</span>
+                  <span className="next-action-text">{nextActionLabel}</span>
+                </div>
+              )}
+
+              {showPitchContinue && (
+                <div className="guidance-message pitch-continue">
+                  <span>続行ボタンで次の投球へ進みます</span>
+                  <button className="pitch-continue-button" onClick={handlePitchContinue}>
+                    続行
+                  </button>
+                </div>
+              )}
+
+              <div className="commentary-panel">
+                <div className="commentary-title">実況</div>
+                <div className="commentary-list">
+                  {recentCommentary.length === 0 ? (
+                    <div className="commentary-empty">実況なし</div>
+                  ) : (
+                    recentCommentary.map((event, index) => (
+                      <div key={`${event.timestamp}-${index}`} className={getCommentaryClass(event.type)}>
+                        <span className="commentary-inning">
+                          {event.inning > 0 ? `${event.inning}回${event.isTopHalf ? '表' : '裏'}` : '試合前'}
+                        </span>
+                        <span className="commentary-text">{event.description}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
               {/* フェーズ表示 */}
               {phase === 'inning_start' && (
                 <div className="phase-message">
@@ -1478,13 +1715,29 @@ export function GameScreen() {
 
           {/* サイドバー（プレイログ） */}
           <div className="game-sidebar">
-            <div className={`play-log ${playLogCollapsed ? 'collapsed' : ''}`}>
+            <div className="sidebar-toggle">
+              <button
+                className="sidebar-toggle-button"
+                onClick={() => setShowCompactSidebar(!showCompactSidebar)}
+              >
+                {showCompactSidebar ? 'ログを表示' : 'ログを折りたたむ'}
+              </button>
+            </div>
+            <div className={`play-log ${playLogCollapsed ? 'collapsed' : ''} ${showCompactSidebar ? 'hidden' : ''}`}>
               <div 
                 className="play-log-header"
                 onClick={() => setPlayLogCollapsed(!playLogCollapsed)}
               >
                 <span>プレイログ</span>
                 <div className="play-log-controls">
+                  <label className="log-pitch-toggle" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={showPitchLogInSidebar}
+                      onChange={(e) => setShowPitchLogInSidebar(e.target.checked)}
+                    />
+                    <span>投球ログ</span>
+                  </label>
                   <select 
                     value={logFilter} 
                     onChange={(e) => {
@@ -1565,10 +1818,17 @@ export function GameScreen() {
         <ResumeGameDialog
           isOpen={showResumeDialog}
           onResume={() => {
+            const saved = loadSavedGame();
+            if (saved?.gameState) {
+              dispatch(restoreGameState(saved.gameState));
+              success('前回の試合を再開します');
+            } else {
+              warning('保存データの復元に失敗しました');
+            }
             setShowResumeDialog(false);
-            info('前回の試合を再開します');
           }}
           onStartNew={() => {
+            clearSavedGame();
             setShowResumeDialog(false);
             info('新しい試合を開始します');
           }}

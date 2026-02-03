@@ -248,6 +248,36 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             )}
           </section>
 
+          {/* 投球表示設定 */}
+          <section className="settings-section">
+            <h3>投球表示</h3>
+
+            <div className="settings-item">
+              <label htmlFor="pitchDisplayMode">表示モード</label>
+              <select
+                id="pitchDisplayMode"
+                value={settings.pitchDisplayMode}
+                onChange={(e) => handleChange('pitchDisplayMode', e.target.value as 'detail' | 'summary')}
+              >
+                <option value="detail">詳細（1球ごとに表示）</option>
+                <option value="summary">簡易（最終結果のみ表示）</option>
+              </select>
+            </div>
+
+            <div className="settings-item">
+              <label htmlFor="pitchDisplaySpeed">表示速度</label>
+              <select
+                id="pitchDisplaySpeed"
+                value={settings.pitchDisplaySpeed}
+                onChange={(e) => handleChange('pitchDisplaySpeed', e.target.value as 'instant' | 'normal' | 'slow')}
+              >
+                <option value="instant">即座表示</option>
+                <option value="normal">通常表示（0.5秒）</option>
+                <option value="slow">ゆっくり表示（1.5秒）</option>
+              </select>
+            </div>
+          </section>
+
           {/* サウンド設定 */}
           <section className="settings-section">
             <h3>サウンド設定</h3>

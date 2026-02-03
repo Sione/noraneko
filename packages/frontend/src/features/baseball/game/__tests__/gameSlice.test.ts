@@ -16,6 +16,9 @@ import gameReducer, {
   addScore,
   checkSayonara,
   setTeams,
+  applyIntentionalWalk,
+  setDefensiveShift,
+  changePitcher,
   resetGame,
 } from '../gameSlice';
 import { TeamInGame, PlayerInGame } from '../../types';
@@ -46,7 +49,7 @@ function createTestTeam(teamId: string, teamName: string): TeamInGame {
     teamName,
     abbreviation: teamId.substring(0, 3).toUpperCase(),
     lineup: players,
-    bench: [],
+    bench: [createTestPlayer(`${teamId}-rp`, '控え投手', 'P')],
     currentBatterIndex: 0,
     score: 0,
     hits: 0,
@@ -517,6 +520,67 @@ describe('ゲームスライス - タスク1: 試合開始と基本フロー', (
       state = gameReducer(state, checkGameEnd());
 
       expect(state.elapsedSeconds).toBeGreaterThan(0);
+    });
+  });
+
+  describe('2.2 守備指示の反映', () => {
+    let gameState: GameState;
+
+    beforeEach(() => {
+      gameState = gameReducer(
+        initialState,
+        setTeams({ homeTeam, awayTeam, isPlayerHome: true, allPlayers })
+      );
+      gameState = gameReducer(gameState, startGame());
+      gameState = gameReducer(gameState, startInning());
+      gameState = gameReducer(gameState, startAtBat());
+    });
+
+    it('敬遠で四球処理が即座に行われる（満塁で押し出し）', () => {
+      const battingTeam = gameState.isTopHalf ? gameState.awayTeam! : gameState.homeTeam!;
+      const runner1 = battingTeam.lineup[1];
+      const runner2 = battingTeam.lineup[2];
+      const runner3 = battingTeam.lineup[3];
+
+      const stateWithRunners: GameState = {
+        ...gameState,
+        runners: {
+          first: { playerId: runner1.id, playerName: runner1.name },
+          second: { playerId: runner2.id, playerName: runner2.name },
+          third: { playerId: runner3.id, playerName: runner3.name },
+        },
+        score: { ...gameState.score },
+      };
+
+      const state = gameReducer(stateWithRunners, applyIntentionalWalk());
+
+      expect(state.score.away).toBe(stateWithRunners.score.away + 1);
+      expect(state.runners.first?.playerId).toBe(battingTeam.lineup[0].id);
+      expect(state.runners.second?.playerId).toBe(runner1.id);
+      expect(state.runners.third?.playerId).toBe(runner2.id);
+    });
+
+    it('守備シフト変更でロックカウントが設定される', () => {
+      let state = gameReducer(gameState, setDefensiveShift('pull_left'));
+      expect(state.defensiveShift).toBe('pull_left');
+      expect(state.shiftLockRemaining).toBe(3);
+
+      state = gameReducer(state, endAtBat());
+      expect(state.shiftLockRemaining).toBe(2);
+    });
+
+    it('投手交代で現在の投手と打席情報が更新される', () => {
+      const defendingTeam = gameState.isTopHalf ? gameState.homeTeam! : gameState.awayTeam!;
+      const newPitcher = defendingTeam.bench[0];
+
+      const state = gameReducer(
+        gameState,
+        changePitcher({ pitcherId: newPitcher.id })
+      );
+
+      expect(state.currentPitcher?.playerId).toBe(newPitcher.id);
+      expect(state.currentAtBat?.pitcherId).toBe(newPitcher.id);
+      expect(state.currentAtBat?.pitcherName).toBe(newPitcher.name);
     });
   });
 

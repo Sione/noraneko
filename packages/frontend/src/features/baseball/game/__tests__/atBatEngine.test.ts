@@ -7,7 +7,8 @@ import { describe, it, expect } from 'vitest';
 import { 
   judgeAtBatOutcome, 
   describeBatBall,
-  AtBatOutcome 
+  simulatePitch,
+  simulateAtBatWithPitchLoop
 } from '../atBatEngine';
 import { PlayerInGame, Condition, FatigueLevel } from '../../types';
 
@@ -361,5 +362,34 @@ describe('打席判定エンジン - タスク3.4', () => {
     // 有利な組み合わせの方がインプレー率が高いことを期待
     console.log(`Advantage in-play rate: ${advantageInPlayCount}/${trials}`);
     console.log(`Disadvantage in-play rate: ${disadvantageInPlayCount}/${trials}`);
+  });
+});
+
+describe('1球単位判定エンジン - タスク3.1/3.2', () => {
+  it('simulatePitchが有効な結果を返す', () => {
+    const batter = createTestBatter();
+    const pitcher = createTestPitcher();
+    const result = simulatePitch(batter, pitcher, 0, 0, 0, 'normal_swing');
+
+    expect(['called_strike', 'swinging_strike', 'ball', 'foul', 'in_play']).toContain(result.outcome);
+    expect(result.description).toBeTruthy();
+  });
+
+  it('simulateAtBatWithPitchLoopが最終結果と投球ログを返す', () => {
+    const batter = createTestBatter();
+    const pitcher = createTestPitcher();
+    const runners = { first: null, second: null, third: null };
+    const result = simulateAtBatWithPitchLoop(batter, pitcher, runners, 0, 'normal_swing');
+
+    expect(['strikeout', 'walk', 'in_play']).toContain(result.outcome);
+    expect(result.pitches.length).toBeGreaterThan(0);
+
+    for (const pitch of result.pitches) {
+      expect(pitch.pitchNumber).toBeGreaterThan(0);
+      expect(pitch.balls).toBeGreaterThanOrEqual(0);
+      expect(pitch.balls).toBeLessThanOrEqual(4);
+      expect(pitch.strikes).toBeGreaterThanOrEqual(0);
+      expect(pitch.strikes).toBeLessThanOrEqual(3);
+    }
   });
 });

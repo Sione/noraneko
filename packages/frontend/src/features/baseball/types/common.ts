@@ -51,6 +51,7 @@ export interface AtBatState {
   pitcherName: string;
   balls: number;
   strikes: number;
+  pitchNumber: number;
 }
 
 // イニングスコア
@@ -75,6 +76,7 @@ export type PlayEventType =
   | 'game_start'
   | 'inning_start'
   | 'at_bat_start'
+  | 'pitch'
   | 'hit'
   | 'out'
   | 'strikeout'
@@ -85,6 +87,14 @@ export type PlayEventType =
   | 'substitution'
   | 'inning_end'
   | 'game_end';
+
+// 1球ごとの結果
+export type PitchOutcome =
+  | 'called_strike'
+  | 'swinging_strike'
+  | 'ball'
+  | 'foul'
+  | 'in_play';
 
 // 守備シフト
 export type DefensiveShift =
